@@ -31,6 +31,7 @@ bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
 
+//Global window and renderer
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRender = NULL;
 
