@@ -19,7 +19,7 @@
 #define ERROR_I printf("-----> %s\n", IMG_GetError());
 #define ERROR_T printf("-----> %s\n", TTF_GetError());
 
-//hello
+//hello2
 
 #define ksym key.keysym.sym
 
