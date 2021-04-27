@@ -13,7 +13,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-// #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_ttf.h>
 
 #define ERROR printf("------> %s\n", SDL_GetError());
 #define ERROR_I printf("-----> %s\n", IMG_GetError());
@@ -34,6 +34,7 @@ void closeAll();
 //Global window and renderer
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRender = NULL;
+TTF_Font* gFont = NULL;
 
 class Texture{
 	private:
@@ -89,6 +90,7 @@ class Texture{
 			mTexture = tTexture;
 			return (mTexture != NULL);
 		}
+
 		void setBlendMode(SDL_BlendMode blending){
 			SDL_SetTextureBlendMode(mTexture,blending);
 		}
@@ -196,6 +198,7 @@ class Character{
 
 Character gMyCharacter;
 Texture gBackgroundTexture,gBuilding[2],gTrees[3],gBush;
+
 std::vector<SDL_Rect>room1Objects,room2Objects,gBushSprite;
 
 bool init(){
@@ -241,6 +244,18 @@ bool loadMedia(){
 
 	SDL_Rect tRect;	
 
+	tRect.x = 900,tRect.y = 140;
+	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
+	room1Objects.push_back(tRect);
+
+	tRect.x = 120,tRect.y = 470;
+	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
+	room1Objects.push_back(tRect);
+
+	tRect.x = 100,tRect.y = 140;
+	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
+	room1Objects.push_back(tRect);
+
 	for(int i = 0;i < 3;i++){
 		tRect.x = i * gBush.getWidth()/3;
 		tRect.y = 0;
@@ -258,31 +273,26 @@ bool loadMedia(){
 		tRect.y = 2 * gBush.getHeight()/3;
 		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
 		gBushSprite.push_back(tRect);
+	} 
+
+	for( int i = 50; i <= 1000; i+= 190 ){
+		tRect.x = i,tRect.y = 50;
+		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
+		room1Objects.push_back(tRect);
 	}
+	for( int i = 100; i <= 1100; i+= 211 )
+	{
+		tRect.x = i,tRect.y = 300;
+		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
+		room1Objects.push_back(tRect);
+	}
+	for( int i = 400; i <= 1000; i+= 199 )
+	{
+		tRect.x = i,tRect.y = 500;
+		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
+		room1Objects.push_back(tRect);
+	}	
 
-	tRect.x = (3 * WIDTH) /4,tRect.y = (HEIGHT/5);
-	tRect.w = 45,tRect.h = 46;
-	room1Objects.push_back(tRect);
-
-	tRect.x = WIDTH/18,tRect.y = (4 * HEIGHT)/5 - gMyCharacter.charHeight;
-	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
-	room1Objects.push_back(tRect);
-
-	tRect.x = room1Objects[1].x - 20,tRect.y = room1Objects[1].y - 30;
-	tRect.w = gTrees[0].getWidth(),tRect.h = gTrees[0].getHeight();
-	room1Objects.push_back(tRect);
-
-	tRect.x = WIDTH/3,tRect.y = HEIGHT/5;
-	tRect.w = gTrees[0].getWidth(),tRect.h = gTrees[0].getHeight();
-	room1Objects.push_back(tRect);
-
-	tRect.x = 4*WIDTH/5,tRect.y = 5 * HEIGHT/6;
-	tRect.w = gTrees[0].getWidth(),tRect.h = gTrees[0].getHeight();
-	room1Objects.push_back(tRect);	
-
-	tRect.x = 500,tRect.y = 500;
-	tRect.w = gTrees[0].getWidth(),tRect.h = gTrees[0].getHeight();
-	room1Objects.push_back(tRect);
 	return true;
 }
 
@@ -304,10 +314,17 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 void closeAll(){
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
+
+	gMyCharacter.mCharTexture.free();
+	gBackgroundTexture.free();
+	for(int i = 0;i < 2;i++)gBuilding[i].free();
+	for(int i = 0;i < 3;i++)gTrees[i].free();
+	gBush.free();
+
 	gWindow = NULL;
 	gRender = NULL;
 	IMG_Quit();
-	// TTF_Quit();
+	TTF_Quit();
 	SDL_Quit();
 }
 
@@ -317,16 +334,22 @@ void renderRoom1(){
     
     gBackgroundTexture.render(0,0);
 
-    gBuilding[0].render(room1Objects[0].x,room1Objects[0].y);
-    gBuilding[1].render(room1Objects[1].x,room1Objects[1].y);
+    gBuilding[1].render(room1Objects[0].x,room1Objects[0].y);
+	gBuilding[1].render(room1Objects[1].x,room1Objects[1].y);
+	gBuilding[1].render(room1Objects[2].x,room1Objects[2].y);
+//	gBush.render(40,100,&gBushSprite[2]);
 
-    gTrees[0].render(room1Objects[2].x,room1Objects[2].y);
-    gTrees[1].render(room1Objects[3].x,room1Objects[3].y);
-    gTrees[2].render(room1Objects[4].x,room1Objects[4].y);
-	gTrees[0].render(500,500);
-	gBush.render(200,200,&gBushSprite[3]);
-
-    // SDL_RenderDrawPoint(gRender,WIDTH/12 - 100,HEIGHT - 100);
+	for( int i = 50; i <= 1000; i+= 190 ) gTrees[i%3].render(i,50);
+	for( int i = 100; i <=200; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
+	for( int i = 302; i <= 400; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
+	for( int i = 470; i <= 570; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
+	for( int i = 700; i <= 1000; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
+	for( int i = 100; i <= 1100; i+= 211 ) gTrees[i%3].render(i,300);
+	for( int i = 150; i <=300; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
+	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
+	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
+	for( int i = 400; i <= 1150; i+= 199 ) gTrees[i%3].render(i,500);
+	// for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
     gMyCharacter.render();
 }
 
