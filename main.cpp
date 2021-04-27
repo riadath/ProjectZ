@@ -146,10 +146,11 @@ class Character{
 		}
 		void spriteChanger(){
 			mCurSprite++;
-			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 0;
+			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 1;
 		}
 		void handleEvent(SDL_Event& e){
-			if(e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)spriteChanger();
+			if(e.type != SDL_MOUSEMOTION)
+				spriteChanger();
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
 					case SDLK_w: mCharVelY -= CHAR_VEL;break;
