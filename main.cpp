@@ -13,7 +13,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-// #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_ttf.h>
 
 #define ERROR printf("------> %s\n", SDL_GetError());
 #define ERROR_I printf("-----> %s\n", IMG_GetError());
@@ -34,6 +34,7 @@ void closeAll();
 //Global window and renderer
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRender = NULL;
+TTF_Font* gFont = NULL;
 
 class Texture{
 	private:
@@ -89,6 +90,7 @@ class Texture{
 			mTexture = tTexture;
 			return (mTexture != NULL);
 		}
+
 		void setBlendMode(SDL_BlendMode blending){
 			SDL_SetTextureBlendMode(mTexture,blending);
 		}
@@ -195,6 +197,7 @@ class Character{
 
 Character gMyCharacter;
 Texture gBackgroundTexture,gBuilding[2],gTrees[3],gBush;
+
 std::vector<SDL_Rect>room1Objects,room2Objects,gBushSprite;
 
 bool init(){
@@ -271,7 +274,6 @@ bool loadMedia(){
 		gBushSprite.push_back(tRect);
 	} 
 
-
 	for( int i = 50; i <= 1000; i+= 190 ){
 		tRect.x = i,tRect.y = 50;
 		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
@@ -311,10 +313,17 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 void closeAll(){
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
+
+	gMyCharacter.mCharTexture.free();
+	gBackgroundTexture.free();
+	for(int i = 0;i < 2;i++)gBuilding[i].free();
+	for(int i = 0;i < 3;i++)gTrees[i].free();
+	gBush.free();
+
 	gWindow = NULL;
 	gRender = NULL;
 	IMG_Quit();
-	// TTF_Quit();
+	TTF_Quit();
 	SDL_Quit();
 }
 
@@ -327,8 +336,8 @@ void renderRoom1(){
     gBuilding[1].render(room1Objects[0].x,room1Objects[0].y);
 	gBuilding[1].render(room1Objects[1].x,room1Objects[1].y);
 	gBuilding[1].render(room1Objects[2].x,room1Objects[2].y);
-
 //	gBush.render(40,100,&gBushSprite[2]);
+
 	for( int i = 50; i <= 1000; i+= 190 ) gTrees[i%3].render(i,50);
 	for( int i = 100; i <=200; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
 	for( int i = 302; i <= 400; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
@@ -339,7 +348,7 @@ void renderRoom1(){
 	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 400; i <= 1150; i+= 199 ) gTrees[i%3].render(i,500);
-	for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
+	// for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
     gMyCharacter.render();
 }
 
