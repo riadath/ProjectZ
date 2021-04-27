@@ -348,7 +348,7 @@ void renderRoom1(){
 	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 400; i <= 1150; i+= 199 ) gTrees[i%3].render(i,500);
-	// for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
+	for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
     gMyCharacter.render();
 }
 
