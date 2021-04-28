@@ -340,16 +340,19 @@ void renderRoom1(){
 //	gBush.render(40,100,&gBushSprite[2]);
 
 	for( int i = 50; i <= 1000; i+= 190 ) gTrees[i%3].render(i,50);
+
+	//bush rendering
 	for( int i = 100; i <=200; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
 	for( int i = 302; i <= 400; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
 	for( int i = 470; i <= 570; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
 	for( int i = 700; i <= 1000; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 100; i <= 1100; i+= 211 ) gTrees[i%3].render(i,300);
 	for( int i = 150; i <=300; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
 	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
+	for( int i = 300; i <= 1000; i+= 46 ) gBush.render(i,570,&gBushSprite[i%5]);
+	//tree rendering
 	for( int i = 400; i <= 1150; i+= 199 ) gTrees[i%3].render(i,500);
-	for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
+	for( int i = 100; i <= 1100; i+= 211 ) gTrees[i%3].render(i,300);
     gMyCharacter.render();
 }
 
