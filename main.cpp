@@ -1,27 +1,24 @@
-#include "texture_timer.h"
-
-const int WIDTH = 1200;
-const int HEIGHT = 697;
+#include "bucket_ball.h"
 
 bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
 void renderRomm1();
 
-class Character{
-	private:
+struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
+		int mCurSprite,mSpeedDec;
+
 		const int CHAR_SPRITE_COUNT = 10;
-		SDL_Rect mCharShape,mCharacterSprite[10];
-	public:
 		const int charWidth = 32,charHeight = 65; 
 		const int CHAR_VEL = 3;
-		int mCurSprite,mSpeedDec;
+
+		SDL_Rect mCharShape,mCharacterSprite[10];
 		SDL_RendererFlip mFlipType;
 		Texture mCharTexture;
 		Character(){
-			mCharPosX = WIDTH/2,mCharPosY = HEIGHT/2;
+			mCharPosX = SCREEN_WIDTH/2,mCharPosY = SCREEN_HEIGHT/2;
 			mCharVelX = mCharVelY = 0;
 			mCharShape.x = mCharPosX,mCharShape.y = mCharPosY;
 			mCharShape.w = charWidth,mCharShape.h = charHeight;
@@ -34,6 +31,10 @@ class Character{
 				mCharacterSprite[i].x = i * mCharShape.w;
 				mCharacterSprite[i].y = 0;
 			}
+		}
+		void positionReset(){
+			mCharPosX = SCREEN_WIDTH/2,mCharPosY = SCREEN_HEIGHT/2;
+			mCharVelX = mCharVelY = 0;
 		}
 		void spriteChanger(){
 			mCurSprite++;
@@ -68,13 +69,13 @@ class Character{
 			mCharPosX += mCharVelX;
 			
 			mCharShape.x = mCharPosX;
-			if(mCharPosX < 0 || (mCharPosX + charWidth > WIDTH) || checkCollision(mCharShape,objects)){
+			if(mCharPosX < 0 || (mCharPosX + charWidth > SCREEN_WIDTH) || checkCollision(mCharShape,objects)){
 				mCharPosX -= mCharVelX;
 				mCharShape.x = mCharPosX;
 			}
 			mCharPosY += mCharVelY;
 			mCharShape.y = mCharPosY;
-			if(mCharPosY < 0 || (mCharPosY + charHeight > HEIGHT) || checkCollision(mCharShape,objects)){
+			if(mCharPosY < 0 || (mCharPosY + charHeight > SCREEN_HEIGHT) || checkCollision(mCharShape,objects)){
 				mCharPosY -= mCharVelY;
 				mCharShape.y = mCharPosY;
 			}
@@ -88,7 +89,7 @@ Character gMyCharacter;
 const int gBuildingCount = 3;
 const int gTreeCount = 3;
 Texture gBackgroundTexture,gBuilding[gBuildingCount],gTrees[gTreeCount],gBush;
-std::vector<SDL_Rect>room1Objects,room2Objects,gBushSprite;
+std::vector<SDL_Rect>room1Objects,gBushSprite;
 
 bool loadMedia(){
 	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png",true,255,255,255))return false;
@@ -166,14 +167,14 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 void closeAll(){
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
-
+	Mix_FreeMusic(gMusic);
 	gMyCharacter.mCharTexture.free();
 	gBackgroundTexture.free();
 	for(int i = 0;i < gBuildingCount;i++)gBuilding[i].free();
 	for(int i = 0;i < gTreeCount;i++)gTrees[i].free();
 	gBush.free();
 	
-	Mix_FreeMusic(gMusic);
+	
 	gWindow = NULL;
 	gRender = NULL;
 	gMusic = NULL;
@@ -183,7 +184,8 @@ void closeAll(){
 	SDL_Quit();
 	Mix_Quit();
 }
-void renderRoom1(){  
+
+void renderRoom1Objects(){  
     SDL_SetRenderDrawColor(gRender,255,255,255,255);
     SDL_RenderClear(gRender);
     
@@ -216,7 +218,7 @@ bool init(){
 		return false;
 	}
 	gWindow = SDL_CreateWindow("kms",SDL_WINDOWPOS_CENTERED,
-	SDL_WINDOWPOS_CENTERED,WIDTH,HEIGHT,SDL_WINDOW_SHOWN);
+	SDL_WINDOWPOS_CENTERED,SCREEN_WIDTH,SCREEN_HEIGHT,SDL_WINDOW_SHOWN);
 	if(gWindow == NULL){
 		ERROR;
 		return false;
@@ -255,15 +257,21 @@ int main(int argc, char* argv[])
 		printf("Failed to load media\n");
 		return 0;
 	}
+
 	bool quit = false;
 	SDL_Event e;
+	bool ifBB = false;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
 			gMyCharacter.handleEvent(e);
 		}
         gMyCharacter.move(room1Objects);
-		renderRoom1();
+		
+		if(gMyCharacter.mCharPosX == 0 && gMyCharacter.mCharPosY == 0 ){
+			ifBB = true;
+		}
+		renderRoom1Objects();
 		SDL_RenderPresent(gRender);
 	}
 	closeAll();
