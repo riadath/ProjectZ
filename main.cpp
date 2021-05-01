@@ -260,7 +260,6 @@ int main(int argc, char* argv[])
 
 	bool quit = false;
 	SDL_Event e;
-	bool ifBB = false;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
@@ -268,9 +267,6 @@ int main(int argc, char* argv[])
 		}
         gMyCharacter.move(room1Objects);
 		
-		if(gMyCharacter.mCharPosX == 0 && gMyCharacter.mCharPosY == 0 ){
-			ifBB = true;
-		}
 		renderRoom1Objects();
 		SDL_RenderPresent(gRender);
 	}
