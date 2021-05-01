@@ -21,22 +21,12 @@
 #define ERROR_I printf("-----> %s\n", IMG_GetError());
 #define ERROR_T printf("-----> %s\n", TTF_GetError());
 #define ERROR_M printf("-----> %s\n",Mix_GetError());
-
 #define ksym key.keysym.sym
 
-const int WIDTH = 1200;
-const int HEIGHT = 697;
-
-//Global window and renderer
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRender = NULL;
 TTF_Font* gFont = NULL;
 Mix_Music* gMusic = NULL;
-
-bool init();
-bool loadMedia();
-bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
-void closeAll();
 
 class Texture{
 	private:
@@ -169,38 +159,3 @@ class Timer{
 		bool isStarted(){return mIfStarted;}
 		bool isPaused(){return mIfPaused && mIfStarted;}
 };
-
-bool init(){
-	if(SDL_Init(SDL_INIT_VIDEO) < 0){
-		ERROR;
-		return false;
-	}
-	gWindow = SDL_CreateWindow("kms",SDL_WINDOWPOS_CENTERED,
-	SDL_WINDOWPOS_CENTERED,WIDTH,HEIGHT,SDL_WINDOW_SHOWN);
-	if(gWindow == NULL){
-		ERROR;
-		return false;
-	}
-	if(!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1")){
-		printf("Linear texture filtering not enabled\n");
-	}
-	gRender = SDL_CreateRenderer(gWindow,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if(gRender == NULL){
-		ERROR;
-		return false;
-	}
-	SDL_SetRenderDrawColor(gRender,0xFF,0xFF,0xFF,0xFF);
-	if(!IMG_Init(IMG_INIT_PNG)){
-		ERROR_I;
-		return false;
-	}
-	if(TTF_Init() == -1){
-		ERROR_T;
-		return false;
-	}
-	if(Mix_OpenAudio(44100,MIX_DEFAULT_FORMAT,2,1024) < 0){
-		ERROR_M;
-		return false;
-	}
-	return true;
-}
