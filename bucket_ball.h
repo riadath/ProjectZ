@@ -134,6 +134,7 @@ struct Ball{
 			mBallRects[i].y += ballDropSpeed;
 		}
 	}
+	
 	void free(){
 		mBallRects.clear();
 		mSpriteNumber.clear();

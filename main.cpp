@@ -38,19 +38,15 @@ struct Character{
 		}
 		void spriteChanger(){
 			mCurSprite++;
-			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 0;
+			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 1;
 		}
 		void handleEvent(SDL_Event& e){
-			if(e.type != SDL_MOUSEMOTION && e.type != SDL_MOUSEBUTTONDOWN && e.type != SDL_MOUSEBUTTONUP)spriteChanger();
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
 					case SDLK_w: mCharVelY -= CHAR_VEL;break;
 					case SDLK_s: mCharVelY += CHAR_VEL;break;
-					case SDLK_a: mCharVelX -= CHAR_VEL;
-						mFlipType = SDL_FLIP_HORIZONTAL;
-						break;
-					case SDLK_d: mCharVelX += CHAR_VEL;
-						mFlipType = SDL_FLIP_NONE;break;
+					case SDLK_a: mCharVelX -= CHAR_VEL;break;
+					case SDLK_d: mCharVelX += CHAR_VEL;break;
 					default:break;
 				}
 			}
@@ -85,10 +81,14 @@ struct Character{
 		}
 };
 
+
 Character gMyCharacter;
 
 const int gBuildingCount = 3;
 const int gTreeCount = 3;
+
+//Variable to check the change in characters position
+int charCurPosX ,charCurPosY;
 
 Texture gBackgroundTexture;
 Texture gBushTexture;
@@ -102,7 +102,7 @@ std::vector<std::pair<int,int>>gBuildingPositions;
 std::vector<std::tuple<int,int,int>>gTreePositions;
 
 bool loadMedia(){
-	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png",true,255,255,255))return false;
+	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png"))return false;
 	if(!gBackgroundTexture.loadFile("images/png/background1.png"))return false;
 	if(!gBuildingTexture[0].loadFile("images/png/house2.png",true,0,64,128))return false;
 	if(!gBuildingTexture[1].loadFile("images/png/house1_5.png"))return false;
@@ -187,6 +187,7 @@ void closeAll(){
 	Mix_Quit();
 }
 
+
 void renderRoom1Objects(){  
     SDL_SetRenderDrawColor(gRender,255,255,255,255);
     SDL_RenderClear(gRender);
@@ -211,6 +212,13 @@ void renderRoom1Objects(){
 	for( int i = 800; i <=1030; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
 
 
+	if(charCurPosX != gMyCharacter.mCharPosX || charCurPosY != gMyCharacter.mCharPosY){
+			gMyCharacter.spriteChanger();
+			if(charCurPosX > gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
+			else if(charCurPosX < gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_NONE;
+			charCurPosX = gMyCharacter.mCharPosX;
+			charCurPosY = gMyCharacter.mCharPosY;
+	}else gMyCharacter.mCurSprite = 0;
     gMyCharacter.render();
 }
 
@@ -264,7 +272,7 @@ bool ifTaskPosition(int posX,int posY){
 	dorRect.x = gBuildingPositions[1].first + 50;
 	dorRect.y = gBuildingPositions[1].second + 71;
 	dorRect.w = 15;
-	dorRect.h = 20;
+	dorRect.h = 0;
 	return (checkCollisionRect(dorRect,gMyCharacter.mCharShape));
 }
 
@@ -288,6 +296,8 @@ int main(int argc, char* argv[])
 	bool quit = false;
 	SDL_Event e;
 	int BB_score = 0;
+	charCurPosX = gMyCharacter.mCharPosX;
+	charCurPosY = gMyCharacter.mCharPosY;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
