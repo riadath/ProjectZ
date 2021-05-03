@@ -4,8 +4,18 @@ int TOTAL_POINTS = 0;
 int TOTAL_LIVES = 5;
 int spawnSpeed = 0,spawnInterval = 173;
 int ballDropSpeed = 2;
-Timer gTimer;
+Timer gTimerBB;
 Mix_Chunk* gSplash = NULL;
+
+void initVariable()
+{
+	TOTAL_LIVES = 5;
+	TOTAL_POINTS = 0;
+	spawnInterval = 173;
+	spawnSpeed = 0;
+	ballDropSpeed = 2;
+	gTimerBB.start();
+}
 
 enum COLLISION_TYPE{
 	NO_COLLISION,
@@ -124,6 +134,10 @@ struct Ball{
 			mBallRects[i].y += ballDropSpeed;
 		}
 	}
+	void free(){
+		mBallRects.clear();
+		mSpriteNumber.clear();
+	}
 };
 
 std::stringstream scoreText,liveText,timeText;
@@ -137,9 +151,12 @@ Ball gBallDrop;
 
 
 void closeBB(){
+	SDL_RenderClear(gRender);
     gBucketBallTexture.free();
+	gBallDrop.free();
     gLiveTexture.free();
     gScoreTexture.free();
+	gTimerBB.stop();
 }
 
 bool loadBucketBallMedia(){
@@ -182,6 +199,7 @@ void renderRoomBB(){
 }
 
 int bucketBall(){
+	initVariable();
 	if(!loadBucketBallMedia()){
 		printf("Failed to load Media\n");
 		return -1;
@@ -189,9 +207,8 @@ int bucketBall(){
 	bool quit = false;
 	SDL_Event e;
 	
-	gTimer.start();
-	Uint32 prevTime = gTimer.getTicks()/1000;
-	Uint32 prevTime1 = gTimer.getTicks()/1000;
+	Uint32 prevTime = gTimerBB.getTicks()/1000;
+	Uint32 prevTime1 = gTimerBB.getTicks()/1000;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT)quit = true;
@@ -200,13 +217,14 @@ int bucketBall(){
 
 		if(TOTAL_LIVES <= 0)quit = true;
 
-		Uint32 BBTime = gTimer.getTicks()/1000;
+		Uint32 BBTime = gTimerBB.getTicks()/1000;
 		if(BBTime%3 == 0 && BBTime != prevTime)spawnInterval = std::max(53,spawnInterval - 10),prevTime = BBTime;
 		if(BBTime%15 == 0 && BBTime != prevTime1)ballDropSpeed += 1,prevTime1 = BBTime;
 		gBallCatcher.move();
 		renderRoomBB();
 		SDL_RenderPresent(gRender);
 	}
+	gTimerBB.stop();
     closeBB();
 	return TOTAL_POINTS;
 }

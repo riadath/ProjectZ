@@ -41,7 +41,7 @@ struct Character{
 			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 0;
 		}
 		void handleEvent(SDL_Event& e){
-			if(e.type != SDL_MOUSEMOTION)spriteChanger();
+			if(e.type != SDL_MOUSEMOTION && e.type != SDL_MOUSEBUTTONDOWN && e.type != SDL_MOUSEBUTTONUP)spriteChanger();
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
 					case SDLK_w: mCharVelY -= CHAR_VEL;break;
@@ -105,7 +105,7 @@ bool loadMedia(){
 	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png",true,255,255,255))return false;
 	if(!gBackgroundTexture.loadFile("images/png/background1.png"))return false;
 	if(!gBuildingTexture[0].loadFile("images/png/house2.png",true,0,64,128))return false;
-	if(!gBuildingTexture[1].loadFile("images/png/house1_5.png",true,255,255,255))return false;
+	if(!gBuildingTexture[1].loadFile("images/png/house1_5.png"))return false;
 	if(!gBuildingTexture[2].loadFile("images/png/house1_4.png"))return false;
 	if(!gTreesTexture[0].loadFile("images/png/tree1.png"))return false;
 	if(!gTreesTexture[1].loadFile("images/png/tree2.png"))return false;
@@ -119,12 +119,12 @@ bool loadMedia(){
 	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.charHeight;
 	room1Objects.push_back(tRect);
 
-	tRect.x = 120,tRect.y = 450;
+	tRect.x = 120,tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.charHeight;
 	room1Objects.push_back(tRect);
 
-	tRect.x = 100,tRect.y = 120;
+	tRect.x = 100,tRect.y = 180;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
 	room1Objects.push_back(tRect);
@@ -249,6 +249,25 @@ bool init(){
 	return true;
 }
 
+bool checkCollisionRect(SDL_Rect player,SDL_Rect object){
+	bool tFlag = true;
+	if(player.x + player.w <= object.x)tFlag = false;
+	if(player.x >= object.x + object.w)tFlag = false;
+	if(player.y + player.h <= object.y)tFlag = false;
+	if(player.y >= object.y + object.h)tFlag = false;
+	return tFlag;
+}
+
+//enumerate each task
+bool ifTaskPosition(int posX,int posY){
+	SDL_Rect dorRect;
+	dorRect.x = gBuildingPositions[1].first + 50;
+	dorRect.y = gBuildingPositions[1].second + 71;
+	dorRect.w = 15;
+	dorRect.h = 20;
+	return (checkCollisionRect(dorRect,gMyCharacter.mCharShape));
+}
+
 int main(int argc, char* argv[])
 {
 	srand(time(0));
@@ -256,8 +275,10 @@ int main(int argc, char* argv[])
 		printf("Failed to initialize\n");
 		return 0;
 	}
-	//made games--->comment/delete later(for testing)
-	// bucketBall();
+	std::string pathCursor = "images/png/cursor.png";
+	SDL_Surface* myCursorSurface = IMG_Load(pathCursor.c_str());
+	SDL_Cursor* myCursor =  SDL_CreateColorCursor(myCursorSurface, 0, 0);
+	SDL_SetCursor(myCursor);
 
 	if(!loadMedia()){
 		printf("Failed to load media\n");
@@ -266,13 +287,18 @@ int main(int argc, char* argv[])
 
 	bool quit = false;
 	SDL_Event e;
+	int BB_score = 0;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
 			gMyCharacter.handleEvent(e);
 		}
         gMyCharacter.move(room1Objects);
-		
+		bool flag = ifTaskPosition(gMyCharacter.mCharPosX,gMyCharacter.mCharPosY);
+		if(flag){
+			BB_score = bucketBall();
+			gMyCharacter.positionReset();
+		}
 		renderRoom1Objects();
 		SDL_RenderPresent(gRender);
 	}
