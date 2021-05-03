@@ -41,7 +41,7 @@ struct Character{
 			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 0;
 		}
 		void handleEvent(SDL_Event& e){
-			if(e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)spriteChanger();
+			if(e.type != SDL_MOUSEMOTION)spriteChanger();
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
 					case SDLK_w: mCharVelY -= CHAR_VEL;break;
@@ -86,64 +86,66 @@ struct Character{
 };
 
 Character gMyCharacter;
+
 const int gBuildingCount = 3;
 const int gTreeCount = 3;
-Texture gBackgroundTexture,gBuilding[gBuildingCount],gTrees[gTreeCount],gBush;
-std::vector<SDL_Rect>room1Objects,gBushSprite;
+
+Texture gBackgroundTexture;
+Texture gBushTexture;
+Texture gBuildingTexture[gBuildingCount];
+Texture gTreesTexture[gTreeCount];
+
+std::vector<SDL_Rect>room1Objects;
+std::vector<SDL_Rect>gBushTextureSprite;
+
+std::vector<std::pair<int,int>>gBuildingPositions;
+std::vector<std::tuple<int,int,int>>gTreePositions;
 
 bool loadMedia(){
 	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png",true,255,255,255))return false;
 	if(!gBackgroundTexture.loadFile("images/png/background1.png"))return false;
-	if(!gBuilding[0].loadFile("images/png/greenBuilding.png",true,255,255,255))return false;
-	if(!gBuilding[1].loadFile("images/png/whiteBuilding.png",true,255,255,255))return false;
-	if(!gBuilding[2].loadFile("images/png/house2.png",true,0,64,128))return false;
-	if(!gTrees[0].loadFile("images/png/tree1.png"))return false;
-	if(!gTrees[1].loadFile("images/png/tree2.png"))return false;
-	if(!gTrees[2].loadFile("images/png/tree3.png"))return false;
-	if(!gBush.loadFile("images/png/bushAll.png",true,255,255,255))return false;
+	if(!gBuildingTexture[0].loadFile("images/png/house2.png",true,0,64,128))return false;
+	if(!gBuildingTexture[1].loadFile("images/png/house1_5.png",true,255,255,255))return false;
+	if(!gBuildingTexture[2].loadFile("images/png/house1_4.png"))return false;
+	if(!gTreesTexture[0].loadFile("images/png/tree1.png"))return false;
+	if(!gTreesTexture[1].loadFile("images/png/tree2.png"))return false;
+	if(!gTreesTexture[2].loadFile("images/png/tree3.png"))return false;
+	if(!gBushTexture.loadFile("images/png/bushAll.png",true,255,255,255))return false;
 
 	SDL_Rect tRect;	
 
 	tRect.x = 900,tRect.y = 450;
-	tRect.w = gBuilding[0].getWidth() - 20,tRect.h = gBuilding[0].getHeight() - 10;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.charHeight;
 	room1Objects.push_back(tRect);
 
-	tRect.x = 120,tRect.y = 470;
-	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
+	tRect.x = 120,tRect.y = 450;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.charHeight;
 	room1Objects.push_back(tRect);
 
-	tRect.x = 100,tRect.y = 140;
-	tRect.w = gBuilding[2].getWidth() - 20,tRect.h = gBuilding[2].getHeight() - 10;
+	tRect.x = 100,tRect.y = 120;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
 	room1Objects.push_back(tRect);
 
-	for(int i = 0;i < 3;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = 0;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
+	for(int i = 0;i < 6;i++){
+		tRect.x = i * gBushTexture.getWidth()/3;
+		tRect.y = (i/3) * gBushTexture.getHeight()/3;
+		tRect.w = gBushTexture.getWidth()/3,tRect.h = gBushTexture.getHeight()/3;
+		gBushTextureSprite.push_back(tRect);
 	}
-	for(int i = 0;i < 3;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = gBush.getHeight()/3;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
-	}
-	for(int i = 0;i < 2;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = 2 * gBush.getHeight()/3;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
-	} 
-
 	for( int i = 50; i <= 1000; i+= 190 ){
-		tRect.x = i,tRect.y = 50;
-		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
+		tRect.x = i,tRect.y = 30;
+		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
+		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
 		room1Objects.push_back(tRect);
 	}
-	for( int i = 100; i <= 1100; i+= 211 )
+	for( int i = 311; i <= 1100; i+= 211 )
 	{
-		tRect.x = i,tRect.y = 300;
-		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
+		tRect.x = i,tRect.y = 350;
+		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
+		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
 		room1Objects.push_back(tRect);
 	}
 
@@ -170,9 +172,9 @@ void closeAll(){
 	Mix_FreeMusic(gMusic);
 	gMyCharacter.mCharTexture.free();
 	gBackgroundTexture.free();
-	for(int i = 0;i < gBuildingCount;i++)gBuilding[i].free();
-	for(int i = 0;i < gTreeCount;i++)gTrees[i].free();
-	gBush.free();
+	for(int i = 0;i < gBuildingCount;i++)gBuildingTexture[i].free();
+	for(int i = 0;i < gTreeCount;i++)gTreesTexture[i].free();
+	gBushTexture.free();
 	
 	
 	gWindow = NULL;
@@ -191,24 +193,24 @@ void renderRoom1Objects(){
     
     gBackgroundTexture.render(0,0);
 
-    gBuilding[0].render(room1Objects[0].x,room1Objects[0].y);
-	gBuilding[1].render(room1Objects[1].x,room1Objects[1].y);
-	gBuilding[2].render(room1Objects[2].x,room1Objects[2].y);
-//	gBush.render(40,100,&gBushSprite[2]);
-
-	
+	//building render
+    for(int i = 0;i < gBuildingCount;i++)
+		gBuildingTexture[i].render(gBuildingPositions[i].first,gBuildingPositions[i].second);
+	for(int i = 0;i < gTreePositions.size();i++){
+		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]),std::get<2>(gTreePositions[i]));
+	}
 
 	//bush rendering
-	for( int i = 100; i <=200; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 302; i <= 400; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 470; i <= 570; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 700; i <= 1000; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 150; i <=300; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	//tree rendering
-	for( int i = 50; i <= 1000; i+= 190 ) gTrees[i%3].render(i,50);
-	for( int i = 100; i <= 1100; i+= 211 ) gTrees[i%3].render(i,300);
+	int bushHeigt1 = 80,bushHeigt2 = 400;
+	for( int i = 100; i <=200; i+= 41 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 302; i <= 400; i+= 41 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 470; i <= 570; i+= 43 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 700; i <= 1000; i+= 43 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 150; i <=300; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+	for( int i = 350; i <=500; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+	for( int i = 800; i <=1030; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+
+
     gMyCharacter.render();
 }
 
@@ -249,10 +251,14 @@ bool init(){
 
 int main(int argc, char* argv[])
 {
+	srand(time(0));
 	if(!init()){
 		printf("Failed to initialize\n");
 		return 0;
 	}
+	//made games--->comment/delete later(for testing)
+	// bucketBall();
+
 	if(!loadMedia()){
 		printf("Failed to load media\n");
 		return 0;

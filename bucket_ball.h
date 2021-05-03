@@ -6,6 +6,7 @@ int spawnSpeed = 0,spawnInterval = 173;
 int ballDropSpeed = 2;
 Timer gTimer;
 Mix_Chunk* gSplash = NULL;
+
 enum COLLISION_TYPE{
 	NO_COLLISION,
 	WALL_COLLISION,
