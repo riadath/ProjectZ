@@ -211,13 +211,13 @@ void renderRoom1Objects(){
 	for( int i = 350; i <=500; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
 	for( int i = 800; i <=1030; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
 
-
+	//Checking if player has moved
 	if(charCurPosX != gMyCharacter.mCharPosX || charCurPosY != gMyCharacter.mCharPosY){
-			gMyCharacter.spriteChanger();
-			if(charCurPosX > gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
-			else if(charCurPosX < gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_NONE;
-			charCurPosX = gMyCharacter.mCharPosX;
-			charCurPosY = gMyCharacter.mCharPosY;
+		gMyCharacter.spriteChanger();
+		if(charCurPosX > gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
+		else if(charCurPosX < gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_NONE;
+		charCurPosX = gMyCharacter.mCharPosX;
+		charCurPosY = gMyCharacter.mCharPosY;
 	}else gMyCharacter.mCurSprite = 0;
     gMyCharacter.render();
 }
