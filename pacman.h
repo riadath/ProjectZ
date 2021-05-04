@@ -216,7 +216,7 @@ bool loadPacmanMedia()
 void closePacman()
 {
 	gPacmanTexture.free();
-    
+
 }
 
 bool if_collided( SDL_Rect a )

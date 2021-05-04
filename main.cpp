@@ -365,8 +365,6 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	int pp = pacman();
-
 	bool quit = false;
 	SDL_Event e;
 	int BB_score = 0;
