@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include "texture_timer.h"
 
+#include "texture_timer.h"
 
 int TOTAL_POINTS;
 int TOTAL_LIVES;

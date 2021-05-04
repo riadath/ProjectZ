@@ -1,6 +1,7 @@
 #include "texture_timer.h"
 #include "bucket_ball.h"
 
+//function prototypes
 bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
@@ -8,26 +9,72 @@ void renderRomm1();
 
 //structure for player
 
+struct CoinAnimation{
+	Texture mCoinTexture;
+	
+	int mSPRITE_COUNT;
+	int mSpriteLevel;
+	int mCoinWidth;
+	int mCointHeight;
+	
+	int mCurSprite = 0;
+	const int mSPEED_DEC = 4;
+
+	SDL_Rect *mCoinSprite;
+	CoinAnimation(int tSpriteCount,int tCoinWidth,int tCoinHeight,int tSpriteLevel){
+		mSPRITE_COUNT = tSpriteCount;
+		mCoinWidth = tCoinWidth;
+		mCointHeight = tCoinHeight;	
+		mSpriteLevel = tSpriteLevel;
+
+		mCoinSprite = (SDL_Rect*)malloc(tSpriteCount * sizeof(SDL_Rect));
+
+		for(int i = 0,xi = 0;i < mSPRITE_COUNT;i++,xi++){
+			mCoinSprite[i].w = mCoinWidth;
+			mCoinSprite[i].h = mCointHeight;
+			mCoinSprite[i].x = xi * mCoinWidth;
+			if(i >= mSpriteLevel)xi = 0;
+			mCoinSprite[i].y = (i/mSpriteLevel) * mCointHeight;
+		}
+	}
+	void spriteChanger(){
+		
+	}
+};
+
 struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
 		int mCurSprite;
 
-		const int CHAR_SPEED_DEC = 5;
-		const int CHAR_SPRITE_COUNT = 10;
-		const int charWidth = 32,charHeight = 65; 
-		const int CHAR_VELOCITY = 4;
+		int CHAR_SPRITE_COUNT;
+		int mCharWidth;
+		int mCharHeight; 
 
-		SDL_Rect mCharShape,mCharacterSprite[10];
+		const int CHAR_SPEED_DEC = 5;
+		const int CHAR_VELOCITY = 4;
+		
+
+		SDL_Rect mCharShape;
+		SDL_Rect *mCharacterSprite;
 		SDL_RendererFlip mFlipType;
 		Texture mCharTexture;
-		Character(){
+		Character(int tSpriteCount,int tCharWidth,int tCharHeight){
+			
+			CHAR_SPRITE_COUNT = tSpriteCount;
+			mCharWidth = tCharWidth;
+			mCharHeight = tCharHeight;
+
+			//allocating memory for character spritesheet rects
+			mCharacterSprite = (SDL_Rect*)malloc(tSpriteCount * sizeof(SDL_Rect));
+
 			mCharPosX = SCREEN_WIDTH/2,mCharPosY = SCREEN_HEIGHT/2;
 			mCharVelX = mCharVelY = 0;
 			mCharShape.x = mCharPosX,mCharShape.y = mCharPosY;
-			mCharShape.w = charWidth,mCharShape.h = charHeight;
+			mCharShape.w = mCharWidth,mCharShape.h = mCharHeight;
 			mCurSprite = 1;
 			mFlipType = SDL_FLIP_NONE;
+
 			for(int i = 0;i < CHAR_SPRITE_COUNT;i++){
 				mCharacterSprite[i].w = mCharShape.w;
 				mCharacterSprite[i].h = mCharShape.h;
@@ -68,13 +115,13 @@ struct Character{
 			mCharPosX += mCharVelX;
 			
 			mCharShape.x = mCharPosX;
-			if(mCharPosX < 0 || (mCharPosX + charWidth > SCREEN_WIDTH) || checkCollision(mCharShape,objects)){
+			if(mCharPosX < 0 || (mCharPosX + mCharWidth > SCREEN_WIDTH) || checkCollision(mCharShape,objects)){
 				mCharPosX -= mCharVelX;
 				mCharShape.x = mCharPosX;
 			}
 			mCharPosY += mCharVelY;
 			mCharShape.y = mCharPosY;
-			if(mCharPosY < 0 || (mCharPosY + charHeight > SCREEN_HEIGHT) || checkCollision(mCharShape,objects)){
+			if(mCharPosY < 0 || (mCharPosY + mCharHeight > SCREEN_HEIGHT) || checkCollision(mCharShape,objects)){
 				mCharPosY -= mCharVelY;
 				mCharShape.y = mCharPosY;
 			}
@@ -88,7 +135,7 @@ struct Character{
 };
 
 
-Character gMyCharacter;
+Character gMyCharacter(10,32,65);
 
 const int gBuildingCount = 3;
 const int gTreeCount = 3;
@@ -125,12 +172,12 @@ bool loadMedia(){
 
 	tRect.x = 900,tRect.y = 450;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
-	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.charHeight;
+	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
 	roomOneObjects.push_back(tRect);
 
 	tRect.x = 120,tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
-	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.charHeight;
+	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
 	roomOneObjects.push_back(tRect);
 
 	tRect.x = 100,tRect.y = 180;
@@ -138,8 +185,9 @@ bool loadMedia(){
 	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
 	roomOneObjects.push_back(tRect);
 
-	for(int i = 0;i < 6;i++){
-		tRect.x = i * gBushTexture.getWidth()/3;
+	for(int i = 0,xi = 0;i < 6;i++,xi++){
+		tRect.x = xi * gBushTexture.getWidth()/3;
+		if(i >= 3)xi = 0;
 		tRect.y = (i/3) * gBushTexture.getHeight()/3;
 		tRect.w = gBushTexture.getWidth()/3,tRect.h = gBushTexture.getHeight()/3;
 		gBushTextureSprite.push_back(tRect);
