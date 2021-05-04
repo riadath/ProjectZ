@@ -33,7 +33,6 @@ SDL_Window* gWindow = NULL;
 SDL_Renderer* gRender = NULL;
 TTF_Font* gFont = NULL;
 Mix_Music* gMusic = NULL;
-
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 700;
 

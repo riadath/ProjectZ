@@ -177,7 +177,7 @@ Ball gBallDrop;
 
 void initVariable()
 {
-	TOTAL_LIVES = 5;
+	TOTAL_LIVES = 2;
 	TOTAL_POINTS = 0;
 
 	gBallDrop.mSpawnInterval = 173;
@@ -207,7 +207,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape,SDL_Rect ballShape){
 		if(ballShape.y > bucketShape.y + bucketShape.h)ifBucketCol = false;
 
 		if(ifBucketCol){
-			Mix_PlayChannel(-1,gSplash,0);
+			Mix_PlayChannel(2,gSplash,0);
 			return BUCKET_COLLSIION;
 		}
 
@@ -223,6 +223,7 @@ bool loadBucketBallMedia(){
 	if(!gBallCatcher.mBucketTexture.loadFile("images/png/bucketLava.png"))return false;
 	if(!gBallDrop.mBallTexture.loadFile("images/png/ball.png"))return false;
     if(!gLavaTexture.loadFile("images/png/lavaSplash.png"))return false;
+	
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf",24);
 	if(gFont == NULL){
 		ERROR_T;
