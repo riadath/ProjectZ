@@ -1,3 +1,5 @@
+#ifndef UTILS_H
+#define UTILS_H
 #include "texture_timer.h"
 
 int eachCatchScore;
@@ -283,3 +285,5 @@ int bucketBall(){
     closeBB();
 	return TOTAL_POINTS;
 }
+
+#endif
