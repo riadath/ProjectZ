@@ -1,4 +1,5 @@
 #include "bucket_ball.h"
+#include "texture_timer.h"
 
 bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
@@ -8,11 +9,12 @@ void renderRomm1();
 struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
-		int mCurSprite,mSpeedDec;
+		int mCurSprite;
 
+		const int CHAR_SPEED_DEC = 5;
 		const int CHAR_SPRITE_COUNT = 10;
 		const int charWidth = 32,charHeight = 65; 
-		const int CHAR_VEL = 3;
+		const int CHAR_VELOCITY = 4;
 
 		SDL_Rect mCharShape,mCharacterSprite[10];
 		SDL_RendererFlip mFlipType;
@@ -23,7 +25,6 @@ struct Character{
 			mCharShape.x = mCharPosX,mCharShape.y = mCharPosY;
 			mCharShape.w = charWidth,mCharShape.h = charHeight;
 			mCurSprite = 1;
-			mSpeedDec = 3;
 			mFlipType = SDL_FLIP_NONE;
 			for(int i = 0;i < CHAR_SPRITE_COUNT;i++){
 				mCharacterSprite[i].w = mCharShape.w;
@@ -38,24 +39,24 @@ struct Character{
 		}
 		void spriteChanger(){
 			mCurSprite++;
-			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 1;
+			if(mCurSprite/CHAR_SPEED_DEC >= CHAR_SPRITE_COUNT)mCurSprite = 1;
 		}
 		void handleEvent(SDL_Event& e){
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
-					case SDLK_w: mCharVelY -= CHAR_VEL;break;
-					case SDLK_s: mCharVelY += CHAR_VEL;break;
-					case SDLK_a: mCharVelX -= CHAR_VEL;break;
-					case SDLK_d: mCharVelX += CHAR_VEL;break;
+					case SDLK_w: mCharVelY -= CHAR_VELOCITY;break;
+					case SDLK_s: mCharVelY += CHAR_VELOCITY;break;
+					case SDLK_a: mCharVelX -= CHAR_VELOCITY;break;
+					case SDLK_d: mCharVelX += CHAR_VELOCITY;break;
 					default:break;
 				}
 			}
 			else if(e.type == SDL_KEYUP && e.key.repeat == 0){
 				switch (e.ksym){
-					case SDLK_w: mCharVelY += CHAR_VEL;break;
-					case SDLK_s: mCharVelY -= CHAR_VEL;break;
-					case SDLK_a: mCharVelX += CHAR_VEL;break;
-					case SDLK_d: mCharVelX -= CHAR_VEL;break;
+					case SDLK_w: mCharVelY += CHAR_VELOCITY;break;
+					case SDLK_s: mCharVelY -= CHAR_VELOCITY;break;
+					case SDLK_a: mCharVelX += CHAR_VELOCITY;break;
+					case SDLK_d: mCharVelX -= CHAR_VELOCITY;break;
 					default:break;
 				}
 			}
@@ -77,10 +78,9 @@ struct Character{
 			}
 		}
 		void render(){
-			mCharTexture.render(mCharPosX,mCharPosY,&mCharacterSprite[mCurSprite/mSpeedDec],mFlipType);
+			mCharTexture.render(mCharPosX,mCharPosY,&mCharacterSprite[mCurSprite/CHAR_SPEED_DEC],mFlipType);
 		}
 };
-
 
 Character gMyCharacter;
 
@@ -213,11 +213,16 @@ void renderRoom1Objects(){
 	//Checking if player has moved
 	if(charCurPosX != gMyCharacter.mCharPosX || charCurPosY != gMyCharacter.mCharPosY){
 		gMyCharacter.spriteChanger();
+
 		if(charCurPosX > gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
 		else if(charCurPosX < gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_NONE;
+
+		//update character position
 		charCurPosX = gMyCharacter.mCharPosX;
 		charCurPosY = gMyCharacter.mCharPosY;
+
 	}else gMyCharacter.mCurSprite = 0;
+
     gMyCharacter.render();
 }
 

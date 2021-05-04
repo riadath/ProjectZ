@@ -1,3 +1,6 @@
+#ifndef TEXTURETIMER_H
+#define TEXTURETIMER_H
+
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
@@ -13,7 +16,6 @@
 #include <time.h>
 #include <tuple>
 #include <utility>
-// #include <bits/stdc++.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -161,3 +163,5 @@ struct Timer{
 	bool isStarted(){return mIfStarted;}
 	bool isPaused(){return mIfPaused && mIfStarted;}
 };
+
+#endif
