@@ -1,6 +1,7 @@
 #include "bucket_ball.h"
 #include "texture_timer.h"
 
+//function prototypes
 bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
