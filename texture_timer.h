@@ -32,7 +32,7 @@ TTF_Font* gFont = NULL;
 Mix_Music* gMusic = NULL;
 
 const int SCREEN_WIDTH = 1200;
-const int SCREEN_HEIGHT = 697;
+const int SCREEN_HEIGHT = 700;
 
 struct Texture{
 	SDL_Texture* mTexture;

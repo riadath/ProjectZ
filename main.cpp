@@ -110,7 +110,7 @@ bool loadMedia(){
 	if(!gTreesTexture[0].loadFile("images/png/tree1.png"))return false;
 	if(!gTreesTexture[1].loadFile("images/png/tree2.png"))return false;
 	if(!gTreesTexture[2].loadFile("images/png/tree3.png"))return false;
-	if(!gBushTexture.loadFile("images/png/bushAll.png",true,255,255,255))return false;
+	if(!gBushTexture.loadFile("images/png/bushAll.png"))return false;
 
 	SDL_Rect tRect;	
 
@@ -186,7 +186,6 @@ void closeAll(){
 	SDL_Quit();
 	Mix_Quit();
 }
-
 
 void renderRoom1Objects(){  
     SDL_SetRenderDrawColor(gRender,255,255,255,255);
