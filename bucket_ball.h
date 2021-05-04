@@ -2,10 +2,9 @@
 #define UTILS_H
 #include "texture_timer.h"
 
-int eachCatchScore;
-int TOTAL_POINTS,TOTAL_LIVES;
-int spawnSpeed,spawnInterval;
-int ballDropSpeed;
+
+int TOTAL_POINTS;
+int TOTAL_LIVES;
 
 //lava splash animation
 Texture gLavaTexture;
@@ -22,7 +21,6 @@ Texture gBackgroundTextureBB;
 //score and health texture
 Texture gLiveTexture,gScoreTexture;
 
-Timer gTimerBB;
 Mix_Chunk* gSplash = NULL;
 
 enum COLLISION_TYPE{
@@ -40,43 +38,32 @@ int bucketBall();
 void lavaAnimation();
 COLLISION_TYPE checkCollision(SDL_Rect bucketShape,SDL_Rect ballShape);
 
-void initVariable()
-{
-	TOTAL_LIVES = 5;
-	TOTAL_POINTS = 0;
-	spawnInterval = 173;
-	spawnSpeed = 0;
-	ballDropSpeed = 2;
-	eachCatchScore = 100;
-	gTimerBB.start();
-}
-
 
 struct Bucket{
 	int mPosX,mVelX;
-	int velocity;
+	int mVelocity;
 
 	Texture mBucketTexture;
 	SDL_Rect mBucketShape;
 	Bucket(){
 		mPosX = 0;
 		mVelX = 0;
-		velocity = 13;
+		mVelocity = 13;
 		mBucketShape = {mPosX,SCREEN_HEIGHT - mBucketTexture.getHeight(),mBucketTexture.getWidth(),mBucketTexture.getHeight()};
         
 	}
 	void handleEvent(SDL_Event &e){
 		if(e.type == SDL_KEYDOWN && e.key.repeat == 0){
 			switch (e.ksym){
-				case SDLK_RIGHT: mVelX += velocity;break;
-				case SDLK_LEFT:	mVelX -= velocity;break;
+				case SDLK_RIGHT: mVelX += mVelocity;break;
+				case SDLK_LEFT:	mVelX -= mVelocity;break;
 				default:break;
 			}
 		}
 		else if(e.type == SDL_KEYUP & e.key.repeat == 0){
 			switch(e.ksym){
-				case SDLK_RIGHT: mVelX -= velocity;break;
-				case SDLK_LEFT:	mVelX += velocity;break;
+				case SDLK_RIGHT: mVelX -= mVelocity;break;
+				case SDLK_LEFT:	mVelX += mVelocity;break;
 				default:break; 
 			}
 		}
@@ -102,13 +89,25 @@ struct Ball{
 	const int mBallWidth = 21;
     const int mBallHeight = 21;
 
+	//variables for controlling ball spawn and drop speed
+	int mSpawnSpeed;
+	int mEachCatchScore;
+	int mSpawnInterval;
+	int mBallDropSpeed;
+
+	Timer mTimer;
+
+	//variables for time management
+	Uint32 mPrevTime1;
+	Uint32 mPrevTime2;
+
 	Texture mBallTexture;
 
     SDL_Rect mBallShape;
     SDL_Rect mBallSprite[8];
 
-	std::vector<SDL_Rect>mBallRects;
-	std::vector<int>mSpriteNumber;
+	//Ball poistion and sprite number
+	std::vector<std::pair<int,SDL_Rect>>mBallRects;
 
 	Ball(){
 		for(int i = 50;i <= SCREEN_WIDTH;i += 80){
@@ -122,52 +121,74 @@ struct Ball{
 		}
 	}
 
-	void onScreen(SDL_Rect bucketShape){
-		if(spawnSpeed++%spawnInterval == 0){
+	void ballSpawner(SDL_Rect bucketShape){
+
+		Uint32 BBTime = mTimer.getTicks()/1000;
+		if(BBTime%3 == 0 && BBTime != mPrevTime1)
+			mSpawnInterval = std::max(53,mSpawnInterval - 3),mPrevTime1 = BBTime;
+		if(BBTime%20 == 0 && BBTime != mPrevTime2)
+			mBallDropSpeed += 1,mEachCatchScore += 20,mPrevTime2 = BBTime;
+
+		if(mSpawnSpeed++%mSpawnInterval == 0){
 			int tX = mBallSpawnPosition[rand()%mBallSpawnPosition.size()];
 			int tY = 0;
 
 			SDL_Rect tRect = {tX,tY,mBallWidth,mBallHeight};
-			mBallRects.push_back(tRect);
-			mSpriteNumber.push_back(rand()%mSPRITE_COUNT);
+			mBallRects.push_back(std::make_pair(rand()%mSPRITE_COUNT,tRect));
 		}
 
-		std::vector<SDL_Rect>tempRect;
-		std::vector<int>tempSpriteNumber;
+		//temporary list of ball positions
+		std::vector<std::pair<int,SDL_Rect>>tempRect;
 
 		for(int i = 0;i < mBallRects.size();i++){
-			COLLISION_TYPE whatCol = checkCollision(bucketShape,mBallRects[i]);
+			COLLISION_TYPE whatCol = checkCollision(bucketShape,mBallRects[i].second);
 
 			if(whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSIION){
-				mBallRects[i].w = -1,mBallRects[i].h = -1;
+				mBallRects[i].second.w = -1,mBallRects[i].second.h = -1;
 
 				if(whatCol == BUCKET_COLLSIION){
-					TOTAL_POINTS += eachCatchScore;
+					TOTAL_POINTS += mEachCatchScore;
                     gLavaDuration = 10;
 				}
 				else TOTAL_LIVES -= 1;
-			}else tempRect.push_back(mBallRects[i]),tempSpriteNumber.push_back(mSpriteNumber[i]);
+			}else tempRect.push_back(mBallRects[i]);
 		}
 		mBallRects = tempRect;
-		mSpriteNumber = tempSpriteNumber;
 	}
 
 	void render(SDL_Rect bucketShape){
-		onScreen(bucketShape);
+		ballSpawner(bucketShape);
 		for(int i = 0;i < mBallRects.size();i++){
-			mBallTexture.render(mBallRects[i].x,mBallRects[i].y,&mBallSprite[mSpriteNumber[i]]);
-			mBallRects[i].y += ballDropSpeed;
+			mBallTexture.render(mBallRects[i].second.x,mBallRects[i].second.y,
+			&mBallSprite[mBallRects[i].first]);
+			mBallRects[i].second.y += mBallDropSpeed;
 		}
 	}
 	
 	void free(){
+		mBallTexture.free();
 		mBallRects.clear();
-		mSpriteNumber.clear();
+		mTimer.stop();
 	}
 };
 
 Bucket gBallCatcher;
 Ball gBallDrop;
+
+void initVariable()
+{
+	TOTAL_LIVES = 5;
+	TOTAL_POINTS = 0;
+
+	gBallDrop.mSpawnInterval = 173;
+	gBallDrop.mSpawnSpeed = 0;
+	gBallDrop.mBallDropSpeed = 2;
+	gBallDrop.mEachCatchScore = 100;
+
+	gBallDrop.mTimer.start();
+	gBallDrop.mPrevTime1 = gBallDrop.mTimer.getTicks()/1000;
+	gBallDrop.mPrevTime2 = gBallDrop.mTimer.getTicks()/1000;
+}
 
 void closeBB(){
 	SDL_RenderClear(gRender);
@@ -175,7 +196,6 @@ void closeBB(){
 	gBallDrop.free();
     gLiveTexture.free();
     gScoreTexture.free();
-	gTimerBB.stop();
 }
 
 COLLISION_TYPE checkCollision(SDL_Rect bucketShape,SDL_Rect ballShape){
@@ -264,8 +284,6 @@ int bucketBall(){
 	bool quit = false;
 	SDL_Event e;
 	
-	Uint32 prevTime = gTimerBB.getTicks()/1000;
-	Uint32 prevTime1 = gTimerBB.getTicks()/1000;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT)quit = true;
@@ -274,14 +292,10 @@ int bucketBall(){
 
 		if(TOTAL_LIVES <= 0)quit = true;
 
-		Uint32 BBTime = gTimerBB.getTicks()/1000;
-		if(BBTime%3 == 0 && BBTime != prevTime)spawnInterval = std::max(53,spawnInterval - 3),prevTime = BBTime;
-		if(BBTime%20 == 0 && BBTime != prevTime1)ballDropSpeed += 1,eachCatchScore += 20,prevTime1 = BBTime;
 		gBallCatcher.move();
 		renderRoomBB();
 		SDL_RenderPresent(gRender);
 	}
-	gTimerBB.stop();
     closeBB();
 	return TOTAL_POINTS;
 }

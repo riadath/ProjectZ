@@ -82,7 +82,11 @@ struct Character{
 		void render(){
 			mCharTexture.render(mCharPosX,mCharPosY,&mCharacterSprite[mCurSprite/CHAR_SPEED_DEC],mFlipType);
 		}
+		void free(){
+			mCharTexture.free();
+		}
 };
+
 
 Character gMyCharacter;
 
@@ -92,16 +96,17 @@ const int gTreeCount = 3;
 //Variable to check the change in characters position
 int charCurPosX ,charCurPosY;
 
-//Texture files
-
+//Texture files (background and decorative objects)
 Texture gBackgroundTexture;
 Texture gBushTexture;
 Texture gBuildingTexture[gBuildingCount];
 Texture gTreesTexture[gTreeCount];
 
-std::vector<SDL_Rect>room1Objects;
+//List of objects in the room for collision detection
+std::vector<SDL_Rect>roomOneObjects;
 std::vector<SDL_Rect>gBushTextureSprite;
 
+//Cordinates for placing trees and buildings on the map
 std::vector<std::pair<int,int>>gBuildingPositions;
 std::vector<std::tuple<int,int,int>>gTreePositions;
 
@@ -121,17 +126,17 @@ bool loadMedia(){
 	tRect.x = 900,tRect.y = 450;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.charHeight;
-	room1Objects.push_back(tRect);
+	roomOneObjects.push_back(tRect);
 
 	tRect.x = 120,tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.charHeight;
-	room1Objects.push_back(tRect);
+	roomOneObjects.push_back(tRect);
 
 	tRect.x = 100,tRect.y = 180;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
-	room1Objects.push_back(tRect);
+	roomOneObjects.push_back(tRect);
 
 	for(int i = 0;i < 6;i++){
 		tRect.x = i * gBushTexture.getWidth()/3;
@@ -143,18 +148,19 @@ bool loadMedia(){
 		tRect.x = i,tRect.y = 30;
 		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
 		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
-		room1Objects.push_back(tRect);
+		roomOneObjects.push_back(tRect);
 	}
 	for( int i = 311; i <= 1100; i+= 211 )
 	{
 		tRect.x = i,tRect.y = 350;
 		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
 		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
-		room1Objects.push_back(tRect);
+		roomOneObjects.push_back(tRect);
 	}
 
 	return true;
 }
+
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 	bool flag = false;
 	for(int i = 0;i < (int)objects.size();i++){
@@ -170,16 +176,22 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 	}
 	return flag;
 }
+
 void closeAll(){
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
 	Mix_FreeMusic(gMusic);
-	gMyCharacter.mCharTexture.free();
+
+	gMyCharacter.free();
 	gBackgroundTexture.free();
 	for(int i = 0;i < gBuildingCount;i++)gBuildingTexture[i].free();
 	for(int i = 0;i < gTreeCount;i++)gTreesTexture[i].free();
 	gBushTexture.free();
 	
+	roomOneObjects.clear();
+	gBushTextureSprite.clear();
+	gBuildingPositions.clear();
+	gTreePositions.clear();
 	
 	gWindow = NULL;
 	gRender = NULL;
@@ -291,6 +303,8 @@ int main(int argc, char* argv[])
 		printf("Failed to initialize\n");
 		return 0;
 	}
+
+	//chaning cursor inside the game
 	std::string pathCursor = "images/png/cursor.png";
 	SDL_Surface* myCursorSurface = IMG_Load(pathCursor.c_str());
 	SDL_Cursor* myCursor =  SDL_CreateColorCursor(myCursorSurface, 0, 0);
@@ -311,7 +325,7 @@ int main(int argc, char* argv[])
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
 			gMyCharacter.handleEvent(e);
 		}
-        gMyCharacter.move(room1Objects);
+        gMyCharacter.move(roomOneObjects);
 		bool flag = ifTaskPosition(gMyCharacter.mCharPosX,gMyCharacter.mCharPosY);
 		if(flag){
 			BB_score = bucketBall();
