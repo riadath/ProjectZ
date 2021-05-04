@@ -353,6 +353,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+
 	//chaning cursor inside the game
 	std::string pathCursor = "images/png/cursor.png";
 	SDL_Surface* myCursorSurface = IMG_Load(pathCursor.c_str());
@@ -363,6 +364,8 @@ int main(int argc, char* argv[])
 		printf("Failed to load media\n");
 		return 0;
 	}
+
+	int pp = pacman();
 
 	bool quit = false;
 	SDL_Event e;

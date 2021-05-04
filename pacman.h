@@ -216,12 +216,7 @@ bool loadPacmanMedia()
 void closePacman()
 {
 	gPacmanTexture.free();
-	SDL_DestroyRenderer( gRender );
-	SDL_DestroyWindow( gWindow );
-	gWindow = NULL;
-	gRender = NULL;
-	IMG_Quit();
-	SDL_Quit();
+    
 }
 
 bool if_collided( SDL_Rect a )
@@ -355,13 +350,14 @@ bool is_FoodValid( PacmanFood temp )
 
 void initPacman(){
     point = 0;
-    missed = 5;
+    missed = 2;
     Food_queue.clear();
 }
 
 int pacman()
 {
     initPacman();
+
 	loadPacmanMedia();	
 
     bool quitPacman = false;
@@ -414,7 +410,7 @@ int pacman()
 
         pacman.render( );
         render_food( Food_queue );
-        
+
         SDL_RenderPresent( gRender );
     }
 
