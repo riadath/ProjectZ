@@ -6,6 +6,8 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
 void renderRomm1();
 
+//structure for player
+
 struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
@@ -89,6 +91,8 @@ const int gTreeCount = 3;
 
 //Variable to check the change in characters position
 int charCurPosX ,charCurPosY;
+
+//Texture files
 
 Texture gBackgroundTexture;
 Texture gBushTexture;
