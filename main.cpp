@@ -1,5 +1,6 @@
 #include "texture_timer.h"
 #include "bucket_ball.h"
+#include "pacman.h"
 
 //function prototypes
 bool loadMedia();
@@ -376,7 +377,7 @@ int main(int argc, char* argv[])
         gMyCharacter.move(roomOneObjects);
 		bool flag = ifTaskPosition(gMyCharacter.mCharPosX,gMyCharacter.mCharPosY);
 		if(flag){
-			BB_score = bucketBall();
+			BB_score = pacman();
 			gMyCharacter.positionReset();
 		}
 		renderRoom1Objects();
