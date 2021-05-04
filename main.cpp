@@ -1,144 +1,80 @@
+#include "texture_timer.h"
+#include "bucket_ball.h"
 
-#include <stdio.h>
-#include <iostream>
-#include <math.h>
-#include <string>
-#include <stdlib.h>
-#include <cstring>
-#include <algorithm>
-#include <math.h>
-#include <cstdio>
-#include <vector>
-#include <map>
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
-
-#define ERROR printf("------> %s\n", SDL_GetError());
-#define ERROR_I printf("-----> %s\n", IMG_GetError());
-#define ERROR_T printf("-----> %s\n", TTF_GetError());
-
-//hello2
-
-#define ksym key.keysym.sym
-
-const int WIDTH = 1200;
-const int HEIGHT = 697;
-
-bool init();
+//function prototypes
 bool loadMedia();
 bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
+void renderRomm1();
 
-//Global window and renderer
-SDL_Window* gWindow = NULL;
-SDL_Renderer* gRender = NULL;
-TTF_Font* gFont = NULL;
+//structure for player
 
-class Texture{
-	private:
-		SDL_Texture* mTexture;
-		int mWidth,mHeight;
-	public:
-		Texture(){
-			mTexture = NULL;
-			mWidth = 0,mHeight = 0;
+struct CoinAnimation{
+	Texture mCoinTexture;
+	
+	int mSPRITE_COUNT;
+	int mSpriteLevel;
+	int mCoinWidth;
+	int mCointHeight;
+	
+	int mCurSprite = 0;
+	const int mSPEED_DEC = 4;
+
+	SDL_Rect *mCoinSprite;
+	CoinAnimation(int tSpriteCount,int tCoinWidth,int tCoinHeight,int tSpriteLevel){
+		mSPRITE_COUNT = tSpriteCount;
+		mCoinWidth = tCoinWidth;
+		mCointHeight = tCoinHeight;	
+		mSpriteLevel = tSpriteLevel;
+
+		mCoinSprite = (SDL_Rect*)malloc(tSpriteCount * sizeof(SDL_Rect));
+
+		for(int i = 0,xi = 0;i < mSPRITE_COUNT;i++,xi++){
+			mCoinSprite[i].w = mCoinWidth;
+			mCoinSprite[i].h = mCointHeight;
+			mCoinSprite[i].x = xi * mCoinWidth;
+			if(i >= mSpriteLevel)xi = 0;
+			mCoinSprite[i].y = (i/mSpriteLevel) * mCointHeight;
 		}
-		~Texture(){
-			free();
-		}
-		int getWidth(){
-			return mWidth;
-		}
-		int getHeight(){
-			return mHeight;
-		}
-		void free(){
-			SDL_DestroyTexture(mTexture);
-			mTexture = NULL;
-			mWidth = 0,mHeight = 0;
-		}
-		void setColor(Uint8 r,Uint8 g,Uint8 b){
-			SDL_SetTextureColorMod(mTexture,r,g,b);
-		}
-		void render(int x,int y,SDL_Rect* clip = NULL,SDL_RendererFlip flip = SDL_FLIP_NONE){
-			SDL_Rect renderSize = {x,y,mWidth,mHeight};
-			if(clip != NULL)renderSize.h = clip->h,renderSize.w = clip->w;
-			
-			SDL_RenderCopyEx(gRender,mTexture,clip,&renderSize,0,NULL,flip);
-		}
+	}
+	void spriteChanger(){
 		
-		bool loadFile(std::string path,bool ifColKey = 0,Uint8 r = 255,Uint8 g = 255,Uint8 b = 255){
-			free();
-			SDL_Surface* tSurface = IMG_Load(path.c_str());
-			SDL_Texture* tTexture = NULL;
-			if(tSurface == NULL){
-				ERROR_I;
-				return false;
-			}
-			
-			SDL_SetColorKey(tSurface,ifColKey,SDL_MapRGB(tSurface->format,r,g,b));
-			tTexture = SDL_CreateTextureFromSurface(gRender,tSurface);
-			if(tTexture == NULL){
-				ERROR;
-				return false;
-			}
-			mWidth = tSurface->w;
-			mHeight = tSurface->h;
-			SDL_FreeSurface(tSurface);
-			mTexture = tTexture;
-			return (mTexture != NULL);
-		}
-
-		void setBlendMode(SDL_BlendMode blending){
-			SDL_SetTextureBlendMode(mTexture,blending);
-		}
-		void setAlpha(Uint8 alpha){
-			SDL_SetTextureAlphaMod(mTexture,alpha);
-		}
-		
-		#if defined(SDL_TTF_MAJOR_VERSION)
-		bool loadFromText(std::string path,SDL_Color textColor){
-			free();
-			SDL_Surface* textSurface = TTF_RenderText_Solid(gFont,path.c_str(),textColor);
-			if(textSurface == NULL){
-				ERROR_T;
-				return false;
-			}
-			mTexture = SDL_CreateTextureFromSurface(gRender,textSurface);
-			if(mTexture == NULL){
-				ERROR;
-				return false;
-			}
-			mWidth = textSurface->w;
-			mHeight = textSurface->h;
-			SDL_FreeSurface(textSurface);
-			return (mTexture != NULL);
-		}
-		#endif
+	}
 };
 
-class Character{
-	private:
+struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
-		const int CHAR_SPRITE_COUNT = 10;
-		SDL_Rect mCharShape,mCharacterSprite[10];
-	public:
-		const int charWidth = 32,charHeight = 65; 
-		const int CHAR_VEL = 3;
-		int mCurSprite,mSpeedDec;
+		int mCurSprite;
+
+		int CHAR_SPRITE_COUNT;
+		int mCharWidth;
+		int mCharHeight; 
+
+		const int CHAR_SPEED_DEC = 5;
+		const int CHAR_VELOCITY = 4;
+		
+
+		SDL_Rect mCharShape;
+		SDL_Rect *mCharacterSprite;
 		SDL_RendererFlip mFlipType;
 		Texture mCharTexture;
-		Character(){
-			mCharPosX = WIDTH/2,mCharPosY = HEIGHT/2;
+		Character(int tSpriteCount,int tCharWidth,int tCharHeight){
+			
+			CHAR_SPRITE_COUNT = tSpriteCount;
+			mCharWidth = tCharWidth;
+			mCharHeight = tCharHeight;
+
+			//allocating memory for character spritesheet rects
+			mCharacterSprite = (SDL_Rect*)malloc(tSpriteCount * sizeof(SDL_Rect));
+
+			mCharPosX = SCREEN_WIDTH/2,mCharPosY = SCREEN_HEIGHT/2;
 			mCharVelX = mCharVelY = 0;
 			mCharShape.x = mCharPosX,mCharShape.y = mCharPosY;
-			mCharShape.w = charWidth,mCharShape.h = charHeight;
+			mCharShape.w = mCharWidth,mCharShape.h = mCharHeight;
 			mCurSprite = 1;
-			mSpeedDec = 3;
 			mFlipType = SDL_FLIP_NONE;
+
 			for(int i = 0;i < CHAR_SPRITE_COUNT;i++){
 				mCharacterSprite[i].w = mCharShape.w;
 				mCharacterSprite[i].h = mCharShape.h;
@@ -146,30 +82,30 @@ class Character{
 				mCharacterSprite[i].y = 0;
 			}
 		}
+		void positionReset(){
+			mCharPosX = SCREEN_WIDTH/2,mCharPosY = SCREEN_HEIGHT/2;
+			mCharVelX = mCharVelY = 0;
+		}
 		void spriteChanger(){
 			mCurSprite++;
-			if(mCurSprite/mSpeedDec >= CHAR_SPRITE_COUNT)mCurSprite = 0;
+			if(mCurSprite/CHAR_SPEED_DEC >= CHAR_SPRITE_COUNT)mCurSprite = 1;
 		}
 		void handleEvent(SDL_Event& e){
-			if(e.type == SDL_KEYDOWN || e.type == SDL_KEYUP)spriteChanger();
 			if(e.type == SDL_KEYDOWN & e.key.repeat == 0){	
 				switch (e.ksym){
-					case SDLK_w: mCharVelY -= CHAR_VEL;break;
-					case SDLK_s: mCharVelY += CHAR_VEL;break;
-					case SDLK_a: mCharVelX -= CHAR_VEL;
-						mFlipType = SDL_FLIP_HORIZONTAL;
-						break;
-					case SDLK_d: mCharVelX += CHAR_VEL;
-						mFlipType = SDL_FLIP_NONE;break;
+					case SDLK_w: mCharVelY -= CHAR_VELOCITY;break;
+					case SDLK_s: mCharVelY += CHAR_VELOCITY;break;
+					case SDLK_a: mCharVelX -= CHAR_VELOCITY;break;
+					case SDLK_d: mCharVelX += CHAR_VELOCITY;break;
 					default:break;
 				}
 			}
 			else if(e.type == SDL_KEYUP && e.key.repeat == 0){
 				switch (e.ksym){
-					case SDLK_w: mCharVelY += CHAR_VEL;break;
-					case SDLK_s: mCharVelY -= CHAR_VEL;break;
-					case SDLK_a: mCharVelX += CHAR_VEL;break;
-					case SDLK_d: mCharVelX -= CHAR_VEL;break;
+					case SDLK_w: mCharVelY += CHAR_VELOCITY;break;
+					case SDLK_s: mCharVelY -= CHAR_VELOCITY;break;
+					case SDLK_a: mCharVelX += CHAR_VELOCITY;break;
+					case SDLK_d: mCharVelX -= CHAR_VELOCITY;break;
 					default:break;
 				}
 			}
@@ -179,118 +115,96 @@ class Character{
 			mCharPosX += mCharVelX;
 			
 			mCharShape.x = mCharPosX;
-			if(mCharPosX < 0 || (mCharPosX + charWidth > WIDTH) || checkCollision(mCharShape,objects)){
+			if(mCharPosX < 0 || (mCharPosX + mCharWidth > SCREEN_WIDTH) || checkCollision(mCharShape,objects)){
 				mCharPosX -= mCharVelX;
 				mCharShape.x = mCharPosX;
 			}
 			mCharPosY += mCharVelY;
 			mCharShape.y = mCharPosY;
-			if(mCharPosY < 0 || (mCharPosY + charHeight > HEIGHT) || checkCollision(mCharShape,objects)){
+			if(mCharPosY < 0 || (mCharPosY + mCharHeight > SCREEN_HEIGHT) || checkCollision(mCharShape,objects)){
 				mCharPosY -= mCharVelY;
 				mCharShape.y = mCharPosY;
 			}
 		}
 		void render(){
-			mCharTexture.render(mCharPosX,mCharPosY,&mCharacterSprite[mCurSprite/mSpeedDec],mFlipType);
+			mCharTexture.render(mCharPosX,mCharPosY,&mCharacterSprite[mCurSprite/CHAR_SPEED_DEC],mFlipType);
+		}
+		void free(){
+			mCharTexture.free();
 		}
 };
 
-Character gMyCharacter;
-Texture gBackgroundTexture,gBuilding[2],gTrees[3],gBush;
 
-std::vector<SDL_Rect>room1Objects,room2Objects,gBushSprite;
+Character gMyCharacter(10,32,65);
 
-bool init(){
-	if(SDL_Init(SDL_INIT_VIDEO) < 0){
-		ERROR;
-		return false;
-	}
-	gWindow = SDL_CreateWindow("kms",SDL_WINDOWPOS_CENTERED,
-	SDL_WINDOWPOS_CENTERED,WIDTH,HEIGHT,SDL_WINDOW_SHOWN);
-	if(gWindow == NULL){
-		ERROR;
-		return false;
-	}
-	if(!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1")){
-		printf("Linear texture filtering not enabled\n");
-	}
-	gRender = SDL_CreateRenderer(gWindow,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if(gRender == NULL){
-		ERROR;
-		return false;
-	}
-	SDL_SetRenderDrawColor(gRender,0xFF,0xFF,0xFF,0xFF);
-	if(!IMG_Init(IMG_INIT_PNG)){
-		ERROR_I;
-		return false;
-	}
-	// if(TTF_Init() == -1){
-	// 	ERROR_T;
-	// 	return false;
-	// }
-	return true;
-}
+const int gBuildingCount = 3;
+const int gTreeCount = 3;
+
+//Variable to check the change in characters position
+int charCurPosX ,charCurPosY;
+
+//Texture files (background and decorative objects)
+Texture gBackgroundTexture;
+Texture gBushTexture;
+Texture gBuildingTexture[gBuildingCount];
+Texture gTreesTexture[gTreeCount];
+
+//List of objects in the room for collision detection
+std::vector<SDL_Rect>roomOneObjects;
+std::vector<SDL_Rect>gBushTextureSprite;
+
+//Cordinates for placing trees and buildings on the map
+std::vector<std::pair<int,int>>gBuildingPositions;
+std::vector<std::tuple<int,int,int>>gTreePositions;
 
 bool loadMedia(){
-	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png",true,255,255,255))return false;
-	if(!gBackgroundTexture.loadFile("images/png/room1f.png"))return false;
-	if(!gBuilding[0].loadFile("images/png/building1.png"))return false;
-	if(!gBuilding[1].loadFile("images/png/house2.png",true,0,64,128))return false;
-	if(!gTrees[0].loadFile("images/png/tree1.png"))return false;
-	if(!gTrees[1].loadFile("images/png/tree2.png"))return false;
-	if(!gTrees[2].loadFile("images/png/tree3.png"))return false;
-	if(!gBush.loadFile("images/png/bushAll.png",true,255,255,255))return false;
+	if(!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png"))return false;
+	if(!gBackgroundTexture.loadFile("images/png/background1.png"))return false;
+	if(!gBuildingTexture[0].loadFile("images/png/house2.png",true,0,64,128))return false;
+	if(!gBuildingTexture[1].loadFile("images/png/house1_5.png"))return false;
+	if(!gBuildingTexture[2].loadFile("images/png/house1_4.png"))return false;
+	if(!gTreesTexture[0].loadFile("images/png/tree1.png"))return false;
+	if(!gTreesTexture[1].loadFile("images/png/tree2.png"))return false;
+	if(!gTreesTexture[2].loadFile("images/png/tree3.png"))return false;
+	if(!gBushTexture.loadFile("images/png/bushAll.png"))return false;
 
 	SDL_Rect tRect;	
 
-	tRect.x = 900,tRect.y = 140;
-	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
-	room1Objects.push_back(tRect);
+	tRect.x = 900,tRect.y = 450;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
+	roomOneObjects.push_back(tRect);
 
-	tRect.x = 120,tRect.y = 470;
-	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
-	room1Objects.push_back(tRect);
+	tRect.x = 120,tRect.y = 500;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
+	roomOneObjects.push_back(tRect);
 
-	tRect.x = 100,tRect.y = 140;
-	tRect.w = gBuilding[1].getWidth() - 20,tRect.h = gBuilding[1].getHeight() - 10;
-	room1Objects.push_back(tRect);
+	tRect.x = 100,tRect.y = 180;
+	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
+	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
+	roomOneObjects.push_back(tRect);
 
-	for(int i = 0;i < 3;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = 0;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
+	for(int i = 0,xi = 0;i < 6;i++,xi++){
+		tRect.x = xi * gBushTexture.getWidth()/3;
+		if(i >= 3)xi = 0;
+		tRect.y = (i/3) * gBushTexture.getHeight()/3;
+		tRect.w = gBushTexture.getWidth()/3,tRect.h = gBushTexture.getHeight()/3;
+		gBushTextureSprite.push_back(tRect);
 	}
-	for(int i = 0;i < 3;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = gBush.getHeight()/3;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
-	}
-	for(int i = 0;i < 2;i++){
-		tRect.x = i * gBush.getWidth()/3;
-		tRect.y = 2 * gBush.getHeight()/3;
-		tRect.w = gBush.getWidth()/3,tRect.h = gBush.getHeight()/3;
-		gBushSprite.push_back(tRect);
-	} 
-
 	for( int i = 50; i <= 1000; i+= 190 ){
-		tRect.x = i,tRect.y = 50;
-		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
-		room1Objects.push_back(tRect);
+		tRect.x = i,tRect.y = 30;
+		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
+		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
+		roomOneObjects.push_back(tRect);
 	}
-	for( int i = 100; i <= 1100; i+= 211 )
+	for( int i = 311; i <= 1100; i+= 211 )
 	{
-		tRect.x = i,tRect.y = 300;
-		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
-		room1Objects.push_back(tRect);
+		tRect.x = i,tRect.y = 350;
+		gTreePositions.push_back(std::make_tuple(i%gTreeCount,tRect.x,tRect.y));
+		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
+		roomOneObjects.push_back(tRect);
 	}
-	for( int i = 400; i <= 1000; i+= 199 )
-	{
-		tRect.x = i,tRect.y = 500;
-		tRect.w = gTrees[i%3].getWidth(),tRect.h = gTrees[i%3].getHeight();
-		room1Objects.push_back(tRect);
-	}	
 
 	return true;
 }
@@ -310,70 +224,164 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects){
 	}
 	return flag;
 }
+
 void closeAll(){
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
+	Mix_FreeMusic(gMusic);
 
-	gMyCharacter.mCharTexture.free();
+	gMyCharacter.free();
 	gBackgroundTexture.free();
-	for(int i = 0;i < 2;i++)gBuilding[i].free();
-	for(int i = 0;i < 3;i++)gTrees[i].free();
-	gBush.free();
-
+	for(int i = 0;i < gBuildingCount;i++)gBuildingTexture[i].free();
+	for(int i = 0;i < gTreeCount;i++)gTreesTexture[i].free();
+	gBushTexture.free();
+	
+	roomOneObjects.clear();
+	gBushTextureSprite.clear();
+	gBuildingPositions.clear();
+	gTreePositions.clear();
+	
 	gWindow = NULL;
 	gRender = NULL;
+	gMusic = NULL;
+	gFont = NULL;
 	IMG_Quit();
 	TTF_Quit();
 	SDL_Quit();
+	Mix_Quit();
 }
 
-void renderRoom1(){  
+void renderRoom1Objects(){  
     SDL_SetRenderDrawColor(gRender,255,255,255,255);
     SDL_RenderClear(gRender);
     
     gBackgroundTexture.render(0,0);
 
-    gBuilding[1].render(room1Objects[0].x,room1Objects[0].y);
-	gBuilding[1].render(room1Objects[1].x,room1Objects[1].y);
-	gBuilding[1].render(room1Objects[2].x,room1Objects[2].y);
-//	gBush.render(40,100,&gBushSprite[2]);
+	//building render
+    for(int i = 0;i < gBuildingCount;i++)
+		gBuildingTexture[i].render(gBuildingPositions[i].first,gBuildingPositions[i].second);
+	for(int i = 0;i < gTreePositions.size();i++){
+		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]),std::get<2>(gTreePositions[i]));
+	}
 
-	for( int i = 50; i <= 1000; i+= 190 ) gTrees[i%3].render(i,50);
-	for( int i = 100; i <=200; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 302; i <= 400; i+= 41 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 470; i <= 570; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 700; i <= 1000; i+= 43 ) gBush.render(i,100,&gBushSprite[i%5]);
-	for( int i = 100; i <= 1100; i+= 211 ) gTrees[i%3].render(i,300);
-	for( int i = 150; i <=300; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	for( int i = 350; i <=500; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	for( int i = 800; i <=1030; i+= 41 ) gBush.render(i,350,&gBushSprite[i%5]);
-	for( int i = 400; i <= 1150; i+= 199 ) gTrees[i%3].render(i,500);
-	for( int i = 300; i <= 1000; i+= 43 ) gBush.render(i,550,&gBushSprite[i%5]);
+	//bush rendering
+	int bushHeigt1 = 80,bushHeigt2 = 400;
+	for( int i = 100; i <=200; i+= 41 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 302; i <= 400; i+= 41 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 470; i <= 570; i+= 43 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 700; i <= 1000; i+= 43 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
+	for( int i = 150; i <=300; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+	for( int i = 350; i <=500; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+	for( int i = 800; i <=1030; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+
+	//Checking if player has moved
+	if(charCurPosX != gMyCharacter.mCharPosX || charCurPosY != gMyCharacter.mCharPosY){
+		gMyCharacter.spriteChanger();
+
+		if(charCurPosX > gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
+		else if(charCurPosX < gMyCharacter.mCharPosX)gMyCharacter.mFlipType = SDL_FLIP_NONE;
+
+		//update character position
+		charCurPosX = gMyCharacter.mCharPosX;
+		charCurPosY = gMyCharacter.mCharPosY;
+
+	}else gMyCharacter.mCurSprite = 0;
+
     gMyCharacter.render();
+}
+
+bool init(){
+	if(SDL_Init(SDL_INIT_VIDEO) < 0){
+		ERROR;
+		return false;
+	}
+	gWindow = SDL_CreateWindow("kms",SDL_WINDOWPOS_CENTERED,
+	SDL_WINDOWPOS_CENTERED,SCREEN_WIDTH,SCREEN_HEIGHT,SDL_WINDOW_SHOWN);
+	if(gWindow == NULL){
+		ERROR;
+		return false;
+	}
+	if(!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"1")){
+		printf("Linear texture filtering not enabled\n");
+	}
+	gRender = SDL_CreateRenderer(gWindow,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if(gRender == NULL){
+		ERROR;
+		return false;
+	}
+	SDL_SetRenderDrawColor(gRender,0xFF,0xFF,0xFF,0xFF);
+	if(!IMG_Init(IMG_INIT_PNG)){
+		ERROR_I;
+		return false;
+	}
+	if(TTF_Init() == -1){
+		ERROR_T;
+		return false;
+	}
+	if(Mix_OpenAudio(44100,MIX_DEFAULT_FORMAT,2,2048) < 0){
+		ERROR_M;
+		return false;
+	}
+	return true;
+}
+
+bool checkCollisionRect(SDL_Rect player,SDL_Rect object){
+	bool tFlag = true;
+	if(player.x + player.w <= object.x)tFlag = false;
+	if(player.x >= object.x + object.w)tFlag = false;
+	if(player.y + player.h <= object.y)tFlag = false;
+	if(player.y >= object.y + object.h)tFlag = false;
+	return tFlag;
+}
+
+//enumerate each task
+bool ifTaskPosition(int posX,int posY){
+	SDL_Rect dorRect;
+	dorRect.x = gBuildingPositions[1].first + 50;
+	dorRect.y = gBuildingPositions[1].second + 71;
+	dorRect.w = 15;
+	dorRect.h = 0;
+	return (checkCollisionRect(dorRect,gMyCharacter.mCharShape));
 }
 
 int main(int argc, char* argv[])
 {
+	srand(time(0));
 	if(!init()){
 		printf("Failed to initialize\n");
 		return 0;
 	}
+
+	//chaning cursor inside the game
+	std::string pathCursor = "images/png/cursor.png";
+	SDL_Surface* myCursorSurface = IMG_Load(pathCursor.c_str());
+	SDL_Cursor* myCursor =  SDL_CreateColorCursor(myCursorSurface, 0, 0);
+	SDL_SetCursor(myCursor);
+
 	if(!loadMedia()){
 		printf("Failed to load media\n");
 		return 0;
 	}
+
 	bool quit = false;
 	SDL_Event e;
+	int BB_score = 0;
+	charCurPosX = gMyCharacter.mCharPosX;
+	charCurPosY = gMyCharacter.mCharPosY;
 	while(!quit){
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))quit = true;
 			gMyCharacter.handleEvent(e);
 		}
-        gMyCharacter.move(room1Objects);
-		renderRoom1();
+        gMyCharacter.move(roomOneObjects);
+		bool flag = ifTaskPosition(gMyCharacter.mCharPosX,gMyCharacter.mCharPosY);
+		if(flag){
+			BB_score = bucketBall();
+			gMyCharacter.positionReset();
+		}
+		renderRoom1Objects();
 		SDL_RenderPresent(gRender);
 	}
-
 	closeAll();
 	return 0;
 }
