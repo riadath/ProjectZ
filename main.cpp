@@ -8,18 +8,17 @@ bool checkCollision(SDL_Rect player,std::vector<SDL_Rect>objects);
 void closeAll();
 void renderRomm1();
 
-//structure for player
-
+//structure for coin animation handling
 struct CoinAnimation{
 	Texture mCoinTexture;
 	
 	int mSPRITE_COUNT;
-	int mSpriteLevel;
+	int mSpriteLevel; //number of images in a row
 	int mCoinWidth;
 	int mCointHeight;
 	
 	int mCurSprite = 0;
-	const int mSPEED_DEC = 4;
+	const int mSPEED_DEC = 6;
 
 	SDL_Rect *mCoinSprite;
 	CoinAnimation(int tSpriteCount,int tCoinWidth,int tCoinHeight,int tSpriteLevel){
@@ -39,10 +38,16 @@ struct CoinAnimation{
 		}
 	}
 	void spriteChanger(){
-		
+		mCurSprite++;
+		if(mCurSprite/mSPEED_DEC >= mSPRITE_COUNT)mCurSprite = 0;
+	}
+	void render(int x,int y){
+		mCoinTexture.render(x,y,&mCoinSprite[mCurSprite/mSPEED_DEC]);
+		spriteChanger();
 	}
 };
 
+//structure for player
 struct Character{
 		int mCharPosX,mCharPosY;
 		int mCharVelX,mCharVelY;
@@ -135,7 +140,17 @@ struct Character{
 		}
 };
 
+enum TASK_NAME{
+	BUCKET_BALL,
+	PACMAN,
+	NUMBER_OF_TASKS
+};
 
+//varaibles for task management
+SDL_Rect gTaskPosition[NUMBER_OF_TASKS];
+bool gIfTaskComplete[NUMBER_OF_TASKS];
+
+CoinAnimation gTaskCoinA(8,40,40,4);
 Character gMyCharacter(10,32,65);
 
 const int gBuildingCount = 3;
@@ -168,19 +183,19 @@ bool loadMedia(){
 	if(!gTreesTexture[1].loadFile("images/png/tree2.png"))return false;
 	if(!gTreesTexture[2].loadFile("images/png/tree3.png"))return false;
 	if(!gBushTexture.loadFile("images/png/bushAll.png"))return false;
-
+	if(!gTaskCoinA.mCoinTexture.loadFile("images/png/coin.png"))return false;
+	
 	SDL_Rect tRect;	
 
+	//initializing building positions
 	tRect.x = 900,tRect.y = 450;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[0].getWidth() - 20,tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
 	roomOneObjects.push_back(tRect);
-
 	tRect.x = 120,tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[1].getWidth() - 20,tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
 	roomOneObjects.push_back(tRect);
-
 	tRect.x = 100,tRect.y = 180;
 	gBuildingPositions.push_back(std::make_pair(tRect.x,tRect.y));
 	tRect.w = gBuildingTexture[2].getWidth() - 20,tRect.h = gBuildingTexture[2].getHeight() - 20;
@@ -206,6 +221,17 @@ bool loadMedia(){
 		tRect.w = gTreesTexture[i%gTreeCount].getWidth(),tRect.h = gTreesTexture[i%gTreeCount].getHeight();
 		roomOneObjects.push_back(tRect);
 	}
+
+	//initializing task positons on map
+	gTaskPosition[BUCKET_BALL].h = gTaskCoinA.mCoinTexture.getHeight();
+	gTaskPosition[BUCKET_BALL].w = gTaskCoinA.mCoinTexture.getWidth();
+	gTaskPosition[BUCKET_BALL].x = gBuildingPositions[1].first + 41;
+	gTaskPosition[BUCKET_BALL].y = gBuildingPositions[1].second + 120;
+
+	gTaskPosition[PACMAN].h = gTaskCoinA.mCoinTexture.getHeight();
+	gTaskPosition[PACMAN].w = gTaskCoinA.mCoinTexture.getWidth();
+	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + 33;
+	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + 160;
 
 	return true;
 }
@@ -288,6 +314,10 @@ void renderRoom1Objects(){
 
 	}else gMyCharacter.mCurSprite = 0;
 
+	if(!gIfTaskComplete[BUCKET_BALL])
+		gTaskCoinA.render(gTaskPosition[BUCKET_BALL].x,gTaskPosition[BUCKET_BALL].y);
+	if(!gIfTaskComplete[PACMAN])
+	gTaskCoinA.render(gTaskPosition[PACMAN].x,gTaskPosition[PACMAN].y);
     gMyCharacter.render();
 }
 
@@ -336,13 +366,8 @@ bool checkCollisionRect(SDL_Rect player,SDL_Rect object){
 }
 
 //enumerate each task
-bool ifTaskPosition(int posX,int posY){
-	SDL_Rect dorRect;
-	dorRect.x = gBuildingPositions[1].first + 50;
-	dorRect.y = gBuildingPositions[1].second + 71;
-	dorRect.w = 15;
-	dorRect.h = 0;
-	return (checkCollisionRect(dorRect,gMyCharacter.mCharShape));
+TASK_NAME ifTaskPosition(int posX,int posY){
+	
 }
 
 int main(int argc, char* argv[])
@@ -377,10 +402,10 @@ int main(int argc, char* argv[])
 		}
         gMyCharacter.move(roomOneObjects);
 		bool flag = ifTaskPosition(gMyCharacter.mCharPosX,gMyCharacter.mCharPosY);
-		if(flag){
-			BB_score = pacman();
-			gMyCharacter.positionReset();
-		}
+		// if(flag){
+		// 	BB_score = pacman();
+		// 	gMyCharacter.positionReset();
+		// }
 		renderRoom1Objects();
 		SDL_RenderPresent(gRender);
 	}
