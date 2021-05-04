@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef BUCKETBALL_H
+#define BUCKETBALL_H
 
 #include "texture_timer.h"
 
