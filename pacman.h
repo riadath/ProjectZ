@@ -366,7 +366,7 @@ int pacman()
 
     Pacman pacman;
 
-    Uint32 startTime = 0;
+    Uint32 startTime = SDL_GetTicks();
 
     int prev = 0;	
     while( !quitPacman )
@@ -394,7 +394,7 @@ int pacman()
 
         int food_spawning_gap = 10000;
         int food_vanishing_gap = 5000;
-        int curr_time = SDL_GetTicks();
+        int curr_time = SDL_GetTicks() - startTime;
         int food_number = curr_time/food_spawning_gap + 1;
         for( int i = 0; i < Food_queue.size(); i++ ){
             if( curr_time-Food_queue[i].second > food_vanishing_gap ){

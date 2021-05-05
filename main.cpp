@@ -311,13 +311,6 @@ void renderRoom1Objects(){
     
     gBackgroundTexture.render(0,0);
 
-	//building render
-    for(int i = 0;i < gBuildingCount;i++)
-		gBuildingTexture[i].render(gBuildingPositions[i].first,gBuildingPositions[i].second);
-	for(int i = 0;i < gTreePositions.size();i++){
-		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]),std::get<2>(gTreePositions[i]));
-	}
-
 	//bush rendering
 	int bushHeigt1 = 80,bushHeigt2 = 400;
 	for( int i = 100; i <=200; i+= 41 ) gBushTexture.render(i,bushHeigt1,&gBushTextureSprite[i%5]);
@@ -327,6 +320,13 @@ void renderRoom1Objects(){
 	for( int i = 150; i <=300; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
 	for( int i = 350; i <=500; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
 	for( int i = 800; i <=1030; i+= 41 ) gBushTexture.render(i,bushHeigt2,&gBushTextureSprite[i%5]);
+
+	//building render
+    for(int i = 0;i < gBuildingCount;i++)
+		gBuildingTexture[i].render(gBuildingPositions[i].first,gBuildingPositions[i].second);
+	for(int i = 0;i < gTreePositions.size();i++){
+		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]),std::get<2>(gTreePositions[i]));
+	}
 
 	//Checking if player has moved
 	if(charCurPosX != gMyCharacter.mCharPosX || charCurPosY != gMyCharacter.mCharPosY){
@@ -423,7 +423,7 @@ int main(int argc, char* argv[])
 	//Loading map object position and shape
 	gameInitialize();
 
-	//chaning cursor inside the game
+	//chaning cursor inside the game 
 	std::string pathCursor = "images/png/cursor.png";
 	SDL_Surface* myCursorSurface = IMG_Load(pathCursor.c_str());
 	SDL_Cursor* myCursor =  SDL_CreateColorCursor(myCursorSurface, 0, 0);
