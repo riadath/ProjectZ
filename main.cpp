@@ -17,7 +17,7 @@ bool checkCollision(SDL_Rect player, std::vector<SDL_Rect> objects);
 void closeAll();
 void renderRoom1Objects();
 void gameInitialize();
-TASK_NAME ifTaskPosition();
+void taskHandler();
 
 //structure for coin animation handling
 struct CoinAnimation
@@ -62,6 +62,10 @@ struct CoinAnimation
 	{
 		mCoinTexture.render(x, y, &mCoinSprite[mCurSprite / mSPEED_DEC]);
 		spriteChanger();
+	}
+	void free()
+	{
+		mCoinTexture.free();
 	}
 };
 //structure for player
@@ -196,6 +200,7 @@ bool gIfTaskComplete[NUMBER_OF_TASKS];
 int gTaskScore[NUMBER_OF_TASKS];
 int gRequiredTaskScore[NUMBER_OF_TASKS];
 
+//struct variables
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
 Character gMyCharacter(10, 32, 65);
 
@@ -205,6 +210,7 @@ const int gTreeCount = 3;
 //Variable to check the change in characters position
 int charCurPosX, charCurPosY;
 
+//Texture variables
 //Texture files (background and decorative objects)
 Texture gBackgroundTexture;
 Texture gBushTexture;
@@ -256,11 +262,12 @@ bool loadMedia()
 
 void gameInitialize()
 {
-	//starting time count
+	//starting timer
 	gTimer.start();
 
 	SDL_Rect tRect;
 	//initializing building positions
+
 	tRect.x = 900, tRect.y = 450;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[0].getWidth() - 20, tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
@@ -275,6 +282,8 @@ void gameInitialize()
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[2].getWidth() - 20, tRect.h = gBuildingTexture[2].getHeight() - 20;
 	roomOneObjects.push_back(tRect);
+
+	//initializing bush positions on map
 
 	for (int i = 0, xi = 0; i < 6; i++, xi++)
 	{
@@ -349,6 +358,9 @@ void closeAll()
 	gTimer.stop();
 	gMyCharacter.free();
 	gBackgroundTexture.free();
+	gTaskCoinA.free();
+	gTimeTexture.free();
+
 	for (int i = 0; i < gBuildingCount; i++)
 		gBuildingTexture[i].free();
 	for (int i = 0; i < gTreeCount; i++)
@@ -493,13 +505,30 @@ bool checkCollisionRect(SDL_Rect player, SDL_Rect object)
 	return tFlag;
 }
 
-TASK_NAME ifTaskPosition()
+//runs a specific task
+
+void taskHandler()
 {
-	if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[BUCKET_BALL]))
-		return BUCKET_BALL;
-	if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[PACMAN]))
-		return PACMAN;
-	return NO_GAME;
+	TASK_NAME whichTask = NO_GAME;
+	for(int i = BUCKET_BALL;i < NUMBER_OF_TASKS;i++){
+	if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[i]))
+		whichTask = (TASK_NAME)i;
+	}
+	if (!gIfTaskComplete[whichTask])
+	{
+		int curTaskScore = 0;
+		if(whichTask == BUCKET_BALL)curTaskScore = bucketBall();
+		if(whichTask == PACMAN)curTaskScore = pacman();
+
+		gTaskScore[whichTask] = curTaskScore;
+		if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask])
+		{
+			gIfTaskComplete[whichTask] = true;
+		}
+		else
+			gTaskScore[whichTask] = 0;
+		gMyCharacter.positionReset();
+	}
 }
 
 int main(int argc, char *argv[])
@@ -543,38 +572,12 @@ int main(int argc, char *argv[])
 		}
 		gMyCharacter.move(roomOneObjects);
 
-		//Checking which task to run
-		TASK_NAME whichTask = ifTaskPosition();
-		if (!gIfTaskComplete[whichTask])
-		{
-			if (whichTask == BUCKET_BALL && !gIfTaskComplete[whichTask])
-			{
-				gTaskScore[BUCKET_BALL] = bucketBall();
-				if (gTaskScore[BUCKET_BALL] >= gRequiredTaskScore[BUCKET_BALL])
-				{
-					gIfTaskComplete[BUCKET_BALL] = true;
-				}
-				else
-					gTaskScore[BUCKET_BALL] = 0;
-				gMyCharacter.positionReset();
-			}
-			else if (whichTask == PACMAN && !gIfTaskComplete[whichTask])
-			{
-				if (!gIfTaskComplete[whichTask])
-					gTaskScore[PACMAN] = pacman();
-				if (gTaskScore[PACMAN] >= gRequiredTaskScore[PACMAN])
-				{
-					gIfTaskComplete[PACMAN] = true;
-				}
-				else
-					gTaskScore[PACMAN] = 0;
-				gMyCharacter.positionReset();
-			}
-		}
+		//running a task if in correct position
+		taskHandler();
 
 		//rendering all the objects on map
 		renderRoom1Objects();
-		
+
 		SDL_RenderPresent(gRender);
 	}
 	closeAll();
