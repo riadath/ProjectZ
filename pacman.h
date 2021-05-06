@@ -57,8 +57,8 @@ std::deque<std::pair<PacmanFood, int>> Food_queue;
 struct Pacman
 {
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
-	static const int DOT_WIDTH = 65;
-	static const int DOT_HEIGHT = 65;
+	static const int DOT_WIDTH = 40;
+	static const int DOT_HEIGHT = 47;
 
 	static const int DOT_VEL = 8;
 
