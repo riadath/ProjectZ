@@ -355,6 +355,7 @@ void closeAll()
 	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRender);
 	Mix_FreeMusic(gMusic);
+	TTF_CloseFont(gFont);
 	gTimer.stop();
 	gMyCharacter.free();
 	gBackgroundTexture.free();
