@@ -15,7 +15,7 @@ bool init();
 bool loadMedia();
 bool checkCollision(SDL_Rect player, std::vector<SDL_Rect> objects);
 void closeAll();
-void renderRoom1Objects();
+void renderMapObjects();
 void gameInitialize();
 void taskHandler();
 
@@ -204,8 +204,9 @@ int gRequiredTaskScore[NUMBER_OF_TASKS];
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
 Character gMyCharacter(10, 32, 65);
 
-const int gBuildingCount = 3;
-const int gTreeCount = 3;
+
+const int BUILDING_COUNT = 3;
+const int TREE_COUNT = 3;
 
 //Variable to check the change in characters position
 int charCurPosX, charCurPosY;
@@ -214,8 +215,8 @@ int charCurPosX, charCurPosY;
 //Texture files (background and decorative objects)
 Texture gBackgroundTexture;
 Texture gBushTexture;
-Texture gBuildingTexture[gBuildingCount];
-Texture gTreesTexture[gTreeCount];
+Texture gBuildingTexture[BUILDING_COUNT];
+Texture gTreesTexture[TREE_COUNT];
 Texture gTimeTexture;
 
 //List of objects in the room for collision detection
@@ -260,6 +261,8 @@ bool loadMedia()
 	return true;
 }
 
+
+//Initializes object positions on map and some golabl variables
 void gameInitialize()
 {
 	//starting timer
@@ -297,15 +300,15 @@ void gameInitialize()
 	for (int i = 50; i <= 1000; i += 190)
 	{
 		tRect.x = i, tRect.y = 30;
-		gTreePositions.push_back(std::make_tuple(i % gTreeCount, tRect.x, tRect.y));
-		tRect.w = gTreesTexture[i % gTreeCount].getWidth(), tRect.h = gTreesTexture[i % gTreeCount].getHeight();
+		gTreePositions.push_back(std::make_tuple(i % TREE_COUNT, tRect.x, tRect.y));
+		tRect.w = gTreesTexture[i % TREE_COUNT].getWidth(), tRect.h = gTreesTexture[i % TREE_COUNT].getHeight();
 		roomOneObjects.push_back(tRect);
 	}
 	for (int i = 311; i <= 1100; i += 211)
 	{
 		tRect.x = i, tRect.y = 350;
-		gTreePositions.push_back(std::make_tuple(i % gTreeCount, tRect.x, tRect.y));
-		tRect.w = gTreesTexture[i % gTreeCount].getWidth(), tRect.h = gTreesTexture[i % gTreeCount].getHeight();
+		gTreePositions.push_back(std::make_tuple(i % TREE_COUNT, tRect.x, tRect.y));
+		tRect.w = gTreesTexture[i % TREE_COUNT].getWidth(), tRect.h = gTreesTexture[i % TREE_COUNT].getHeight();
 		roomOneObjects.push_back(tRect);
 	}
 
@@ -327,6 +330,7 @@ void gameInitialize()
 	gRequiredTaskScore[PACMAN] = 5;
 }
 
+//Checks collision between objects
 bool checkCollision(SDL_Rect player, std::vector<SDL_Rect> objects)
 {
 	bool flag = false;
@@ -362,9 +366,9 @@ void closeAll()
 	gTaskCoinA.free();
 	gTimeTexture.free();
 
-	for (int i = 0; i < gBuildingCount; i++)
+	for (int i = 0; i < BUILDING_COUNT; i++)
 		gBuildingTexture[i].free();
-	for (int i = 0; i < gTreeCount; i++)
+	for (int i = 0; i < TREE_COUNT; i++)
 		gTreesTexture[i].free();
 	gBushTexture.free();
 
@@ -383,7 +387,8 @@ void closeAll()
 	Mix_Quit();
 }
 
-void renderRoom1Objects()
+//Rendering all the objects in the map
+void renderMapObjects()
 {
 	SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 	SDL_RenderClear(gRender);
@@ -393,22 +398,22 @@ void renderRoom1Objects()
 	//bush rendering
 	int bushHeigt1 = 80, bushHeigt2 = 400;
 	for (int i = 100; i <= 200; i += 41)
-		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i%6]);
 	for (int i = 302; i <= 400; i += 41)
-		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i%6]);
 	for (int i = 470; i <= 570; i += 43)
-		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i%6]);
 	for (int i = 700; i <= 1000; i += 43)
-		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt1, &gBushTextureSprite[i%6]);
 	for (int i = 150; i <= 300; i += 41)
-		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i%6]);
 	for (int i = 350; i <= 500; i += 41)
-		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i%6]);
 	for (int i = 800; i <= 1030; i += 41)
-		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i % 5]);
+		gBushTexture.render(i, bushHeigt2, &gBushTextureSprite[i%6]);
 
 	//building render
-	for (int i = 0; i < gBuildingCount; i++)
+	for (int i = 0; i < BUILDING_COUNT; i++)
 		gBuildingTexture[i].render(gBuildingPositions[i].first, gBuildingPositions[i].second);
 	for (int i = 0; i < gTreePositions.size(); i++)
 	{
@@ -492,6 +497,7 @@ bool init()
 	return true;
 }
 
+//checks collision between two objects
 bool checkCollisionRect(SDL_Rect player, SDL_Rect object)
 {
 	bool tFlag = true;
@@ -506,8 +512,7 @@ bool checkCollisionRect(SDL_Rect player, SDL_Rect object)
 	return tFlag;
 }
 
-//runs a specific task
-
+//runs a specific task depending on the players position
 void taskHandler()
 {
 	TASK_NAME whichTask = NO_GAME;
@@ -515,6 +520,8 @@ void taskHandler()
 	if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[i]))
 		whichTask = (TASK_NAME)i;
 	}
+
+	//Run the task if it's not completed yet
 	if (!gIfTaskComplete[whichTask])
 	{
 		int curTaskScore = 0;
@@ -577,7 +584,7 @@ int main(int argc, char *argv[])
 		taskHandler();
 
 		//rendering all the objects on map
-		renderRoom1Objects();
+		renderMapObjects();
 
 		SDL_RenderPresent(gRender);
 	}
