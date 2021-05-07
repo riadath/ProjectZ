@@ -1,3 +1,12 @@
+/**
+ * @file bucket_ball.h
+ * @author Reyadath Ullah (SH - 33)
+ * @brief Bucket Ball Game (One of the Tasks in the game)
+ * @version 0.1
+ * @date 30-04-2021
+ * @copyright Copyright (c) 2021
+ */
+
 #ifndef BUCKETBALL_H
 #define BUCKETBALL_H
 
@@ -10,7 +19,9 @@ int TOTAL_LIVES;
 Texture gLavaTexture;
 int gCurLavaSprite = 0;
 int gLavaDuration = 0;
-const int gLavaWidth = 59, gLavaHeight = 53;
+
+const int LAVA_WIDTH = 59;
+const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
@@ -107,8 +118,8 @@ struct Ball
 {
 	std::vector<int> mBallSpawnPosition;
 	const int mSPRITE_COUNT = 8;
-	const int mBallWidth = 21;
-	const int mBallHeight = 21;
+	const int mBALL_WIDTH = 21;
+	const int mBALL_HEIGHT = 21;
 
 	//variables for controlling ball spawn and drop speed
 	int mSpawnSpeed;
@@ -138,9 +149,9 @@ struct Ball
 		}
 		for (int i = 0; i < mSPRITE_COUNT; i++)
 		{
-			mBallSprite[i].w = mBallWidth;
-			mBallSprite[i].h = mBallHeight;
-			mBallSprite[i].x = i * mBallWidth;
+			mBallSprite[i].w = mBALL_WIDTH;
+			mBallSprite[i].h = mBALL_HEIGHT;
+			mBallSprite[i].x = i * mBALL_WIDTH;
 			mBallSprite[i].y = 0;
 		}
 	}
@@ -159,7 +170,7 @@ struct Ball
 			int tX = mBallSpawnPosition[rand() % mBallSpawnPosition.size()];
 			int tY = 0;
 
-			SDL_Rect tRect = {tX, tY, mBallWidth, mBallHeight};
+			SDL_Rect tRect = {tX, tY, mBALL_WIDTH, mBALL_HEIGHT};
 			mBallRects.push_back(std::make_pair(rand() % mSPRITE_COUNT, tRect));
 		}
 
@@ -290,10 +301,10 @@ bool loadBucketBallMedia()
 
 	for (int i = 0; i < LAVA_SPRITE_COUNT; i++)
 	{
-		gLavaSprite[i].x = i * gLavaWidth;
+		gLavaSprite[i].x = i * LAVA_WIDTH;
 		gLavaSprite[i].y = 0;
-		gLavaSprite[i].w = gLavaWidth;
-		gLavaSprite[i].h = gLavaHeight;
+		gLavaSprite[i].w = LAVA_WIDTH;
+		gLavaSprite[i].h = LAVA_HEIGHT;
 	}
 
 	return true;
