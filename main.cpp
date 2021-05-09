@@ -1,6 +1,7 @@
 #include "texture_timer.h"
 #include "bucket_ball.h"
 #include "pacman.h"
+#include "dinorun.h"
 
 enum TASK_NAME
 {
@@ -79,13 +80,14 @@ struct Character
 	int mCharWidth;
 	int mCharHeight;
 
-	const int CHAR_SPEED_DEC = 5;
+	const int SPRITE_SPEED = 5;
 	const int CHAR_VELOCITY = 4;
 
 	SDL_Rect mCharShape;
 	SDL_Rect *mCharacterSprite;
 	SDL_RendererFlip mFlipType;
 	Texture mCharTexture;
+	
 	Character(int tSpriteCount, int tCharWidth, int tCharHeight)
 	{
 
@@ -119,7 +121,7 @@ struct Character
 	void spriteChanger()
 	{
 		mCurSprite++;
-		if (mCurSprite / CHAR_SPEED_DEC >= CHAR_SPRITE_COUNT)
+		if (mCurSprite / SPRITE_SPEED >= CHAR_SPRITE_COUNT)
 			mCurSprite = 1;
 	}
 	void handleEvent(SDL_Event &e)
@@ -186,7 +188,7 @@ struct Character
 	}
 	void render()
 	{
-		mCharTexture.render(mCharPosX, mCharPosY, &mCharacterSprite[mCurSprite / CHAR_SPEED_DEC], mFlipType);
+		mCharTexture.render(mCharPosX, mCharPosY, &mCharacterSprite[mCurSprite / SPRITE_SPEED], mFlipType);
 	}
 	void free()
 	{
@@ -548,6 +550,10 @@ int main(int argc, char *argv[])
 		printf("Failed to initialize\n");
 		return 0;
 	}
+	//=====================================================================
+	dinoRun();return 0;
+	//=====================================================================
+
 	if (!loadMedia())
 	{
 		printf("Failed to load media\n");

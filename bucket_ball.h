@@ -27,13 +27,13 @@ enum COLLISION_TYPE
 {
 	NO_COLLISION,
 	WALL_COLLISION,
-	BUCKET_COLLSIION
+	BUCKET_COLLSION
 };
 
 //function prototypes
 void initVariable();
 void closeBB();
-void renderRoomBB();
+void renderMapBB();
 bool loadBucketBallMedia();
 int bucketBall();
 void lavaAnimation();
@@ -170,11 +170,11 @@ struct Ball
 		{
 			COLLISION_TYPE whatCol = checkCollision(bucketShape, mBallRects[i].second);
 
-			if (whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSIION)
+			if (whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSION)
 			{
 				mBallRects[i].second.w = -1, mBallRects[i].second.h = -1;
 
-				if (whatCol == BUCKET_COLLSIION)
+				if (whatCol == BUCKET_COLLSION)
 				{
 					TOTAL_POINTS += mEachCatchScore;
 					gLavaDuration = 10;
@@ -251,7 +251,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 	if (ifBucketCol)
 	{
 		Mix_PlayChannel(2, gSplash, 0);
-		return BUCKET_COLLSIION;
+		return BUCKET_COLLSION;
 	}
 
 	else
@@ -265,13 +265,13 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 
 bool loadBucketBallMedia()
 {
-	if (!gBackgroundTextureBB.loadFile("images/png/bucketBack.png"))
+	if (!gBackgroundTextureBB.loadFile("images/png/BucketBall/bucketBack.png"))
 		return false;
-	if (!gBallCatcher.mBucketTexture.loadFile("images/png/bucketLava.png"))
+	if (!gBallCatcher.mBucketTexture.loadFile("images/png/BucketBall/bucketLava.png"))
 		return false;
-	if (!gBallDrop.mBallTexture.loadFile("images/png/ball.png"))
+	if (!gBallDrop.mBallTexture.loadFile("images/png/BucketBall/ball.png"))
 		return false;
-	if (!gLavaTexture.loadFile("images/png/lavaSplash.png"))
+	if (!gLavaTexture.loadFile("images/png/BucketBall/lavaSplash.png"))
 		return false;
 
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
@@ -306,7 +306,7 @@ void lavaAnimation()
 	gLavaTexture.render(posX, posY, &gLavaSprite[gCurLavaSprite++ % LAVA_SPRITE_COUNT]);
 }
 
-void renderRoomBB()
+void renderMapBB()
 {
 	SDL_Color textColor = {0, 0, 0, 255};
 	scoreText.str("");
@@ -357,7 +357,7 @@ int bucketBall()
 			quit = true;
 
 		gBallCatcher.move();
-		renderRoomBB();
+		renderMapBB();
 		SDL_RenderPresent(gRender);
 	}
 	closeBB();
