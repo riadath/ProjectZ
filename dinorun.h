@@ -191,6 +191,7 @@ void renderMapDino()
 	if(gTree3Scroll < -SCREEN_WIDTH)gTree3Scroll = 0;
 	gStarScroll -= gStarSpeed;
 	if(gStarSpeed < -SCREEN_WIDTH)gStarScroll = 0;
+	
 	gBgTextureDino[MOON_LAYER_7].render(0,0);
 
 	gBgTextureDino[STAR_LAYER_6].render(gStarScroll,0);

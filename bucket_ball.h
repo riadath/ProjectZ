@@ -127,7 +127,7 @@ struct Ball
 	SDL_Rect mBallShape;
 	SDL_Rect mBallSprite[8];
 
-	//Ball poistion and sprite number
+	//Ball position and sprite number
 	std::vector<std::pair<int, SDL_Rect>> mBallRects;
 
 	Ball()
