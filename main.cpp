@@ -8,6 +8,7 @@ enum TASK_NAME
 	NO_GAME,
 	BUCKET_BALL,
 	PACMAN,
+	DINORUN,
 	NUMBER_OF_TASKS
 };
 
@@ -31,7 +32,7 @@ struct CoinAnimation
 	int mCoinHeight;
 
 	int mCurSprite = 0;
-	const int mSPEED_DEC = 6;
+	const int mSPEED_DEC = 8;
 
 	SDL_Rect *mCoinSprite;
 	CoinAnimation(int tSpriteCount, int tCoinWidth, int tCoinHeight, int tSpriteLevel)
@@ -233,23 +234,23 @@ Timer gTimer;
 
 bool loadMedia()
 {
-	if (!gMyCharacter.mCharTexture.loadFile("images/png/walk1.png"))
+	if (!gMyCharacter.mCharTexture.loadFile("images/png/main/walk1.png"))
 		return false;
-	if (!gBackgroundTexture.loadFile("images/png/background1.png"))
+	if (!gBackgroundTexture.loadFile("images/png/main/background1.png"))
 		return false;
-	if (!gBuildingTexture[0].loadFile("images/png/house2.png", true, 0, 64, 128))
+	if (!gBuildingTexture[0].loadFile("images/png/main/house2.png", true, 0, 64, 128))
 		return false;
-	if (!gBuildingTexture[1].loadFile("images/png/house1_5.png"))
+	if (!gBuildingTexture[1].loadFile("images/png/main/house1_5.png"))
 		return false;
-	if (!gBuildingTexture[2].loadFile("images/png/house1_4.png"))
+	if (!gBuildingTexture[2].loadFile("images/png/main/house1_4.png"))
 		return false;
-	if (!gTreesTexture[0].loadFile("images/png/tree1.png"))
+	if (!gTreesTexture[0].loadFile("images/png/main/tree1.png"))
 		return false;
-	if (!gTreesTexture[1].loadFile("images/png/tree2.png"))
+	if (!gTreesTexture[1].loadFile("images/png/main/tree2.png"))
 		return false;
-	if (!gTreesTexture[2].loadFile("images/png/tree3.png"))
+	if (!gTreesTexture[2].loadFile("images/png/main/tree3.png"))
 		return false;
-	if (!gTaskCoinA.mCoinTexture.loadFile("images/png/coin.png"))
+	if (!gTaskCoinA.mCoinTexture.loadFile("images/png/main/coin.png"))
 		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
@@ -315,6 +316,11 @@ void gameInitialize()
 	gTaskPosition[PACMAN].w = gTaskCoinA.mCoinHeight;
 	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + 33;
 	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + 160;
+
+	gTaskPosition[DINORUN].h = gTaskCoinA.mCoinWidth;
+	gTaskPosition[DINORUN].w = gTaskCoinA.mCoinHeight;
+	gTaskPosition[DINORUN].x = gBuildingPositions[0].first + 15;
+	gTaskPosition[DINORUN].y = gBuildingPositions[0].second + 98;
 
 	gRequiredTaskScore[BUCKET_BALL] = 100;
 	gRequiredTaskScore[PACMAN] = 5;
@@ -394,20 +400,22 @@ void renderMapObjects()
 	if (gCamera.y > LEVEL_HEIGHT - gCamera.h)
 		gCamera.y = LEVEL_HEIGHT - gCamera.h;
 
+
 	SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 	SDL_RenderClear(gRender);
-
+	//render background
 	gBackgroundTexture.render(0, 0, &gCamera);
 
 	//building render
 	for (int i = 0; i < BUILDING_COUNT; i++)
 		gBuildingTexture[i].render(gBuildingPositions[i].first - gCamera.x, gBuildingPositions[i].second - gCamera.y);
+	//Tree Render
 	for (int i = 0; i < gTreePositions.size(); i++)
 	{
 		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]) - gCamera.x, std::get<2>(gTreePositions[i]) - gCamera.y);
 	}
 
-	//rendering task position objects
+	//rendering coin animation at task positions
 	for (int i = 0; i < NUMBER_OF_TASKS; i++)
 	{
 		if (!gIfTaskComplete[i])
@@ -519,6 +527,8 @@ void taskHandler()
 			curTaskScore = bucketBall();
 		if (whichTask == PACMAN)
 			curTaskScore = pacman();
+		if(whichTask == DINORUN)
+			curTaskScore = dinoRun();
 
 		gTaskScore[whichTask] = curTaskScore;
 		if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask])
@@ -541,8 +551,9 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	//=====================
-	dinoRun();return 0;
+	//==================================================
+	// dinoRun();return 0;
+	//===================================================
 
 	if (!loadMedia())
 	{
@@ -554,7 +565,7 @@ int main(int argc, char *argv[])
 	gameInitialize();
 
 	//chaning cursor inside the game
-	std::string pathCursor = "images/png/cursor.png";
+	std::string pathCursor = "images/png/main/cursor.png";
 	SDL_Surface *myCursorSurface = IMG_Load(pathCursor.c_str());
 	SDL_Cursor *myCursor = SDL_CreateColorCursor(myCursorSurface, 0, 0);
 	SDL_SetCursor(myCursor);
@@ -575,6 +586,8 @@ int main(int argc, char *argv[])
 			gMyCharacter.handleEvent(e);
 		}
 		gMyCharacter.move(roomOneObjects);
+		
+		printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
 
 		//running a task if in correct position
 		taskHandler();

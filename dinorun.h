@@ -14,7 +14,7 @@ struct Player
 	const int PLAYER_HEIGHT = 65;
 	const int PLAYER_VEL = 100;
 	const int PLAYER_SETP = 10;
-	const int JUMP_VEL = 200;
+	const int JUMP_VEL = 150 + PLAYER_HEIGHT;
 	const int JUMP_STEP = 9;
 	const int GRAVITY = 8;
 	const int SPRITE_COUNT = 6;
@@ -49,8 +49,6 @@ struct Player
 
 	void handleEvent(SDL_Event &e)
 	{
-		// if (mPosY < BASE_HEIGHT - PLAYER_HEIGHT)
-		// 	return;
 		if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 		{
 			switch (e.ksym)
@@ -191,7 +189,7 @@ void renderMapDino()
 	if(gTree3Scroll < -SCREEN_WIDTH)gTree3Scroll = 0;
 	gStarScroll -= gStarSpeed;
 	if(gStarSpeed < -SCREEN_WIDTH)gStarScroll = 0;
-	
+
 	gBgTextureDino[MOON_LAYER_7].render(0,0);
 
 	gBgTextureDino[STAR_LAYER_6].render(gStarScroll,0);
