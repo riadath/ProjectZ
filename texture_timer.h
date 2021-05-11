@@ -115,7 +115,7 @@ struct Texture
 	}
 
 #if defined(SDL_TTF_MAJOR_VERSION)
-	bool loadFromText(std::string path, SDL_Color textColor)
+	bool loadFromText(std::string path, SDL_Color textColor = {255,255,255})
 	{
 		free();
 		SDL_Surface *textSurface = TTF_RenderText_Solid(gFont, path.c_str(), textColor);

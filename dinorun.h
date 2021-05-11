@@ -5,6 +5,11 @@
 #include "texture_timer.h"
 
 bool loadDinoMedia();
+void renderMapDino();
+void spawnBlocks();
+bool checkCollisionDino(SDL_Rect player, SDL_Rect object);
+void initVariableDino();
+void freeDino();
 
 struct Player
 {
@@ -12,10 +17,10 @@ struct Player
 
 	const int PLAYER_WIDTH = 59;
 	const int PLAYER_HEIGHT = 65;
-	const int PLAYER_VEL = 100;
+	const int PLAYER_VEL = 80;
 	const int PLAYER_SETP = 10;
-	const int JUMP_VEL = 150 + PLAYER_HEIGHT;
-	const int JUMP_STEP = 9;
+	const int JUMP_VEL = 240;//use 200
+	const int JUMP_STEP = 14;
 	const int GRAVITY = 8;
 	const int SPRITE_COUNT = 6;
 	const int SPRITE_SPEED = 8;
@@ -26,7 +31,6 @@ struct Player
 	int mCurSprite = 0;
 
 	SDL_Rect *mPlayerSprite;
-	SDL_Rect mPlayerShape;
 
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
 
@@ -54,9 +58,10 @@ struct Player
 			switch (e.ksym)
 			{
 			case SDLK_w:
-				if (mPosY < BASE_HEIGHT - PLAYER_HEIGHT)
+				if (mPosY < BASE_HEIGHT - PLAYER_HEIGHT - 120)
 					return;
 				mVelY -= JUMP_VEL;
+				mFlipType = SDL_FLIP_NONE;
 				mJumping = true;
 				break;
 			case SDLK_a:
@@ -123,6 +128,7 @@ struct Player
 };
 
 int TOTAL_SCORE = 0;
+int TOTAL_HEALTH = 2;
 
 enum BACKGROUND_LAYER
 {
@@ -135,9 +141,18 @@ enum BACKGROUND_LAYER
 	MOON_LAYER_7,
 	LAYER_COUNT
 };
+enum BLOCK_TYPE{
+	BLOCK_T1,
+	BLOCK_T2,
+	BLOCK_T3,
+	BLOCK_COUNT
+};
 
-Player gMyPlayer;
+Player gMyPlayer; //Player object
+
 Texture gBgTextureDino[LAYER_COUNT];
+Texture gBlockTexture[BLOCK_COUNT];
+Texture gHealthTexture;
 
 int gGroundScroll = 0;
 int gTree1Scroll = 0;
@@ -145,6 +160,8 @@ int gTree2Scroll = 0;
 int gTree3Scroll = 0;
 int gStarScroll = 0;
 int gStarDecrease = 1;
+int mSpawnInterval = 0;
+int mSpawnGap = 173;
 
 const int gGroundSpeed = 6;
 const int gTree1Speed = 5;
@@ -152,30 +169,78 @@ const int gTree2Speed = 4;
 const int gTree3Speed = 2;
 const int gStarSpeed = 1;
 
+std::vector<std::pair<int,BLOCK_TYPE>>gBlockPos;//storing block x and block type
+std::vector<bool>gBlockIfCollieded;
+
+void freeDino(){
+
+}
 
 bool loadDinoMedia()
 {
-	if (!gMyPlayer.mPlayerTexture.loadFile("images/png/dino/dino_runner.png"))
+	if (!gMyPlayer.mPlayerTexture.loadFile("images/png/dino/dino_runner.png"))return false;
+	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/png/dino/dino_bush.png"))return false;
+	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/png/dino/dino_ground.png"))return false;
+	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/png/dino/dino_tree1.png"))return false;
+	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/png/dino/dino_tree3.png"))return false;
+	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/png/dino/dino_tree3.png"))return false;
+	if(!gBgTextureDino[STAR_LAYER_6].loadFile("images/png/dino/dino_star.png"))return false;
+	if(!gBgTextureDino[MOON_LAYER_7].loadFile("images/png/dino/dino_moon.png"))return false;
+	if(!gBlockTexture[BLOCK_T1].loadFile("images/png/dino/block1.png"))return false;
+	if(!gBlockTexture[BLOCK_T2].loadFile("images/png/dino/block2.png"))return false;
+	if(!gBlockTexture[BLOCK_T3].loadFile("images/png/dino/block3.png"))return false;
+	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	if (gFont == NULL)
+	{
+		ERROR_T;
 		return false;
-	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/png/dino/dino_bush.png"))
-		return false;
-	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/png/dino/dino_ground.png"))
-		return false;
-	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/png/dino/dino_tree1.png"))
-		return false;
-	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/png/dino/dino_tree3.png"))
-		return false;
-	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/png/dino/dino_tree3.png"))
-		return false;
-	if(!gBgTextureDino[STAR_LAYER_6].loadFile("images/png/dino/dino_star.png"))
-		return false;
-	if(!gBgTextureDino[MOON_LAYER_7].loadFile("images/png/dino/dino_moon.png"))
-		return false;
+	}
+
 	return true;
 }
 
+//checks collision between two objects
+bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
+{
+	bool tFlag = true;
+	if (player.x + player.w <= object.x)
+		tFlag = false;
+	if (player.x >= object.x + object.w)
+		tFlag = false;
+	if (player.y + player.h <= object.y)
+		tFlag = false;
+	if (player.y >= object.y + object.h)
+		tFlag = false;
+	return tFlag;
+}
+
+
+
+void spawnBlocks(){
+	//clear blocks out of screen
+	std::vector<std::pair<int,BLOCK_TYPE>> tBlocks;
+	std::vector<bool>tIfCollieded;
+	for(int i = 0;i < gBlockPos.size();i++){
+		if(gBlockPos[i].first < -gBlockTexture[gBlockPos[i].second].getWidth()){
+			gBlockPos[i].first = -1;
+		}else tBlocks.push_back(gBlockPos[i]),tIfCollieded.push_back(gBlockIfCollieded[i]);
+	}
+	int random_intervals[] = {147,79,153,179};
+	gBlockPos = tBlocks;
+	gBlockIfCollieded = tIfCollieded;
+
+	if(mSpawnInterval++%random_intervals[rand()%4] == 0){
+		gBlockPos.push_back(std::make_pair(SCREEN_WIDTH + 400,(BLOCK_TYPE)(rand()%BLOCK_COUNT)));
+		gBlockIfCollieded.push_back(false);
+	}
+	// if(mSpawnInterval % 12563)mSpawnGap = std::max(53,mSpawnGap - 10);
+}
+
+
 void renderMapDino()
 {
+	spawnBlocks(); //spawing new blocks
+
 	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 155);
 	SDL_RenderClear(gRender);
 
@@ -191,7 +256,6 @@ void renderMapDino()
 	if(gStarSpeed < -SCREEN_WIDTH)gStarScroll = 0;
 
 	gBgTextureDino[MOON_LAYER_7].render(0,0);
-
 	gBgTextureDino[STAR_LAYER_6].render(gStarScroll,0);
 	gBgTextureDino[STAR_LAYER_6].render(gStarScroll + SCREEN_WIDTH,0);
 	gBgTextureDino[TREE3_LAYER_5].render(gTree3Scroll,0);
@@ -205,9 +269,38 @@ void renderMapDino()
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll, 0);
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll + SCREEN_WIDTH, 0);
 
-	
+	std::stringstream liveText;
+	SDL_Color textColor = {255,200,0};
+	liveText.str("");
+	liveText << "Lives : " << TOTAL_HEALTH;
+	gHealthTexture.loadFromText(liveText.str().c_str(), textColor);
+	gHealthTexture.render(0,0);
 
+	//Rendering blocks on map
+	for(int i = 0;i < gBlockPos.size();i++){
+		gBlockPos[i].first -= gGroundSpeed;
+		BLOCK_TYPE block = gBlockPos[i].second;
+		int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
+		int posX = gBlockPos[i].first;
+		gBlockTexture[block].render(posX ,posY);
+
+		SDL_Rect player = {gMyPlayer.mPosX,gMyPlayer.mPosY,gMyPlayer.PLAYER_HEIGHT,gMyPlayer.PLAYER_WIDTH};
+		SDL_Rect object = {gBlockPos[i].first,posY,gBlockTexture[block].getWidth(),gBlockTexture[block].getHeight()};
+		
+		if(checkCollisionDino(player,object) && !gBlockIfCollieded[i]){
+			TOTAL_HEALTH--;
+			gBlockIfCollieded[i] = true;
+			printf("%d Collided\n",TOTAL_HEALTH);
+		}
+	}
+	
 	gMyPlayer.render();
+}
+
+void initVariableDino(){
+	TOTAL_SCORE = 0;
+	TOTAL_HEALTH = 2;
+	gBlockPos.clear();
 }
 
 int dinoRun()
@@ -217,6 +310,8 @@ int dinoRun()
 		printf("Failed to load Media(dinorun)\n");
 		return -1;
 	}
+	initVariableDino();
+
 	bool quit = false;
 	SDL_Event e;
 	while (!quit)
@@ -229,8 +324,9 @@ int dinoRun()
 			}
 			gMyPlayer.handleEvent(e);
 		}
+		// if(TOTAL_HEALTH <= 0)quit = true;
 		gMyPlayer.move();
-
+		// printf("%d %d\n",gMyPlayer.mPosX,gMyPlayer.mPosY);
 		renderMapDino();
 		SDL_RenderPresent(gRender);
 	}

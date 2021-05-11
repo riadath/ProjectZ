@@ -10,16 +10,16 @@ int TOTAL_LIVES;
 Texture gLavaTexture;
 int gCurLavaSprite = 0;
 int gLavaDuration = 0;
-const int gLavaWidth = 59, gLavaHeight = 53;
+const int gLavaWidth = 59;
+const int gLavaHeight = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
-//strings for prompting score and health
-std::stringstream scoreText, liveText, timeText;
-//background texture
-Texture gBackgroundTextureBB;
-//score and health texture
-Texture gLiveTexture, gScoreTexture;
+std::stringstream scoreText, liveText;//strings for prompting score and health
+
+Texture gBackgroundTextureBB;//background texture
+Texture gLiveTexture;//score and health texture
+Texture gScoreTexture;
 
 Mix_Chunk *gSplash = NULL;
 
@@ -116,12 +116,11 @@ struct Ball
 	int mSpawnInterval;
 	int mBallDropSpeed;
 
-	Timer mTimer;
-
 	//variables for time management
+	Timer mTimer;
 	Uint32 mPrevTime1;
 	Uint32 mPrevTime2;
-
+	
 	Texture mBallTexture;
 
 	SDL_Rect mBallShape;
@@ -234,6 +233,7 @@ void closeBB()
 	gScoreTexture.free();
 }
 
+
 COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 {
 	if (ballShape.y + ballShape.h < SCREEN_HEIGHT - bucketShape.h)
@@ -265,7 +265,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 
 bool loadBucketBallMedia()
 {
-	if (!gBackgroundTextureBB.loadFile("images/png/BucketBall/bucketBack.png"))
+	if (!gBackgroundTextureBB.loadFile("images/png/BucketBall/bucketBack1.png"))
 		return false;
 	if (!gBallCatcher.mBucketTexture.loadFile("images/png/BucketBall/bucketLava.png"))
 		return false;

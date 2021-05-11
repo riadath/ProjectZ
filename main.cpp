@@ -3,14 +3,7 @@
 #include "pacman.h"
 #include "dinorun.h"
 
-enum TASK_NAME
-{
-	NO_GAME,
-	BUCKET_BALL,
-	PACMAN,
-	DINORUN,
-	NUMBER_OF_TASKS
-};
+
 
 //function prototypes
 bool init();
@@ -196,12 +189,21 @@ struct Character
 	}
 };
 
-//Dynamic map variables
-SDL_Rect gCamera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+enum TASK_NAME
+{
+	NO_GAME,
+	BUCKET_BALL,
+	PACMAN,
+	DINORUN,
+	NUMBER_OF_TASKS
+};
+
+SDL_Rect gCamera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; //Dynamic map variables
 
 //variables for task management
 SDL_Rect gTaskPosition[NUMBER_OF_TASKS];
 bool gIfTaskComplete[NUMBER_OF_TASKS];
+
 int gTaskScore[NUMBER_OF_TASKS];
 int gRequiredTaskScore[NUMBER_OF_TASKS];
 
@@ -212,21 +214,17 @@ Character gMyCharacter(10, 32, 65);
 const int BUILDING_COUNT = 3;
 const int TREE_COUNT = 3;
 
-//Variable to check the change in characters position
-int charCurPosX, charCurPosY;
+int charCurPosX, charCurPosY; //Variable to check the change in characters position
 
 //Texture variables
-//Texture files (background and decorative objects)
 Texture gBackgroundTexture;
 Texture gBuildingTexture[BUILDING_COUNT];
 Texture gTreesTexture[TREE_COUNT];
 Texture gTimeTexture;
 
-//List of objects in the room for collision detection
-std::vector<SDL_Rect> roomOneObjects;
 
-//Coordinates for placing trees and buildings on the map
-std::vector<std::pair<int, int>> gBuildingPositions;
+std::vector<SDL_Rect> mapObjects;//List of objects in the room for collision detection
+std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
 std::vector<std::tuple<int, int, int>> gTreePositions;
 
 //global timer
@@ -238,11 +236,11 @@ bool loadMedia()
 		return false;
 	if (!gBackgroundTexture.loadFile("images/png/main/background1.png"))
 		return false;
-	if (!gBuildingTexture[0].loadFile("images/png/main/house2.png", true, 0, 64, 128))
+	if (!gBuildingTexture[0].loadFile("images/png/main/arcade1.png"))
 		return false;
-	if (!gBuildingTexture[1].loadFile("images/png/main/house1_5.png"))
+	if (!gBuildingTexture[1].loadFile("images/png/main/arcade2.png"))
 		return false;
-	if (!gBuildingTexture[2].loadFile("images/png/main/house1_4.png"))
+	if (!gBuildingTexture[2].loadFile("images/png/main/arcade4.png"))
 		return false;
 	if (!gTreesTexture[0].loadFile("images/png/main/tree1.png"))
 		return false;
@@ -252,12 +250,18 @@ bool loadMedia()
 		return false;
 	if (!gTaskCoinA.mCoinTexture.loadFile("images/png/main/coin.png"))
 		return false;
-	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	gFont = TTF_OpenFont("images/fonts/Oswald-RegularItalic.ttf", 24);
 	if (gFont == NULL)
 	{
 		ERROR_T;
 		return false;
 	}
+	//chaning cursor inside the game
+	std::string pathCursor = "images/png/main/cursor.png";
+	SDL_Surface *myCursorSurface = IMG_Load(pathCursor.c_str());
+	SDL_Cursor *myCursor = SDL_CreateColorCursor(myCursorSurface, 0, 0);
+	SDL_SetCursor(myCursor);
+
 	return true;
 }
 
@@ -270,20 +274,20 @@ void gameInitialize()
 	SDL_Rect tRect;
 	//initializing building positions
 
-	tRect.x = 900, tRect.y = 450;
+	tRect.x = 950, tRect.y = 550;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
-	tRect.w = gBuildingTexture[0].getWidth() - 15, tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
-	roomOneObjects.push_back(tRect);
+	tRect.w = gBuildingTexture[0].getWidth() - gMyCharacter.mCharWidth , tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
+	mapObjects.push_back(tRect);
 
-	tRect.x = 120, tRect.y = 500;
+	tRect.x = 150, tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
-	tRect.w = gBuildingTexture[1].getWidth() - 15, tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
-	roomOneObjects.push_back(tRect);
+	tRect.w = gBuildingTexture[1].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
+	mapObjects.push_back(tRect);
 
 	tRect.x = 100, tRect.y = 200;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
-	tRect.w = gBuildingTexture[2].getWidth() - 15, tRect.h = gBuildingTexture[2].getHeight() - 20;
-	roomOneObjects.push_back(tRect);
+	tRect.w = gBuildingTexture[2].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[2].getHeight() - 20;
+	mapObjects.push_back(tRect);
 
 	//Rendering trees on map
 	int tempHeight[] = {30, 70, 97};
@@ -293,7 +297,7 @@ void gameInitialize()
 		tRect.x = i, tRect.y = tempHeight[j];
 		gTreePositions.push_back(std::make_tuple(j, tRect.x, tRect.y));
 		tRect.w = gTreesTexture[j].getWidth() - 10, tRect.h = gTreesTexture[j].getHeight() - 10;
-		roomOneObjects.push_back(tRect);
+		mapObjects.push_back(tRect);
 		if(i >= LEVEL_WIDTH){
 			k++;
 			if(k == 1)st = 430,tempHeight[0] = 240, tempHeight[1] = 280, tempHeight[2] = 330;
@@ -307,20 +311,21 @@ void gameInitialize()
 	gTaskPosition[NO_GAME] = {-1, -1, -1, -1};
 	gIfTaskComplete[NO_GAME] = true;
 
+	gTaskPosition[DINORUN].h = gTaskCoinA.mCoinWidth;
+	gTaskPosition[DINORUN].w = gTaskCoinA.mCoinHeight;
+	gTaskPosition[DINORUN].x = gBuildingPositions[0].first + gBuildingTexture[0].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[DINORUN].y = gBuildingPositions[0].second + gBuildingTexture[0].getHeight() - gTaskCoinA.mCoinHeight;
+
 	gTaskPosition[BUCKET_BALL].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[BUCKET_BALL].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[BUCKET_BALL].x = gBuildingPositions[1].first + 41;
-	gTaskPosition[BUCKET_BALL].y = gBuildingPositions[1].second + 120;
+	gTaskPosition[BUCKET_BALL].x = gBuildingPositions[1].first + gBuildingTexture[1].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[BUCKET_BALL].y = gBuildingPositions[1].second + gBuildingTexture[1].getHeight() - gTaskCoinA.mCoinHeight;
 
 	gTaskPosition[PACMAN].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[PACMAN].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + 33;
-	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + 160;
+	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + gBuildingTexture[2].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + gBuildingTexture[2].getHeight() - gTaskCoinA.mCoinHeight;
 
-	gTaskPosition[DINORUN].h = gTaskCoinA.mCoinWidth;
-	gTaskPosition[DINORUN].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[DINORUN].x = gBuildingPositions[0].first + 15;
-	gTaskPosition[DINORUN].y = gBuildingPositions[0].second + 98;
 
 	gRequiredTaskScore[BUCKET_BALL] = 100;
 	gRequiredTaskScore[PACMAN] = 5;
@@ -371,7 +376,7 @@ void closeAll()
 	for (int i = 0; i < BUILDING_COUNT; i++)gBuildingTexture[i].free();
 	for (int i = 0; i < TREE_COUNT; i++)gTreesTexture[i].free();
 
-	roomOneObjects.clear();
+	mapObjects.clear();
 	gBuildingPositions.clear();
 	gTreePositions.clear();
 
@@ -436,8 +441,9 @@ void renderMapObjects()
 		charCurPosX = gMyCharacter.mPosX;
 		charCurPosY = gMyCharacter.mPosY;
 	}
-	else
+	else{
 		gMyCharacter.mCurSprite = 0;
+	}
 
 	//rendering time prompt
 	SDL_Color textColor = {0, 0, 0, 255};
@@ -520,8 +526,8 @@ void taskHandler()
 	}
 
 	//Run the task if it's not completed yet
-	if (!gIfTaskComplete[whichTask])
-	{
+	// if (!gIfTaskComplete[whichTask])
+	// {
 		int curTaskScore = 0;
 		if (whichTask == BUCKET_BALL)
 			curTaskScore = bucketBall();
@@ -529,16 +535,16 @@ void taskHandler()
 			curTaskScore = pacman();
 		if(whichTask == DINORUN)
 			curTaskScore = dinoRun();
-
+		if(whichTask != NO_GAME)gMyCharacter.positionReset();
 		gTaskScore[whichTask] = curTaskScore;
-		if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask])
-		{
-			gIfTaskComplete[whichTask] = true;
-		}
-		else
-			gTaskScore[whichTask] = 0;
-		gMyCharacter.positionReset();
-	}
+		// if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask] && curTaskScore != 0)
+		// {
+		// 	gIfTaskComplete[whichTask] = true;
+		// }
+		// else
+		// 	gTaskScore[whichTask] = 0;
+		
+	// }
 }
 
 int main(int argc, char *argv[])
@@ -564,12 +570,6 @@ int main(int argc, char *argv[])
 	//Loading map object position and shape
 	gameInitialize();
 
-	//chaning cursor inside the game
-	std::string pathCursor = "images/png/main/cursor.png";
-	SDL_Surface *myCursorSurface = IMG_Load(pathCursor.c_str());
-	SDL_Cursor *myCursor = SDL_CreateColorCursor(myCursorSurface, 0, 0);
-	SDL_SetCursor(myCursor);
-
 	bool quit = false;
 	SDL_Event e;
 
@@ -585,9 +585,9 @@ int main(int argc, char *argv[])
 				quit = true;
 			gMyCharacter.handleEvent(e);
 		}
-		gMyCharacter.move(roomOneObjects);
+		gMyCharacter.move(mapObjects);
 		
-		printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
+		// printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
 
 		//running a task if in correct position
 		taskHandler();
