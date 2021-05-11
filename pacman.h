@@ -11,13 +11,9 @@ int point = 0;
 int missed = 5;
 
 bool if_collided(SDL_Rect a);
-
 bool loadPacmanMedia();
-
 void closePacman();
-
 int pacman();
-
 bool checkWallCollision(SDL_Rect a, SDL_Rect b);
 
 Texture gPacmanTexture;
@@ -218,8 +214,8 @@ void load_map()
 
 bool loadPacmanMedia()
 {
-	int k = gPacmanTexture.loadFile("images/png/pacman.png");
-	k = gPacmanFoodTexture.loadFile("images/png/dot.png");
+	int k = gPacmanTexture.loadFile("images/png/pacman/pacman.png");
+	k = gPacmanFoodTexture.loadFile("images/png/pacman/dot.png");
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -232,6 +228,10 @@ bool loadPacmanMedia()
 void closePacman()
 {
 	gPacmanTexture.free();
+	gPacmanTexture.free();
+	gPacmanFoodTexture.free();
+	gPacmanScoreTexture.free();
+	gPacmanRemainingLivesTexture.free();
 }
 
 bool if_collided(SDL_Rect a)
@@ -337,6 +337,7 @@ bool checkWallCollision(SDL_Rect a, SDL_Rect b)
 
 	return true;
 }
+
 
 void render_food(std::deque<std::pair<PacmanFood, int>> Food_queue)
 {

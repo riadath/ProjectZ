@@ -33,6 +33,10 @@ SDL_Window *gWindow = NULL;
 SDL_Renderer *gRender = NULL;
 TTF_Font *gFont = NULL;
 Mix_Music *gMusic = NULL;
+
+const int LEVEL_WIDTH = 1600;
+const int LEVEL_HEIGHT = 900;
+
 const int SCREEN_WIDTH = 1200;
 const int SCREEN_HEIGHT = 700;
 
@@ -111,7 +115,7 @@ struct Texture
 	}
 
 #if defined(SDL_TTF_MAJOR_VERSION)
-	bool loadFromText(std::string path, SDL_Color textColor)
+	bool loadFromText(std::string path, SDL_Color textColor = {255,255,255})
 	{
 		free();
 		SDL_Surface *textSurface = TTF_RenderText_Solid(gFont, path.c_str(), textColor);
