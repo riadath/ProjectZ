@@ -212,6 +212,7 @@ bool loadDinoMedia()
 bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 {
 	bool tFlag = true;
+	player.w -= 10,player.h -= 10;
 	if (player.x + player.w <= object.x)
 		tFlag = false;
 	if (player.x >= object.x + object.w)
