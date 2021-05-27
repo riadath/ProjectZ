@@ -235,7 +235,7 @@ void spawnBlocks(){
 			gBlockPos[i].first = -1;
 		}else tBlocks.push_back(gBlockPos[i]),tIfCollieded.push_back(gBlockIfCollieded[i]);
 	}
-	int random_intervals[] = {147,79,153,179};
+	int random_intervals[] = {147,253,373,477};
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
 

@@ -404,7 +404,7 @@ void renderMapObjects()
 		gCamera.y = LEVEL_HEIGHT - gCamera.h;
 
 
-	SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+	SDL_SetRenderDrawColor(gRender, 127, 0, 127, 255);
 	SDL_RenderClear(gRender);
 	//render background
 	gBackgroundTexture.render(0, 0, &gCamera);
