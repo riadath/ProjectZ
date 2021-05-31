@@ -197,15 +197,37 @@ enum TASK_NAME
 	DINORUN,
 	NUMBER_OF_TASKS
 };
+enum BUTTONS
+{
+	PLAY,
+	CONTINUE,
+	LOGIN,
+	REGISTER,
+	HELP,
+	EXIT,
+	NUMBER_OF_BUTTONS
+};
+
+enum MENU_OPTIONS
+{
+	FULL_EXIT,
+	START_GAME,
+	LOGIN_MENU,
+	REGISTER_MENU,
+	HELP_MENU
+};
+//Game state paused or initial menu
+BUTTONS gameState = PLAY;
 
 SDL_Rect gCamera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; //Dynamic map variables
+SDL_Rect gTaskPosition[NUMBER_OF_TASKS];//Task positions on map
+SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
 
-//variables for task management
-SDL_Rect gTaskPosition[NUMBER_OF_TASKS];
 bool gIfTaskComplete[NUMBER_OF_TASKS];
 
-int gTaskScore[NUMBER_OF_TASKS];
-int gRequiredTaskScore[NUMBER_OF_TASKS];
+int gTaskScore[NUMBER_OF_TASKS]; 
+int gRequiredTaskScore[NUMBER_OF_TASKS]; //required score in each game
+int gCharCurPosX, gCharCurPosY; //Variable to check the change in characters position
 
 //struct variables
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
@@ -214,14 +236,13 @@ Character gMyCharacter(10, 32, 65);
 const int BUILDING_COUNT = 3;
 const int TREE_COUNT = 3;
 
-int charCurPosX, charCurPosY; //Variable to check the change in characters position
-
 //Texture variables
 Texture gBackgroundTexture;
 Texture gBuildingTexture[BUILDING_COUNT];
 Texture gTreesTexture[TREE_COUNT];
 Texture gTimeTexture;
-
+Texture gUI_Background;
+Texture gUI_Buttons[NUMBER_OF_BUTTONS];
 
 std::vector<SDL_Rect> mapObjects;//List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
@@ -232,24 +253,21 @@ Timer gTimer;
 
 bool loadMedia()
 {
-	if (!gMyCharacter.mCharTexture.loadFile("images/png/main/walk1.png"))
-		return false;
-	if (!gBackgroundTexture.loadFile("images/png/main/background1.png"))
-		return false;
-	if (!gBuildingTexture[0].loadFile("images/png/main/arcade1.png"))
-		return false;
-	if (!gBuildingTexture[1].loadFile("images/png/main/arcade2.png"))
-		return false;
-	if (!gBuildingTexture[2].loadFile("images/png/main/arcade4.png"))
-		return false;
-	if (!gTreesTexture[0].loadFile("images/png/main/tree1.png"))
-		return false;
-	if (!gTreesTexture[1].loadFile("images/png/main/tree2.png"))
-		return false;
-	if (!gTreesTexture[2].loadFile("images/png/main/tree3.png"))
-		return false;
-	if (!gTaskCoinA.mCoinTexture.loadFile("images/png/main/coin.png"))
-		return false;
+	if (!gMyCharacter.mCharTexture.loadFile("images/main/walk1.png"))return false;
+	if (!gBackgroundTexture.loadFile("images/main/background1.png"))return false;
+	if (!gBuildingTexture[0].loadFile("images/main/arcade1.png"))return false;
+	if (!gBuildingTexture[1].loadFile("images/main/arcade2.png"))return false;
+	if (!gBuildingTexture[2].loadFile("images/main/arcade4.png"))return false;
+	if (!gTreesTexture[0].loadFile("images/main/tree1.png"))return false;
+	if (!gTreesTexture[1].loadFile("images/main/tree2.png"))return false;
+	if (!gTreesTexture[2].loadFile("images/main/tree3.png"))return false;
+	if (!gTaskCoinA.mCoinTexture.loadFile("images/main/coin.png"))return false;
+	if(!gUI_Background.loadFile("images/main/ui_back.png"))return false;
+	if(!gUI_Buttons[PLAY].loadFile("images/main/play_button.png"))return false;
+	if(!gUI_Buttons[CONTINUE].loadFile("images/main/continue_button.png"))return false;
+	if(!gUI_Buttons[EXIT].loadFile("images/main/exit_button.png"))return false;
+	if(!gUI_Buttons[LOGIN].loadFile("images/main/login_button.png"))return false;
+	if(!gUI_Buttons[REGISTER].loadFile("images/main/register_button.png"))return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-RegularItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -257,7 +275,7 @@ bool loadMedia()
 		return false;
 	}
 	//chaning cursor inside the game
-	std::string pathCursor = "images/png/main/cursor.png";
+	std::string pathCursor = "images/main/cursor.png";
 	SDL_Surface *myCursorSurface = IMG_Load(pathCursor.c_str());
 	SDL_Cursor *myCursor = SDL_CreateColorCursor(myCursorSurface, 0, 0);
 	SDL_SetCursor(myCursor);
@@ -290,6 +308,7 @@ void gameInitialize()
 	mapObjects.push_back(tRect);
 
 	//Rendering trees on map
+
 	int tempHeight[] = {30, 70, 97};
 	int st = 240;
 	for (int i = st, j = 0,k = 0; k <= 3; i += 210, j = (j + 1) % TREE_COUNT)
@@ -329,6 +348,16 @@ void gameInitialize()
 
 	gRequiredTaskScore[BUCKET_BALL] = 100;
 	gRequiredTaskScore[PACMAN] = 5;
+
+	//Initializing UI button positions
+	for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
+		BUTTONS idx = (BUTTONS)i;
+		gButtonPosition[idx].x = SCREEN_WIDTH/2 - 150;
+		gButtonPosition[idx].y = i * 100 + 100;
+		gButtonPosition[idx].w = 150;
+		gButtonPosition[idx].h = 50;
+	}
+
 }
 
 //Checks collision between objects
@@ -428,18 +457,18 @@ void renderMapObjects()
 	}
 
 	//Checking if player has moved
-	if (charCurPosX != gMyCharacter.mPosX || charCurPosY != gMyCharacter.mPosY)
+	if (gCharCurPosX != gMyCharacter.mPosX || gCharCurPosY != gMyCharacter.mPosY)
 	{
 		gMyCharacter.spriteChanger();
 
-		if (charCurPosX > gMyCharacter.mPosX)
+		if (gCharCurPosX > gMyCharacter.mPosX)
 			gMyCharacter.mFlipType = SDL_FLIP_HORIZONTAL;
-		else if (charCurPosX < gMyCharacter.mPosX)
+		else if (gCharCurPosX < gMyCharacter.mPosX)
 			gMyCharacter.mFlipType = SDL_FLIP_NONE;
 
 		//update character position
-		charCurPosX = gMyCharacter.mPosX;
-		charCurPosY = gMyCharacter.mPosY;
+		gCharCurPosX = gMyCharacter.mPosX;
+		gCharCurPosY = gMyCharacter.mPosY;
 	}
 	else{
 		gMyCharacter.mCurSprite = 0;
@@ -547,6 +576,41 @@ void taskHandler()
 	// }
 }
 
+//UI HANDLING
+void renderUI(){
+
+}
+
+MENU_OPTIONS handleUI(SDL_Event &e){
+	bool quit = false;
+	while(!quit){
+		int mouseX,mouseY;
+		SDL_GetMouseState(&mouseX,&mouseY);
+
+		while(SDL_PollEvent(&e) != 0){
+			if(e.type == SDL_QUIT){
+				quit = true;
+				return FULL_EXIT;
+			}
+			else if(e.type == SDL_MOUSEBUTTONDOWN){
+				if(mouseX >= gButtonPosition[PLAY].x && mouseX <= gButtonPosition[PLAY].x + gButtonPosition[PLAY].w
+				&& mouseY >= gButtonPosition[PLAY].y && mouseY <= gButtonPosition[PLAY].y + gButtonPosition[PLAY].h)return START_GAME;
+			}
+		}
+		//render UI
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gUI_Background.render(0,0);
+		for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
+			gUI_Buttons[i].render(gButtonPosition[i].x,gButtonPosition[i].y);
+		}
+		SDL_RenderPresent(gRender);
+
+		
+	}
+	return FULL_EXIT;
+}
+
 int main(int argc, char *argv[])
 {
 	srand(time(0));
@@ -557,10 +621,6 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	//==================================================
-	// dinoRun();return 0;
-	//===================================================
-
 	if (!loadMedia())
 	{
 		printf("Failed to load media\n");
@@ -570,32 +630,41 @@ int main(int argc, char *argv[])
 	//Loading map object position and shape
 	gameInitialize();
 
-	bool quit = false;
+	
 	SDL_Event e;
 
 	//initial character position to track movement
-	charCurPosX = gMyCharacter.mPosX;
-	charCurPosY = gMyCharacter.mPosY;
+	gCharCurPosX = gMyCharacter.mPosX;
+	gCharCurPosY = gMyCharacter.mPosY;
 
-	while (!quit)
-	{
-		while (SDL_PollEvent(&e) != 0)
+	bool game_quit = false;
+	while(!game_quit){
+		bool quit = true;
+		MENU_OPTIONS menuState = handleUI(e);
+		if(menuState == FULL_EXIT)game_quit = true;
+		if(menuState == START_GAME)quit = false;
+
+		while (!quit)
 		{
-			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))
-				quit = true;
-			gMyCharacter.handleEvent(e);
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if(e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE){
+					quit = true;
+				}	
+				gMyCharacter.handleEvent(e);
+			}
+			gMyCharacter.move(mapObjects);
+			
+			// printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
+
+			//running a task if in correct position
+			taskHandler();
+
+			//rendering all the objects on map
+			renderMapObjects();
+
+			SDL_RenderPresent(gRender);
 		}
-		gMyCharacter.move(mapObjects);
-		
-		// printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
-
-		//running a task if in correct position
-		taskHandler();
-
-		//rendering all the objects on map
-		renderMapObjects();
-
-		SDL_RenderPresent(gRender);
 	}
 	closeAll();
 	return 0;
