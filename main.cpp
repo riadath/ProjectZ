@@ -576,6 +576,7 @@ void taskHandler()
 	// }
 }
 
+bool ifResume = false;
 //UI HANDLING
 void renderUI(){
 
@@ -595,20 +596,38 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 			else if(e.type == SDL_MOUSEBUTTONDOWN){
 				if(mouseX >= gButtonPosition[PLAY].x && mouseX <= gButtonPosition[PLAY].x + gButtonPosition[PLAY].w
 				&& mouseY >= gButtonPosition[PLAY].y && mouseY <= gButtonPosition[PLAY].y + gButtonPosition[PLAY].h)return START_GAME;
+
+				if(mouseX >= gButtonPosition[EXIT].x && mouseX <= gButtonPosition[EXIT].x + gButtonPosition[EXIT].w
+				&& mouseY >= gButtonPosition[EXIT].y && mouseY <= gButtonPosition[EXIT].y + gButtonPosition[EXIT].h)return FULL_EXIT;
+
+				if(mouseX >= gButtonPosition[LOGIN].x && mouseX <= gButtonPosition[LOGIN].x + gButtonPosition[LOGIN].w
+				&& mouseY >= gButtonPosition[LOGIN].y && mouseY <= gButtonPosition[LOGIN].y + gButtonPosition[LOGIN].h)return LOGIN_MENU;
 			}
 		}
 		//render UI
 		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 		SDL_RenderClear(gRender);
 		gUI_Background.render(0,0);
-		for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
-			gUI_Buttons[i].render(gButtonPosition[i].x,gButtonPosition[i].y);
+		int st = 0,skip = -1;
+		if(ifResume){
+			st = 1;
+		}else{
+			skip = 1;
+		}
+		for(int i = st;i < NUMBER_OF_BUTTONS;i++){
+			if(skip != -1 && i == skip)continue;
+			int pos = i;
+			if(i == 1)pos = i - st;
+			gUI_Buttons[i].render(gButtonPosition[pos].x,gButtonPosition[pos].y);
 		}
 		SDL_RenderPresent(gRender);
-
 		
 	}
 	return FULL_EXIT;
+}
+
+void loginUI(){
+
 }
 
 int main(int argc, char *argv[])
@@ -642,8 +661,13 @@ int main(int argc, char *argv[])
 		bool quit = true;
 		MENU_OPTIONS menuState = handleUI(e);
 		if(menuState == FULL_EXIT)game_quit = true;
-		if(menuState == START_GAME)quit = false;
+		if(menuState == START_GAME){
+			quit = false;
+			ifResume = true;
+		}
+		if(menuState == LOGIN_MENU){
 
+		}
 		while (!quit)
 		{
 			while (SDL_PollEvent(&e) != 0)
