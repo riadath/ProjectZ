@@ -1,13 +1,3 @@
-/**
- * @file dinorun.h
- * @author Reyadath Ullah (SH - 33)
- * @brief Infinite Runner Game
- * @version 0.1
- * @date 2021-05-12
- * 
- * @copyright Copyright (c) 2021
- * 
- */
 #ifndef DINORUN_H
 #define DINORUN_H
 
@@ -187,17 +177,17 @@ void freeDino(){
 
 bool loadDinoMedia()
 {
-	if (!gMyPlayer.mPlayerTexture.loadFile("images/png/dino/dino_runner.png"))return false;
-	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/png/dino/dino_bush.png"))return false;
-	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/png/dino/dino_ground.png"))return false;
-	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/png/dino/dino_tree1.png"))return false;
-	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/png/dino/dino_tree3.png"))return false;
-	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/png/dino/dino_tree3.png"))return false;
-	if(!gBgTextureDino[STAR_LAYER_6].loadFile("images/png/dino/dino_star.png"))return false;
-	if(!gBgTextureDino[MOON_LAYER_7].loadFile("images/png/dino/dino_moon.png"))return false;
-	if(!gBlockTexture[BLOCK_T1].loadFile("images/png/dino/block1.png"))return false;
-	if(!gBlockTexture[BLOCK_T2].loadFile("images/png/dino/block2.png"))return false;
-	if(!gBlockTexture[BLOCK_T3].loadFile("images/png/dino/block3.png"))return false;
+	if (!gMyPlayer.mPlayerTexture.loadFile("images/dino/dino_runner.png"))return false;
+	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/dino/dino_bush.png"))return false;
+	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/dino/dino_ground.png"))return false;
+	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/dino/dino_tree1.png"))return false;
+	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/dino/dino_tree3.png"))return false;
+	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/dino/dino_tree3.png"))return false;
+	if(!gBgTextureDino[STAR_LAYER_6].loadFile("images/dino/dino_star.png"))return false;
+	if(!gBgTextureDino[MOON_LAYER_7].loadFile("images/dino/dino_moon.png"))return false;
+	if(!gBlockTexture[BLOCK_T1].loadFile("images/dino/block1.png"))return false;
+	if(!gBlockTexture[BLOCK_T2].loadFile("images/dino/block2.png"))return false;
+	if(!gBlockTexture[BLOCK_T3].loadFile("images/dino/block3.png"))return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -235,13 +225,30 @@ void spawnBlocks(){
 			gBlockPos[i].first = -1;
 		}else tBlocks.push_back(gBlockPos[i]),tIfCollieded.push_back(gBlockIfCollieded[i]);
 	}
-	int random_intervals[] = {147,253,373,477};
+	int random_intervals[] = {57,91,123,187,173,273,1823,753};
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
-
-	if(mSpawnInterval++%random_intervals[rand()%4] == 0){
-		gBlockPos.push_back(std::make_pair(SCREEN_WIDTH + 400,(BLOCK_TYPE)(rand()%BLOCK_COUNT)));
-		gBlockIfCollieded.push_back(false);
+	int divCount = 0;
+	if(mSpawnInterval++%random_intervals[rand()%8] == 0 && (int)gBlockPos.size() < 30){
+		int tWidth = SCREEN_WIDTH + 400;
+		int tBlock = rand()%BLOCK_COUNT;
+		bool if_collision = false;
+		for(int i = 0;i < (int)gBlockPos.size();i++){
+			BLOCK_TYPE block = gBlockPos[i].second;
+			int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
+			SDL_Rect object0 = {gBlockPos[i].first,posY,gBlockTexture[block].getWidth(),gBlockTexture[block].getHeight()};
+			posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[tBlock].getHeight();
+			SDL_Rect object1 = {tWidth,posY,gBlockTexture[tBlock].getWidth(),gBlockTexture[tBlock].getHeight()};
+			if(checkCollisionDino(object0,object1)){
+				if_collision = true;
+				break;
+			}
+		}
+		if(!if_collision){
+			gBlockPos.push_back(std::make_pair(tWidth,(BLOCK_TYPE)tBlock));
+			gBlockIfCollieded.push_back(false);
+		}
+		mSpawnInterval %= 14000;
 	}
 	// if(mSpawnInterval % 12563)mSpawnGap = std::max(53,mSpawnGap - 10);
 }

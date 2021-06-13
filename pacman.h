@@ -214,8 +214,8 @@ void load_map()
 
 bool loadPacmanMedia()
 {
-	int k = gPacmanTexture.loadFile("images/png/pacman/pacman.png");
-	k = gPacmanFoodTexture.loadFile("images/png/pacman/dot.png");
+	int k = gPacmanTexture.loadFile("images/pacman/pacman.png");
+	k = gPacmanFoodTexture.loadFile("images/pacman/dot.png");
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{

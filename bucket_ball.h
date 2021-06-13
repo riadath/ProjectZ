@@ -274,13 +274,13 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 
 bool loadBucketBallMedia()
 {
-	if (!gBackgroundTextureBB.loadFile("images/png/BucketBall/bucketBack1.png"))
+	if (!gBackgroundTextureBB.loadFile("images/BucketBall/bucketBack1.png"))
 		return false;
-	if (!gBallCatcher.mBucketTexture.loadFile("images/png/BucketBall/bucketLava.png"))
+	if (!gBallCatcher.mBucketTexture.loadFile("images/BucketBall/bucketLava.png"))
 		return false;
-	if (!gBallDrop.mBallTexture.loadFile("images/png/BucketBall/ball.png"))
+	if (!gBallDrop.mBallTexture.loadFile("images/BucketBall/ball.png"))
 		return false;
-	if (!gLavaTexture.loadFile("images/png/BucketBall/lavaSplash.png"))
+	if (!gLavaTexture.loadFile("images/BucketBall/lavaSplash.png"))
 		return false;
 
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
