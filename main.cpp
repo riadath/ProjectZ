@@ -2,8 +2,7 @@
 #include "bucket_ball.h"
 #include "pacman.h"
 #include "dinorun.h"
-
-
+#include "tower_game.h"
 
 //function prototypes
 bool init();
@@ -195,6 +194,7 @@ enum TASK_NAME
 	BUCKET_BALL,
 	PACMAN,
 	DINORUN,
+	TOWERGAME,
 	NUMBER_OF_TASKS
 };
 enum BUTTONS
@@ -233,7 +233,7 @@ int gCharCurPosX, gCharCurPosY; //Variable to check the change in characters pos
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
 Character gMyCharacter(10, 32, 65);
 
-const int BUILDING_COUNT = 3;
+const int BUILDING_COUNT = 4;
 const int TREE_COUNT = 3;
 
 //Texture variables
@@ -251,6 +251,50 @@ std::vector<std::tuple<int, int, int>> gTreePositions;
 //global timer
 Timer gTimer;
 
+
+bool init()
+{
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	{
+		ERROR;
+		return false;
+	}
+	gWindow = SDL_CreateWindow("kms", SDL_WINDOWPOS_CENTERED,
+							   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+	if (gWindow == NULL)
+	{
+		ERROR;
+		return false;
+	}
+	if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
+	{
+		printf("Linear texture filtering not enabled\n");
+	}
+	gRender = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	if (gRender == NULL)
+	{
+		ERROR;
+		return false;
+	}
+	SDL_SetRenderDrawColor(gRender, 0xFF, 0xFF, 0xFF, 0xFF);
+	if (!IMG_Init(IMG_INIT_PNG))
+	{
+		ERROR_I;
+		return false;
+	}
+	if (TTF_Init() == -1)
+	{
+		ERROR_T;
+		return false;
+	}
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+	{
+		ERROR_M;
+		return false;
+	}
+	return true;
+}
+
 bool loadMedia()
 {
 	if (!gMyCharacter.mCharTexture.loadFile("images/main/walk1.png"))return false;
@@ -258,6 +302,7 @@ bool loadMedia()
 	if (!gBuildingTexture[0].loadFile("images/main/arcade1.png"))return false;
 	if (!gBuildingTexture[1].loadFile("images/main/arcade2.png"))return false;
 	if (!gBuildingTexture[2].loadFile("images/main/arcade4.png"))return false;
+	if (!gBuildingTexture[3].loadFile("images/main/arcade3.png"))return false;
 	if (!gTreesTexture[0].loadFile("images/main/tree1.png"))return false;
 	if (!gTreesTexture[1].loadFile("images/main/tree2.png"))return false;
 	if (!gTreesTexture[2].loadFile("images/main/tree3.png"))return false;
@@ -307,6 +352,12 @@ void gameInitialize()
 	tRect.w = gBuildingTexture[2].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[2].getHeight() - 20;
 	mapObjects.push_back(tRect);
 
+	tRect.x = 700, tRect.y = 200;
+	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
+	tRect.w = gBuildingTexture[3].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[3].getHeight() - 20;
+	mapObjects.push_back(tRect);
+
+
 	//Rendering trees on map
 
 	int tempHeight[] = {30, 70, 97};
@@ -344,15 +395,22 @@ void gameInitialize()
 	gTaskPosition[PACMAN].w = gTaskCoinA.mCoinHeight;
 	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + gBuildingTexture[2].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
 	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + gBuildingTexture[2].getHeight() - gTaskCoinA.mCoinHeight;
+	
+	gTaskPosition[TOWERGAME].h = gTaskCoinA.mCoinWidth;
+	gTaskPosition[TOWERGAME].w = gTaskCoinA.mCoinHeight;
+	gTaskPosition[TOWERGAME].x = gBuildingPositions[3].first + gBuildingTexture[3].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[TOWERGAME].y = gBuildingPositions[3].second + gBuildingTexture[3].getHeight() - gTaskCoinA.mCoinHeight;
 
 
 	gRequiredTaskScore[BUCKET_BALL] = 100;
 	gRequiredTaskScore[PACMAN] = 5;
+	gRequiredTaskScore[TOWERGAME] = 400;
+	gRequiredTaskScore[DINORUN] = 5000;
 
 	//Initializing UI button positions
 	for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
 		BUTTONS idx = (BUTTONS)i;
-		gButtonPosition[idx].x = SCREEN_WIDTH/2 - 150;
+		gButtonPosition[idx].x = SCREEN_WIDTH/2 - 120;
 		gButtonPosition[idx].y = i * 100 + 100;
 		gButtonPosition[idx].w = 150;
 		gButtonPosition[idx].h = 50;
@@ -449,7 +507,7 @@ void renderMapObjects()
 		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]) - gCamera.x, std::get<2>(gTreePositions[i]) - gCamera.y);
 	}
 
-	//rendering coin animation at task positions
+	//rendering coin animation at task positions 	
 	for (int i = 0; i < NUMBER_OF_TASKS; i++)
 	{
 		if (!gIfTaskComplete[i])
@@ -482,49 +540,6 @@ void renderMapObjects()
 	gTimeTexture.render(SCREEN_WIDTH - 100, 0);
 
 	gMyCharacter.render(gCamera.x, gCamera.y);
-}
-
-bool init()
-{
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-	{
-		ERROR;
-		return false;
-	}
-	gWindow = SDL_CreateWindow("kms", SDL_WINDOWPOS_CENTERED,
-							   SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-	if (gWindow == NULL)
-	{
-		ERROR;
-		return false;
-	}
-	if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"))
-	{
-		printf("Linear texture filtering not enabled\n");
-	}
-	gRender = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (gRender == NULL)
-	{
-		ERROR;
-		return false;
-	}
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0xFF, 0xFF, 0xFF);
-	if (!IMG_Init(IMG_INIT_PNG))
-	{
-		ERROR_I;
-		return false;
-	}
-	if (TTF_Init() == -1)
-	{
-		ERROR_T;
-		return false;
-	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
-	{
-		ERROR_M;
-		return false;
-	}
-	return true;
 }
 
 //checks collision between two objects
@@ -564,6 +579,8 @@ void taskHandler()
 			curTaskScore = pacman();
 		if(whichTask == DINORUN)
 			curTaskScore = dinoRun();
+		if(whichTask == TOWERGAME)
+			curTaskScore = towerGame();
 		if(whichTask != NO_GAME)gMyCharacter.positionReset();
 		gTaskScore[whichTask] = curTaskScore;
 		// if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask] && curTaskScore != 0)
@@ -646,6 +663,10 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	//====================================
+	// int pp = towerGame();
+
+
 	//Loading map object position and shape
 	gameInitialize();
 
@@ -668,6 +689,7 @@ int main(int argc, char *argv[])
 		if(menuState == LOGIN_MENU){
 
 		}
+
 		while (!quit)
 		{
 			while (SDL_PollEvent(&e) != 0)

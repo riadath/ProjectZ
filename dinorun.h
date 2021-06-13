@@ -225,13 +225,30 @@ void spawnBlocks(){
 			gBlockPos[i].first = -1;
 		}else tBlocks.push_back(gBlockPos[i]),tIfCollieded.push_back(gBlockIfCollieded[i]);
 	}
-	int random_intervals[] = {187,173,273,1823,753};
+	int random_intervals[] = {57,91,123,187,173,273,1823,753};
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
 	int divCount = 0;
-	if(mSpawnInterval++%random_intervals[rand()%5] == 0){
-		gBlockPos.push_back(std::make_pair(SCREEN_WIDTH + 400,(BLOCK_TYPE)(rand()%BLOCK_COUNT)));
-		gBlockIfCollieded.push_back(false);
+	if(mSpawnInterval++%random_intervals[rand()%8] == 0 && (int)gBlockPos.size() < 30){
+		int tWidth = SCREEN_WIDTH + 400;
+		int tBlock = rand()%BLOCK_COUNT;
+		bool if_collision = false;
+		for(int i = 0;i < (int)gBlockPos.size();i++){
+			BLOCK_TYPE block = gBlockPos[i].second;
+			int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
+			SDL_Rect object0 = {gBlockPos[i].first,posY,gBlockTexture[block].getWidth(),gBlockTexture[block].getHeight()};
+			posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[tBlock].getHeight();
+			SDL_Rect object1 = {tWidth,posY,gBlockTexture[tBlock].getWidth(),gBlockTexture[tBlock].getHeight()};
+			if(checkCollisionDino(object0,object1)){
+				if_collision = true;
+				break;
+			}
+		}
+		if(!if_collision){
+			gBlockPos.push_back(std::make_pair(tWidth,(BLOCK_TYPE)tBlock));
+			gBlockIfCollieded.push_back(false);
+		}
+		mSpawnInterval %= 14000;
 	}
 	// if(mSpawnInterval % 12563)mSpawnGap = std::max(53,mSpawnGap - 10);
 }
