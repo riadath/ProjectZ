@@ -18,8 +18,6 @@ std::deque<SDL_Rect>Platforms;
 
 int y_coordinate;
 
-bool init();
-
 bool checkCollision_tower( SDL_Rect man,SDL_Rect plat );
 
 bool Towerman_Collided_With_Platform( SDL_Rect A );
@@ -152,6 +150,8 @@ struct Towerman
 
 	}
 };
+ Towerman Man;
+
 
 bool Towerman_Collided_With_Platform( SDL_Rect A )
 {
@@ -285,12 +285,16 @@ void load_Tower()
 
 int towerGame()
 {
+    Platforms.clear();
+    Man.mPosY = -30;
+    Man.mPosX = 160; 
+
     loadTowerMedia();	
     bool quit = false;
 
     SDL_Event e;
 
-    Towerman Man;
+   
     int scrollingOffset = 0;
     int scrollingSpeed = 2;
 
