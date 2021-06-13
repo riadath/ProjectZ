@@ -10,16 +10,16 @@ int TOTAL_LIVES;
 Texture gLavaTexture;
 int gCurLavaSprite = 0;
 int gLavaDuration = 0;
-const int gLavaWidth = 59, gLavaHeight = 53;
+const int gLavaWidth = 59;
+const int gLavaHeight = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
-//strings for prompting score and health
-std::stringstream scoreText, liveText, timeText;
-//background texture
-Texture gBackgroundTextureBB;
-//score and health texture
-Texture gLiveTexture, gScoreTexture;
+std::stringstream scoreText, liveText;//strings for prompting score and health
+
+Texture gBackgroundTextureBB;//background texture
+Texture gLiveTexture;//score and health texture
+Texture gScoreTexture;
 
 Mix_Chunk *gSplash = NULL;
 
@@ -27,13 +27,13 @@ enum COLLISION_TYPE
 {
 	NO_COLLISION,
 	WALL_COLLISION,
-	BUCKET_COLLSIION
+	BUCKET_COLLSION
 };
 
 //function prototypes
 void initVariable();
 void closeBB();
-void renderRoomBB();
+void renderMapBB();
 bool loadBucketBallMedia();
 int bucketBall();
 void lavaAnimation();
@@ -116,18 +116,17 @@ struct Ball
 	int mSpawnInterval;
 	int mBallDropSpeed;
 
-	Timer mTimer;
-
 	//variables for time management
+	Timer mTimer;
 	Uint32 mPrevTime1;
 	Uint32 mPrevTime2;
-
+	
 	Texture mBallTexture;
 
 	SDL_Rect mBallShape;
 	SDL_Rect mBallSprite[8];
 
-	//Ball poistion and sprite number
+	//Ball position and sprite number
 	std::vector<std::pair<int, SDL_Rect>> mBallRects;
 
 	Ball()
@@ -170,11 +169,11 @@ struct Ball
 		{
 			COLLISION_TYPE whatCol = checkCollision(bucketShape, mBallRects[i].second);
 
-			if (whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSIION)
+			if (whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSION)
 			{
 				mBallRects[i].second.w = -1, mBallRects[i].second.h = -1;
 
-				if (whatCol == BUCKET_COLLSIION)
+				if (whatCol == BUCKET_COLLSION)
 				{
 					TOTAL_POINTS += mEachCatchScore;
 					gLavaDuration = 10;
@@ -234,6 +233,7 @@ void closeBB()
 	gScoreTexture.free();
 }
 
+
 COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 {
 	if (ballShape.y + ballShape.h < SCREEN_HEIGHT - bucketShape.h)
@@ -251,7 +251,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 	if (ifBucketCol)
 	{
 		Mix_PlayChannel(2, gSplash, 0);
-		return BUCKET_COLLSIION;
+		return BUCKET_COLLSION;
 	}
 
 	else
@@ -265,13 +265,13 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 
 bool loadBucketBallMedia()
 {
-	if (!gBackgroundTextureBB.loadFile("images/png/bucketBack.png"))
+	if (!gBackgroundTextureBB.loadFile("images/BucketBall/bucketBack1.png"))
 		return false;
-	if (!gBallCatcher.mBucketTexture.loadFile("images/png/bucketLava.png"))
+	if (!gBallCatcher.mBucketTexture.loadFile("images/BucketBall/bucketLava.png"))
 		return false;
-	if (!gBallDrop.mBallTexture.loadFile("images/png/ball.png"))
+	if (!gBallDrop.mBallTexture.loadFile("images/BucketBall/ball.png"))
 		return false;
-	if (!gLavaTexture.loadFile("images/png/lavaSplash.png"))
+	if (!gLavaTexture.loadFile("images/BucketBall/lavaSplash.png"))
 		return false;
 
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
@@ -306,7 +306,7 @@ void lavaAnimation()
 	gLavaTexture.render(posX, posY, &gLavaSprite[gCurLavaSprite++ % LAVA_SPRITE_COUNT]);
 }
 
-void renderRoomBB()
+void renderMapBB()
 {
 	SDL_Color textColor = {0, 0, 0, 255};
 	scoreText.str("");
@@ -357,7 +357,7 @@ int bucketBall()
 			quit = true;
 
 		gBallCatcher.move();
-		renderRoomBB();
+		renderMapBB();
 		SDL_RenderPresent(gRender);
 	}
 	closeBB();
