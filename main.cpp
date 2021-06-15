@@ -201,9 +201,9 @@ enum BUTTONS
 {
 	PLAY,
 	CONTINUE,
+	HELP,
 	LOGIN,
 	REGISTER,
-	HELP,
 	EXIT,
 	NUMBER_OF_BUTTONS
 };
@@ -224,10 +224,12 @@ SDL_Rect gTaskPosition[NUMBER_OF_TASKS];//Task positions on map
 SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
 
 bool gIfTaskComplete[NUMBER_OF_TASKS];
+bool ifResume = false; //Checks if the game is resumed or not
 
 int gTaskScore[NUMBER_OF_TASKS]; 
 int gRequiredTaskScore[NUMBER_OF_TASKS]; //required score in each game
 int gCharCurPosX, gCharCurPosY; //Variable to check the change in characters position
+int gCOIN_COUNT = 5;  //5 coins for new users. (will be loaded from file for older users)
 
 //struct variables
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
@@ -295,6 +297,82 @@ bool init()
 	return true;
 }
 
+//Checks collision between objects
+bool checkCollision(SDL_Rect player, std::vector<SDL_Rect> objects)
+{
+	bool flag = false;
+	//getting the relative position of player
+	player.x -= gCamera.x;
+	player.y -= gCamera.y;
+	player.w -= 10;
+	player.h -= 5;
+	for (int i = 0; i < (int)objects.size(); i++)
+	{
+		bool tFlag = true;
+		objects[i].x -= gCamera.x, objects[i].y -= gCamera.y;
+		if (player.x + player.w <= objects[i].x)
+			tFlag = false;
+		if (player.x >= objects[i].x + objects[i].w)
+			tFlag = false;
+		if (player.y + player.h <= objects[i].y)
+			tFlag = false;
+		if (player.y >= objects[i].y + objects[i].h)
+			tFlag = false;
+		if (tFlag)
+		{
+			flag = true;
+			break;
+		}
+	}
+	return flag;
+}
+
+//checks collision between two objects
+bool checkCollisionRect(SDL_Rect player, SDL_Rect object)
+{
+	bool tFlag = true;
+	player.x -= gCamera.x, player.y -= gCamera.y;
+	object.x -= gCamera.x, object.y -= gCamera.y;
+	if (player.x + player.w <= object.x)
+		tFlag = false;
+	if (player.x >= object.x + object.w)
+		tFlag = false;
+	if (player.y + player.h <= object.y)
+		tFlag = false;
+	if (player.y >= object.y + object.h)
+		tFlag = false;
+	return tFlag;
+}
+
+void closeAll()
+{
+	SDL_DestroyWindow(gWindow);
+	SDL_DestroyRenderer(gRender);
+	Mix_FreeMusic(gMusic);
+	TTF_CloseFont(gFont);
+	gTimer.stop();
+	gMyCharacter.free();
+	gBackgroundTexture.free();
+	gTaskCoinA.free();
+	gTimeTexture.free();
+
+	for (int i = 0; i < BUILDING_COUNT; i++)gBuildingTexture[i].free();
+	for (int i = 0; i < TREE_COUNT; i++)gTreesTexture[i].free();
+
+	mapObjects.clear();
+	gBuildingPositions.clear();
+	gTreePositions.clear();
+
+	gWindow = NULL;
+	gRender = NULL;
+	gMusic = NULL;
+	gFont = NULL;
+	IMG_Quit();
+	TTF_Quit();
+	SDL_Quit();
+	Mix_Quit();
+}
+
 bool loadMedia()
 {
 	if (!gMyCharacter.mCharTexture.loadFile("images/main/walk1.png"))return false;
@@ -313,6 +391,7 @@ bool loadMedia()
 	if(!gUI_Buttons[EXIT].loadFile("images/main/exit_button.png"))return false;
 	if(!gUI_Buttons[LOGIN].loadFile("images/main/login_button.png"))return false;
 	if(!gUI_Buttons[REGISTER].loadFile("images/main/register_button.png"))return false;
+	if(!gUI_Buttons[HELP].loadFile("images/main/help_button.png"))return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-RegularItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -352,7 +431,7 @@ void gameInitialize()
 	tRect.w = gBuildingTexture[2].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[2].getHeight() - 20;
 	mapObjects.push_back(tRect);
 
-	tRect.x = 700, tRect.y = 200;
+	tRect.x = 1120, tRect.y = 150;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[3].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[3].getHeight() - 20;
 	mapObjects.push_back(tRect);
@@ -409,72 +488,13 @@ void gameInitialize()
 
 	//Initializing UI button positions
 	for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
-		BUTTONS idx = (BUTTONS)i;
-		gButtonPosition[idx].x = SCREEN_WIDTH/2 - 120;
-		gButtonPosition[idx].y = i * 100 + 100;
-		gButtonPosition[idx].w = 150;
-		gButtonPosition[idx].h = 50;
+		gButtonPosition[i].x = SCREEN_WIDTH/2 - 309/2;
+		gButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
+		gButtonPosition[i].w = 309;
+		gButtonPosition[i].h = 55;
 	}
+	gButtonPosition[CONTINUE] = gButtonPosition[PLAY];
 
-}
-
-//Checks collision between objects
-bool checkCollision(SDL_Rect player, std::vector<SDL_Rect> objects)
-{
-	bool flag = false;
-	//getting the relative position of player
-	player.x -= gCamera.x;
-	player.y -= gCamera.y;
-	player.w -= 10;
-	player.h -= 5;
-	for (int i = 0; i < (int)objects.size(); i++)
-	{
-		bool tFlag = true;
-		objects[i].x -= gCamera.x, objects[i].y -= gCamera.y;
-		if (player.x + player.w <= objects[i].x)
-			tFlag = false;
-		if (player.x >= objects[i].x + objects[i].w)
-			tFlag = false;
-		if (player.y + player.h <= objects[i].y)
-			tFlag = false;
-		if (player.y >= objects[i].y + objects[i].h)
-			tFlag = false;
-		if (tFlag)
-		{
-			flag = true;
-			break;
-		}
-	}
-	return flag;
-}
-
-void closeAll()
-{
-	SDL_DestroyWindow(gWindow);
-	SDL_DestroyRenderer(gRender);
-	Mix_FreeMusic(gMusic);
-	TTF_CloseFont(gFont);
-	gTimer.stop();
-	gMyCharacter.free();
-	gBackgroundTexture.free();
-	gTaskCoinA.free();
-	gTimeTexture.free();
-
-	for (int i = 0; i < BUILDING_COUNT; i++)gBuildingTexture[i].free();
-	for (int i = 0; i < TREE_COUNT; i++)gTreesTexture[i].free();
-
-	mapObjects.clear();
-	gBuildingPositions.clear();
-	gTreePositions.clear();
-
-	gWindow = NULL;
-	gRender = NULL;
-	gMusic = NULL;
-	gFont = NULL;
-	IMG_Quit();
-	TTF_Quit();
-	SDL_Quit();
-	Mix_Quit();
 }
 
 //Rendering all the objects in the map
@@ -542,23 +562,6 @@ void renderMapObjects()
 	gMyCharacter.render(gCamera.x, gCamera.y);
 }
 
-//checks collision between two objects
-bool checkCollisionRect(SDL_Rect player, SDL_Rect object)
-{
-	bool tFlag = true;
-	player.x -= gCamera.x, player.y -= gCamera.y;
-	object.x -= gCamera.x, object.y -= gCamera.y;
-	if (player.x + player.w <= object.x)
-		tFlag = false;
-	if (player.x >= object.x + object.w)
-		tFlag = false;
-	if (player.y + player.h <= object.y)
-		tFlag = false;
-	if (player.y >= object.y + object.h)
-		tFlag = false;
-	return tFlag;
-}
-
 //runs a specific task depending on the players position
 void taskHandler()
 {
@@ -593,17 +596,22 @@ void taskHandler()
 	// }
 }
 
-bool ifResume = false;
-//UI HANDLING
-void renderUI(){
-
-}
-
 MENU_OPTIONS handleUI(SDL_Event &e){
 	bool quit = false;
+	int menuScroll = 0;
 	while(!quit){
 		int mouseX,mouseY;
 		SDL_GetMouseState(&mouseX,&mouseY);
+
+		// Mouse hover animation on button
+
+		for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
+			gUI_Buttons[i].setAlpha(255);
+			if(mouseX >= gButtonPosition[i].x && mouseX <= gButtonPosition[i].x + gButtonPosition[i].w
+			&& mouseY >= gButtonPosition[i].y && mouseY <= gButtonPosition[i].y + gButtonPosition[i].h){
+				gUI_Buttons[i].setAlpha(200);
+			}
+		}
 
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT){
@@ -611,20 +619,27 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 				return FULL_EXIT;
 			}
 			else if(e.type == SDL_MOUSEBUTTONDOWN){
+
 				if(mouseX >= gButtonPosition[PLAY].x && mouseX <= gButtonPosition[PLAY].x + gButtonPosition[PLAY].w
 				&& mouseY >= gButtonPosition[PLAY].y && mouseY <= gButtonPosition[PLAY].y + gButtonPosition[PLAY].h)return START_GAME;
-
+				
 				if(mouseX >= gButtonPosition[EXIT].x && mouseX <= gButtonPosition[EXIT].x + gButtonPosition[EXIT].w
 				&& mouseY >= gButtonPosition[EXIT].y && mouseY <= gButtonPosition[EXIT].y + gButtonPosition[EXIT].h)return FULL_EXIT;
 
 				if(mouseX >= gButtonPosition[LOGIN].x && mouseX <= gButtonPosition[LOGIN].x + gButtonPosition[LOGIN].w
 				&& mouseY >= gButtonPosition[LOGIN].y && mouseY <= gButtonPosition[LOGIN].y + gButtonPosition[LOGIN].h)return LOGIN_MENU;
+
+				if(mouseX >= gButtonPosition[HELP].x && mouseX <= gButtonPosition[HELP].x + gButtonPosition[HELP].w
+				&& mouseY >= gButtonPosition[HELP].y && mouseY <= gButtonPosition[HELP].y + gButtonPosition[HELP].h)return HELP_MENU;
 			}
 		}
 		//render UI
 		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 		SDL_RenderClear(gRender);
-		gUI_Background.render(0,0);
+		menuScroll -= 2;
+		if(menuScroll < -SCREEN_WIDTH)menuScroll = 0;
+		gUI_Background.render(menuScroll,0);
+		gUI_Background.render(menuScroll + SCREEN_WIDTH,0);
 		int st = 0,skip = -1;
 		if(ifResume){
 			st = 1;
@@ -643,9 +658,10 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 	return FULL_EXIT;
 }
 
-void loginUI(){
+MENU_OPTIONS loginUI(){
 
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -663,9 +679,6 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	//====================================
-	// int pp = towerGame();
-
 
 	//Loading map object position and shape
 	gameInitialize();
@@ -681,15 +694,15 @@ int main(int argc, char *argv[])
 	while(!game_quit){
 		bool quit = true;
 		MENU_OPTIONS menuState = handleUI(e);
+		if(menuState == LOGIN_MENU){
+			menuState = loginUI();
+		}
 		if(menuState == FULL_EXIT)game_quit = true;
 		if(menuState == START_GAME){
 			quit = false;
 			ifResume = true;
 		}
-		if(menuState == LOGIN_MENU){
-
-		}
-
+		
 		while (!quit)
 		{
 			while (SDL_PollEvent(&e) != 0)
