@@ -16,6 +16,7 @@
 #include <time.h>
 #include <tuple>
 #include <utility>
+#include <fstream>
 #include <deque>
 
 #include <SDL2/SDL.h>

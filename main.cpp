@@ -205,6 +205,7 @@ enum BUTTONS
 	LOGIN,
 	REGISTER,
 	EXIT,
+	BACK,
 	NUMBER_OF_BUTTONS
 };
 
@@ -214,7 +215,8 @@ enum MENU_OPTIONS
 	START_GAME,
 	LOGIN_MENU,
 	REGISTER_MENU,
-	HELP_MENU
+	HELP_MENU,
+	LOADING_SCREEN
 };
 //Game state paused or initial menu
 BUTTONS gameState = PLAY;
@@ -243,8 +245,11 @@ Texture gBackgroundTexture;
 Texture gBuildingTexture[BUILDING_COUNT];
 Texture gTreesTexture[TREE_COUNT];
 Texture gTimeTexture;
-Texture gUI_Background;
-Texture gUI_Buttons[NUMBER_OF_BUTTONS];
+Texture gUI_BackgroundTexture;
+Texture gUI_ButtonsTexture[NUMBER_OF_BUTTONS];
+Texture gUI_LoginTexture;
+Texture gUI_LoginEnterTexture;
+Texture gCoinCountTexture;
 
 std::vector<SDL_Rect> mapObjects;//List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
@@ -385,14 +390,17 @@ bool loadMedia()
 	if (!gTreesTexture[1].loadFile("images/main/tree2.png"))return false;
 	if (!gTreesTexture[2].loadFile("images/main/tree3.png"))return false;
 	if (!gTaskCoinA.mCoinTexture.loadFile("images/main/coin.png"))return false;
-	if(!gUI_Background.loadFile("images/main/ui_back.png"))return false;
-	if(!gUI_Buttons[PLAY].loadFile("images/main/play_button.png"))return false;
-	if(!gUI_Buttons[CONTINUE].loadFile("images/main/continue_button.png"))return false;
-	if(!gUI_Buttons[EXIT].loadFile("images/main/exit_button.png"))return false;
-	if(!gUI_Buttons[LOGIN].loadFile("images/main/login_button.png"))return false;
-	if(!gUI_Buttons[REGISTER].loadFile("images/main/register_button.png"))return false;
-	if(!gUI_Buttons[HELP].loadFile("images/main/help_button.png"))return false;
-	gFont = TTF_OpenFont("images/fonts/Oswald-RegularItalic.ttf", 24);
+	if(!gUI_BackgroundTexture.loadFile("images/main/ui_back.png"))return false;
+	if(!gUI_ButtonsTexture[PLAY].loadFile("images/main/play_button.png"))return false;
+	if(!gUI_ButtonsTexture[CONTINUE].loadFile("images/main/continue_button.png"))return false;
+	if(!gUI_ButtonsTexture[EXIT].loadFile("images/main/exit_button.png"))return false;
+	if(!gUI_ButtonsTexture[LOGIN].loadFile("images/main/login_button.png"))return false;
+	if(!gUI_ButtonsTexture[REGISTER].loadFile("images/main/register_button.png"))return false;
+	if(!gUI_ButtonsTexture[HELP].loadFile("images/main/help_button.png"))return false;
+	if(!gUI_ButtonsTexture[BACK].loadFile("images/main/back_button.png"))return false;
+	if(!gUI_LoginTexture.loadFile("images/main/login_back.png"))return false;
+	if(!gUI_LoginEnterTexture.loadFile("images/main/login_enter.png"))return false;
+	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 24);
 	if (gFont == NULL)
 	{
 		ERROR_T;
@@ -494,6 +502,8 @@ void gameInitialize()
 		gButtonPosition[i].h = 55;
 	}
 	gButtonPosition[CONTINUE] = gButtonPosition[PLAY];
+	gButtonPosition[BACK].x = 0,gButtonPosition[BACK].y = 0;
+	gButtonPosition[BACK].w = 50,gButtonPosition[BACK].h = 50;
 
 }
 
@@ -554,10 +564,15 @@ void renderMapObjects()
 
 	//rendering time prompt
 	SDL_Color textColor = {0, 0, 0, 255};
-	std::stringstream gTimerText;
-	gTimerText << "Timer : " << gTimer.getTicks() / 1000;
-	gTimeTexture.loadFromText(gTimerText.str().c_str(), textColor);
+	std::stringstream timerText;
+	timerText << "Timer : " << gTimer.getTicks() / 1000;
+	gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
 	gTimeTexture.render(SCREEN_WIDTH - 100, 0);
+
+	std::stringstream coinText;
+	coinText << "Coins : "<<gCOIN_COUNT;
+	gCoinCountTexture.loadFromText(coinText.str().c_str(),textColor);
+	gCoinCountTexture.render(0,0);
 
 	gMyCharacter.render(gCamera.x, gCamera.y);
 }
@@ -572,29 +587,19 @@ void taskHandler()
 			whichTask = (TASK_NAME)i;
 	}
 
-	//Run the task if it's not completed yet
-	// if (!gIfTaskComplete[whichTask])
-	// {
 		int curTaskScore = 0;
 		if (whichTask == BUCKET_BALL)
-			curTaskScore = bucketBall();
+			curTaskScore = bucketBall(),gCOIN_COUNT -= 1;
 		if (whichTask == PACMAN)
-			curTaskScore = pacman();
+			curTaskScore = pacman(),gCOIN_COUNT -= 1;
 		if(whichTask == DINORUN)
-			curTaskScore = dinoRun();
+			curTaskScore = dinoRun(),gCOIN_COUNT -= 1;
 		if(whichTask == TOWERGAME)
-			curTaskScore = towerGame();
+			curTaskScore = towerGame(),gCOIN_COUNT -= 1;
 		if(whichTask != NO_GAME)gMyCharacter.positionReset();
 		gTaskScore[whichTask] = curTaskScore;
-		// if (gTaskScore[whichTask] >= gRequiredTaskScore[whichTask] && curTaskScore != 0)
-		// {
-		// 	gIfTaskComplete[whichTask] = true;
-		// }
-		// else
-		// 	gTaskScore[whichTask] = 0;
-		
-	// }
 }
+
 
 MENU_OPTIONS handleUI(SDL_Event &e){
 	bool quit = false;
@@ -606,10 +611,10 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 		// Mouse hover animation on button
 
 		for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
-			gUI_Buttons[i].setAlpha(255);
+			gUI_ButtonsTexture[i].setAlpha(255);
 			if(mouseX >= gButtonPosition[i].x && mouseX <= gButtonPosition[i].x + gButtonPosition[i].w
 			&& mouseY >= gButtonPosition[i].y && mouseY <= gButtonPosition[i].y + gButtonPosition[i].h){
-				gUI_Buttons[i].setAlpha(200);
+				gUI_ButtonsTexture[i].setAlpha(200);
 			}
 		}
 
@@ -638,28 +643,128 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 		SDL_RenderClear(gRender);
 		menuScroll -= 2;
 		if(menuScroll < -SCREEN_WIDTH)menuScroll = 0;
-		gUI_Background.render(menuScroll,0);
-		gUI_Background.render(menuScroll + SCREEN_WIDTH,0);
+		gUI_BackgroundTexture.render(menuScroll,0);
+		gUI_BackgroundTexture.render(menuScroll + SCREEN_WIDTH,0);
 		int st = 0,skip = -1;
 		if(ifResume){
 			st = 1;
 		}else{
 			skip = 1;
 		}
-		for(int i = st;i < NUMBER_OF_BUTTONS;i++){
+		for(int i = st;i < NUMBER_OF_BUTTONS-1;i++){
 			if(skip != -1 && i == skip)continue;
 			int pos = i;
 			if(i == 1)pos = i - st;
-			gUI_Buttons[i].render(gButtonPosition[pos].x,gButtonPosition[pos].y);
+			gUI_ButtonsTexture[i].render(gButtonPosition[pos].x,gButtonPosition[pos].y);
 		}
+
 		SDL_RenderPresent(gRender);
 		
 	}
 	return FULL_EXIT;
 }
 
-MENU_OPTIONS loginUI(){
+MENU_OPTIONS loginUI(SDL_Event &e){
+	bool quit = false;
+	int invalidPromptDelay = 0;
+	SDL_Color textColor = {255,255,255,255};
+	SDL_Rect loginEnter = {570,250,150,27};
+	Texture inputTexture,promptTexture,invalidTexture;
+	std::string inputText = "Username";
+	promptTexture.loadFromText(inputText.c_str(),textColor);
+	inputText = "Invalid Username";
+	invalidTexture.loadFromText(inputText.c_str(),textColor);
+	inputText = "";
+	while(!quit){
+		bool ifRender = false;
+		int mouseX,mouseY;
+		SDL_GetMouseState(&mouseX,&mouseY);
 
+		while(SDL_PollEvent(&e) != 0){
+			if(e.type == SDL_QUIT){
+				quit = true;
+				return FULL_EXIT;
+			}
+			else if(e.type == SDL_MOUSEBUTTONDOWN){
+
+				if(mouseX >= gButtonPosition[BACK].x && mouseX <= gButtonPosition[BACK].x + gButtonPosition[BACK].w 
+				&& mouseY >= gButtonPosition[BACK].y && mouseY <= gButtonPosition[BACK].y + gButtonPosition[BACK].h){
+					return LOADING_SCREEN;
+				}else if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
+				&& mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h){
+					//check username
+					bool flag = false;
+					std::ifstream usernameFile;
+					usernameFile.open("saved_files/username.in");
+					if(!usernameFile){
+						printf("Could not open file\n");
+					}
+					std::string tStr;
+					int tCoin;
+				
+					while(usernameFile.eof() == false){
+						usernameFile>>tStr>>tCoin;
+						if(tStr == inputText){
+							flag = true;
+							gCOIN_COUNT = tCoin;
+						}
+						// std::cout<<tStr<<"----"<<tCoin<<"\n";
+					}
+					usernameFile.close();
+					if(flag)
+						return START_GAME;
+					else{
+						invalidPromptDelay = 20;
+					}
+				}
+			}
+			else if(e.type == SDL_KEYDOWN){
+				if(e.ksym == SDLK_ESCAPE){
+					return LOADING_SCREEN;
+				}
+				else if(e.ksym == SDLK_BACKSPACE && inputText.size() > 0){
+					inputText.pop_back();
+					ifRender = true;
+				}
+				else if(e.ksym == SDLK_c && SDL_GetModState() && KMOD_CTRL){
+					SDL_SetClipboardText(inputText.c_str());
+				}
+				else if(e.ksym == SDLK_v && SDL_GetModState() && KMOD_CTRL){
+					inputText = SDL_GetClipboardText();
+					ifRender = true;
+				}
+			}
+			else if(e.type == SDL_TEXTINPUT)
+			{
+				if(!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || 
+				e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V') ) ){
+					inputText += e.text.text;
+					ifRender = true;
+				}
+			}
+		}
+		if(ifRender){
+			if(inputText != "")inputTexture.loadFromText(inputText.c_str(),textColor);
+			else inputTexture.loadFromText(" ",textColor);
+		}
+		SDL_SetRenderDrawColor( gRender, 255, 255, 255, 255 );
+		SDL_RenderClear( gRender );
+		gUI_LoginTexture.render(0,0);
+		printf("%d\n",invalidPromptDelay);
+		if(invalidPromptDelay > 0){	
+			invalidTexture.render(500,150);
+			invalidPromptDelay -= 1;
+		}else{
+			promptTexture.render(600,150);
+		}
+		SDL_Rect usernameBox = {450,180,400,65};
+		SDL_RenderDrawRect(gRender,&usernameBox);
+		inputTexture.render(450,180);
+		gUI_LoginEnterTexture.render(loginEnter.x,loginEnter.y);
+		gUI_ButtonsTexture[BACK].render(gButtonPosition[BACK].x,gButtonPosition[BACK].y);
+		SDL_RenderPresent(gRender);
+	}
+	return LOGIN_MENU;
 }
 
 
@@ -693,9 +798,13 @@ int main(int argc, char *argv[])
 	bool game_quit = false;
 	while(!game_quit){
 		bool quit = true;
-		MENU_OPTIONS menuState = handleUI(e);
+		MENU_OPTIONS menuState = LOADING_SCREEN;
+
+		if(menuState == LOADING_SCREEN){
+			menuState = handleUI(e);
+		}
 		if(menuState == LOGIN_MENU){
-			menuState = loginUI();
+			menuState = loginUI(e);
 		}
 		if(menuState == FULL_EXIT)game_quit = true;
 		if(menuState == START_GAME){
@@ -710,6 +819,10 @@ int main(int argc, char *argv[])
 				if(e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE){
 					quit = true;
 				}	
+				else if(e.type == SDL_QUIT){
+					quit = true;
+					game_quit = true;
+				}
 				gMyCharacter.handleEvent(e);
 			}
 			gMyCharacter.move(mapObjects);
