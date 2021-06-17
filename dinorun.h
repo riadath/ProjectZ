@@ -286,16 +286,15 @@ void spawnObjects()
 	{
 		printf("Time : %d\n", curTime);
 		gPrevTime = curTime;
-		gBlockSpawnGap = std::max(110, gBlockSpawnGap - 20);
+		gBlockSpawnGap = std::max(100, gBlockSpawnGap - 10);
 
-		int tX = SCREEN_WIDTH + 200;
+		int tX = SCREEN_WIDTH;
 		bool if_collision = false;
 		for (int i = 0; i < gBlockPos.size(); i++)
 		{
-			if (abs(gBlockPos[i].first - tX) < 50)
+			if (abs(gBlockPos[i].first - tX) < 100)
 			{
 				if_collision = false;
-				break;
 			}
 		}
 		if (!if_collision)
