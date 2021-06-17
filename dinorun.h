@@ -197,6 +197,8 @@ std::vector<int> gHealthPos;
 
 Timer gDinoTimer;
 
+Mix_Chunk *gCollisionSound = NULL;
+
 bool loadDinoMedia()
 {
 	if (!gMyPlayer.mPlayerTexture.loadFile("images/dino/dino_runner.png"))
@@ -231,6 +233,13 @@ bool loadDinoMedia()
 	if (gFont == NULL)
 	{
 		ERROR_T;
+		return false;
+	}
+
+	gCollisionSound = Mix_LoadWAV("sounds/collision.wav");
+	if (gCollisionSound == NULL)
+	{
+		ERROR_M;
 		return false;
 	}
 
@@ -294,7 +303,8 @@ void spawnObjects()
 		{
 			if (abs(gBlockPos[i].first - tX) < 100)
 			{
-				if_collision = false;
+				if_collision = true;
+				break;
 			}
 		}
 		if (!if_collision)
@@ -413,6 +423,7 @@ void renderMapDino()
 		if (checkCollisionDino(player, object) && gBlockIfCollieded[i] == 0)
 		{
 			TOTAL_HEALTH--;
+			Mix_PlayChannel(2, gCollisionSound, 0);
 			gBlockIfCollieded[i] = 80;
 			printf("%d Collided\n", TOTAL_HEALTH);
 		}
