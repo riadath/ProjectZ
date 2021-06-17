@@ -25,7 +25,7 @@ const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
-std::stringstream gBBscoreText, gBBliveText;//strings for prompting score and health
+std::stringstream gBBscoreText;//strings for prompting score and health
 
 Texture gBackgroundTextureBB;//background texture
 Texture gLiveTexture;//score and health texture
@@ -228,7 +228,7 @@ Ball gBallDrop;
 
 void initVariable()
 {
-	TOTAL_LIVES = 2;
+	TOTAL_LIVES = 5;
 	TOTAL_POINTS = 0;
 
 	gBallDrop.mSpawnInterval = 173;
@@ -290,7 +290,8 @@ bool loadBucketBallMedia()
 		return false;
 	if (!gLavaTexture.loadFile("images/BucketBall/lavaSplash.png"))
 		return false;
-
+	if(!gLiveTexture.loadFile("images/health.png"))
+		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -332,20 +333,17 @@ void renderMapBB()
 	{
 		printf("Unable to render score texture\n");
 	}
-	gBBliveText.str("");
-	gBBliveText << "Lives : " << TOTAL_LIVES;
-	if (!gLiveTexture.loadFromText(gBBliveText.str().c_str(), textColor))
-	{
-		printf("Unable to render health texture\n");
-	}
+
 
 	SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 	SDL_RenderClear(gRender);
 	gBackgroundTextureBB.render(0, 0);
 	gScoreTexture.render(1050, 0);
-	gLiveTexture.render(0, 0);
 	gBallDrop.render(gBallCatcher.mBucketShape);
 	gBallCatcher.render();
+	for(int i = 0;i < TOTAL_LIVES;i++){
+		gLiveTexture.render(i * gLiveTexture.getWidth(),0);
+	}
 	if (--gLavaDuration > 0)
 		lavaAnimation();
 }
