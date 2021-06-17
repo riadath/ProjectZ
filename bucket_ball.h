@@ -19,6 +19,7 @@ int TOTAL_LIVES;
 Texture gLavaTexture;
 int gCurLavaSprite = 0;
 int gLavaDuration = 0;
+
 const int LAVA_WIDTH = 59;
 const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;

@@ -251,10 +251,10 @@ Texture gUI_LoginTexture;
 Texture gUI_LoginEnterTexture;
 Texture gCoinCountTexture;
 
-std::vector<SDL_Rect> mapObjects;//List of objects in the room for collision detection
+std::vector<SDL_Rect> gMapObjects;//List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
 std::vector<std::tuple<int, int, int>> gTreePositions;
-
+std::string gCurentUsername;
 //global timer
 Timer gTimer;
 
@@ -364,7 +364,7 @@ void closeAll()
 	for (int i = 0; i < BUILDING_COUNT; i++)gBuildingTexture[i].free();
 	for (int i = 0; i < TREE_COUNT; i++)gTreesTexture[i].free();
 
-	mapObjects.clear();
+	gMapObjects.clear();
 	gBuildingPositions.clear();
 	gTreePositions.clear();
 
@@ -415,7 +415,7 @@ bool loadMedia()
 	return true;
 }
 
-//Initializes object positions on map and some global variables
+//Initializes object positions on map
 void gameInitialize()
 {
 	//starting timer
@@ -427,22 +427,22 @@ void gameInitialize()
 	tRect.x = 950, tRect.y = 550;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[0].getWidth() - gMyCharacter.mCharWidth , tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
-	mapObjects.push_back(tRect);
+	gMapObjects.push_back(tRect);
 
 	tRect.x = 150, tRect.y = 500;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[1].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[1].getHeight() - gMyCharacter.mCharHeight;
-	mapObjects.push_back(tRect);
+	gMapObjects.push_back(tRect);
 
 	tRect.x = 100, tRect.y = 200;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[2].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[2].getHeight() - 20;
-	mapObjects.push_back(tRect);
+	gMapObjects.push_back(tRect);
 
 	tRect.x = 1120, tRect.y = 150;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
 	tRect.w = gBuildingTexture[3].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[3].getHeight() - 20;
-	mapObjects.push_back(tRect);
+	gMapObjects.push_back(tRect);
 
 
 	//Rendering trees on map
@@ -454,7 +454,7 @@ void gameInitialize()
 		tRect.x = i, tRect.y = tempHeight[j];
 		gTreePositions.push_back(std::make_tuple(j, tRect.x, tRect.y));
 		tRect.w = gTreesTexture[j].getWidth() - 10, tRect.h = gTreesTexture[j].getHeight() - 10;
-		mapObjects.push_back(tRect);
+		gMapObjects.push_back(tRect);
 		if(i >= LEVEL_WIDTH){
 			k++;
 			if(k == 1)st = 430,tempHeight[0] = 240, tempHeight[1] = 280, tempHeight[2] = 330;
@@ -564,10 +564,10 @@ void renderMapObjects()
 
 	//rendering time prompt
 	SDL_Color textColor = {0, 0, 0, 255};
-	std::stringstream timerText;
-	timerText << "Timer : " << gTimer.getTicks() / 1000;
-	gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
-	gTimeTexture.render(SCREEN_WIDTH - 100, 0);
+	// std::stringstream timerText;
+	// timerText << "Timer : " << gTimer.getTicks() / 1000;
+	// gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
+	// gTimeTexture.render(SCREEN_WIDTH - 100, 0);
 
 	std::stringstream coinText;
 	coinText << "Coins : "<<gCOIN_COUNT;
@@ -707,6 +707,7 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 						if(tStr == inputText){
 							flag = true;
 							gCOIN_COUNT = tCoin;
+							gCurentUsername = tStr;
 						}
 						// std::cout<<tStr<<"----"<<tCoin<<"\n";
 					}
@@ -714,7 +715,7 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 					if(flag)
 						return START_GAME;
 					else{
-						invalidPromptDelay = 20;
+						invalidPromptDelay = 50;
 					}
 				}
 			}
@@ -749,10 +750,11 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 		}
 		SDL_SetRenderDrawColor( gRender, 255, 255, 255, 255 );
 		SDL_RenderClear( gRender );
+
 		gUI_LoginTexture.render(0,0);
 		printf("%d\n",invalidPromptDelay);
 		if(invalidPromptDelay > 0){	
-			invalidTexture.render(500,150);
+			invalidTexture.render(540,150);
 			invalidPromptDelay -= 1;
 		}else{
 			promptTexture.render(600,150);
@@ -825,7 +827,7 @@ int main(int argc, char *argv[])
 				}
 				gMyCharacter.handleEvent(e);
 			}
-			gMyCharacter.move(mapObjects);
+			gMyCharacter.move(gMapObjects);
 			
 			// printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
 
