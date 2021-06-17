@@ -65,7 +65,13 @@ struct Bucket
 	}
 	void handleEvent(SDL_Event &e)
 	{
-		if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
+		int mouseX,mouseY;
+		SDL_GetMouseState(&mouseX,&mouseY);
+		if(e.type == SDL_MOUSEMOTION){
+			mPosX = mouseX;
+			mVelX = 0;
+		}
+		else if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
 		{
 			switch (e.ksym)
 			{
@@ -94,22 +100,14 @@ struct Bucket
 			}
 		}
 	}
-	void move(SDL_Event &e)
+	void move()
 	{
-		int mouseX,mouseY;
-		SDL_GetMouseState(&mouseX,&mouseY);
-		printf("%d %d\n",mouseX,mouseY);
-		if(e.type == SDL_MOUSEMOTION){
-			mPosX = mouseX;
-			mVelX = 0;
+		mPosX += mVelX;
+		if (mPosX < 0 || (mPosX + mBucketTexture.getWidth() > SCREEN_WIDTH))
+		{
+			mPosX -= mVelX;
 		}
-		else{
-			mPosX += mVelX;
-			if (mPosX < 0 || (mPosX + mBucketTexture.getWidth() > SCREEN_WIDTH))
-			{
-				mPosX -= mVelX;
-			}
-		}
+	
 		mBucketShape = {mPosX, SCREEN_HEIGHT - mBucketTexture.getHeight(), mBucketTexture.getWidth(), mBucketTexture.getHeight()};
 	}
 	void render()
@@ -267,7 +265,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 	if (ballShape.y > bucketShape.y + bucketShape.h)
 		ifBucketCol = false;
 
-	if (ifBucketCol)
+	if (ifBucketCol && ballShape.y <= SCREEN_HEIGHT - bucketShape.h/2)
 	{
 		Mix_PlayChannel(2, gSplash, 0);
 		return BUCKET_COLLSION;
@@ -375,7 +373,7 @@ int bucketBall()
 		if (TOTAL_LIVES <= 0)
 			quit = true;
 
-		gBallCatcher.move(e);
+		gBallCatcher.move();
 		renderMapBB();
 		SDL_RenderPresent(gRender);
 	}

@@ -1,3 +1,12 @@
+/**
+ * @file dinorun.h
+ * @author Reyadath Ullah (SH - 33)
+ * @brief An infinite runner game
+ * @version 0.1
+ * @date 30-05-2021
+ * @copyright Copyright (c) 2021
+ */
+
 #ifndef DINORUN_H
 #define DINORUN_H
 
