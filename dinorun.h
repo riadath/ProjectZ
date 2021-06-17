@@ -14,7 +14,7 @@
 
 bool loadDinoMedia();
 void renderMapDino();
-void spawnBlocks();
+void spawnObjects();
 bool checkCollisionDino(SDL_Rect player, SDL_Rect object);
 void initVariableDino();
 void freeDino();
@@ -175,6 +175,9 @@ int gStarScroll = 0;
 int gStarDecrease = 1;
 int gSpawnInterval = 0;
 int gCurColAnimation = 0;
+int gBlockSpawnGap = 600;
+
+Uint32 gPrevTime; 
 
 const int gCurCollisionDelay = 10;
 const int gGroundSpeed = 6;
@@ -189,6 +192,7 @@ SDL_Rect gCollisionRect[gColAnimationCount];
 std::vector<std::pair<int, BLOCK_TYPE>> gBlockPos; //storing block x and block type
 std::vector<int> gBlockIfCollieded;
 
+Timer gDinoTimer;
 
 bool loadDinoMedia()
 {
@@ -267,11 +271,20 @@ bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 	return tFlag;
 }
 
-void spawnBlocks()
+void spawnObjects()
 {
+	//Increasing Difficulty
+	Uint32 curTime = gDinoTimer.getTicks()/1000;
+	if(curTime%15 == 0 && curTime != gPrevTime){
+		printf("Time : %d\n",curTime);
+		gPrevTime = curTime;
+		gBlockSpawnGap = std::max(110,gBlockSpawnGap - 20);
+	}
+
 	//clear blocks out of screen
 	std::vector<std::pair<int, BLOCK_TYPE>> tBlocks;
 	std::vector<int> tIfCollieded;
+
 	for (int i = 0; i < gBlockPos.size(); i++)
 	{
 		if (gBlockPos[i].first < -gBlockTexture[gBlockPos[i].second].getWidth())
@@ -281,26 +294,20 @@ void spawnBlocks()
 		else
 			tBlocks.push_back(gBlockPos[i]), tIfCollieded.push_back(gBlockIfCollieded[i]);
 	}
-
-	int random_intervals[] = {57, 91, 123, 187, 173, 273, 1823, 753};
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
-	int divCount = 0;
 
-	if (gSpawnInterval++ % random_intervals[rand() % 8] == 0 && (int)gBlockPos.size() < 30)
+
+	int random_intervals[] = {57, 91, 12, 87, 173, 273, 182, 753};
+
+	if (gSpawnInterval++ % random_intervals[rand() % 8] == 0 && (int)gBlockPos.size() < 50)
 	{
 		int tWidth = SCREEN_WIDTH + 400;
 		int tBlock = rand() % BLOCK_COUNT;
 		bool if_collision = false;
-		for (int i = 0; i < (int)gBlockPos.size(); i++)
-		{
-			BLOCK_TYPE block = gBlockPos[i].second;
-			int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
-			SDL_Rect object0 = {gBlockPos[i].first, posY, gBlockTexture[block].getWidth(), gBlockTexture[block].getHeight()};
-			posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[tBlock].getHeight();
-			SDL_Rect object1 = {tWidth, posY, gBlockTexture[tBlock].getWidth(), gBlockTexture[tBlock].getHeight()};
-			if (checkCollisionDino(object0, object1))
-			{
+
+		for (int i = 0; i < (int)gBlockPos.size(); i++){
+			if (abs(tWidth - gBlockPos[i].first) < gBlockSpawnGap){
 				if_collision = true;
 				break;
 			}
@@ -311,13 +318,13 @@ void spawnBlocks()
 			gBlockIfCollieded.push_back(false);
 		}
 
-		gSpawnInterval %= 14000;
+		// gSpawnInterval %= 14000;
 	}
 }
 
 void renderMapDino()
 {
-	spawnBlocks(); //spawing new blocks
+	spawnObjects(); //spawing new blocks
 
 	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 155);
 	SDL_RenderClear(gRender);
@@ -373,7 +380,6 @@ void renderMapDino()
 			gBlockIfCollieded[i] = std::max(0,gBlockIfCollieded[i] - 1);
 			gCollisionTexture.render(gBlockPos[i].first,posY,&gCollisionRect[gCurColAnimation/gCurCollisionDelay]);
 			if(++gCurColAnimation/gCurCollisionDelay >= gColAnimationCount)gCurColAnimation = 0;
-			printf("------>%d\n",gCurColAnimation);
 		}
 
 		SDL_Rect player = {gMyPlayer.mPosX, gMyPlayer.mPosY, gMyPlayer.PLAYER_HEIGHT, gMyPlayer.PLAYER_WIDTH};
@@ -393,6 +399,8 @@ void renderMapDino()
 
 void initVariableDino()
 {
+	gDinoTimer.start();
+	gPrevTime = gDinoTimer.getTicks()/1000;
 	TOTAL_SCORE = 0;
 	TOTAL_HEALTH = 2;
 	gBlockPos.clear();

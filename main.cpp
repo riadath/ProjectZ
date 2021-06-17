@@ -794,7 +794,7 @@ int main(int argc, char *argv[])
 	}
 
 	//=====================================
-	// int pp = dinoRun();
+	int pp = dinoRun();
 
 	//Loading map object position and shape
 	gameInitialize();
