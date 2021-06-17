@@ -69,10 +69,10 @@ struct Bucket
 		{
 			switch (e.ksym)
 			{
-			case SDLK_RIGHT:
+			case SDLK_d:
 				mVelX += mVelocity;
 				break;
-			case SDLK_LEFT:
+			case SDLK_a:
 				mVelX -= mVelocity;
 				break;
 			default:
@@ -83,10 +83,10 @@ struct Bucket
 		{
 			switch (e.ksym)
 			{
-			case SDLK_RIGHT:
+			case SDLK_d:
 				mVelX -= mVelocity;
 				break;
-			case SDLK_LEFT:
+			case SDLK_a:
 				mVelX += mVelocity;
 				break;
 			default:
@@ -94,12 +94,21 @@ struct Bucket
 			}
 		}
 	}
-	void move()
+	void move(SDL_Event &e)
 	{
-		mPosX += mVelX;
-		if (mPosX < 0 || (mPosX + mBucketTexture.getWidth() > SCREEN_WIDTH))
-		{
-			mPosX -= mVelX;
+		int mouseX,mouseY;
+		SDL_GetMouseState(&mouseX,&mouseY);
+		printf("%d %d\n",mouseX,mouseY);
+		if(e.type == SDL_MOUSEMOTION){
+			mPosX = mouseX;
+			mVelX = 0;
+		}
+		else{
+			mPosX += mVelX;
+			if (mPosX < 0 || (mPosX + mBucketTexture.getWidth() > SCREEN_WIDTH))
+			{
+				mPosX -= mVelX;
+			}
 		}
 		mBucketShape = {mPosX, SCREEN_HEIGHT - mBucketTexture.getHeight(), mBucketTexture.getWidth(), mBucketTexture.getHeight()};
 	}
@@ -366,7 +375,7 @@ int bucketBall()
 		if (TOTAL_LIVES <= 0)
 			quit = true;
 
-		gBallCatcher.move();
+		gBallCatcher.move(e);
 		renderMapBB();
 		SDL_RenderPresent(gRender);
 	}

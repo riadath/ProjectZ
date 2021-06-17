@@ -668,7 +668,7 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 	bool quit = false;
 	int invalidPromptDelay = 0;
 	SDL_Color textColor = {255,255,255,255};
-	SDL_Rect loginEnter = {570,250,150,27};
+	SDL_Rect loginEnter = {570,200,150,27};
 	Texture inputTexture,promptTexture,invalidTexture;
 	std::string inputText = "Username";
 	promptTexture.loadFromText(inputText.c_str(),textColor);
@@ -680,17 +680,23 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 		int mouseX,mouseY;
 		SDL_GetMouseState(&mouseX,&mouseY);
 
+		if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
+		&& mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h){
+			gUI_LoginEnterTexture.setAlpha(200);
+		}else gUI_LoginEnterTexture.setAlpha(255);
+
 		while(SDL_PollEvent(&e) != 0){
 			if(e.type == SDL_QUIT){
 				quit = true;
 				return FULL_EXIT;
 			}
 			else if(e.type == SDL_MOUSEBUTTONDOWN){
-
 				if(mouseX >= gButtonPosition[BACK].x && mouseX <= gButtonPosition[BACK].x + gButtonPosition[BACK].w 
 				&& mouseY >= gButtonPosition[BACK].y && mouseY <= gButtonPosition[BACK].y + gButtonPosition[BACK].h){
 					return LOADING_SCREEN;
-				}else if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
+				}
+				
+				else if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
 				&& mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h){
 					//check username
 					bool flag = false;
@@ -719,26 +725,27 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 					}
 				}
 			}
-			else if(e.type == SDL_KEYDOWN){
-				if(e.ksym == SDLK_ESCAPE){
+			
+			else if(e.type == SDL_KEYDOWN)
+			{
+				if(e.ksym == SDLK_BACKSPACE){
 					return LOADING_SCREEN;
 				}
 				else if(e.ksym == SDLK_BACKSPACE && inputText.size() > 0){
 					inputText.pop_back();
 					ifRender = true;
 				}
-				else if(e.ksym == SDLK_c && SDL_GetModState() && KMOD_CTRL){
+				else if(e.ksym == SDLK_c && SDL_GetModState() & KMOD_CTRL){
 					SDL_SetClipboardText(inputText.c_str());
 				}
-				else if(e.ksym == SDLK_v && SDL_GetModState() && KMOD_CTRL){
+				else if(e.ksym == SDLK_v && SDL_GetModState() & KMOD_CTRL){
 					inputText = SDL_GetClipboardText();
 					ifRender = true;
 				}
 			}
 			else if(e.type == SDL_TEXTINPUT)
 			{
-				if(!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || 
-				e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V') ) ){
+				if(!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V') ) ){
 					inputText += e.text.text;
 					ifRender = true;
 				}
@@ -752,16 +759,16 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 		SDL_RenderClear( gRender );
 
 		gUI_LoginTexture.render(0,0);
-		printf("%d\n",invalidPromptDelay);
+		// printf("%d\n",invalidPromptDelay);
 		if(invalidPromptDelay > 0){	
-			invalidTexture.render(540,150);
+			invalidTexture.render(540,50);
 			invalidPromptDelay -= 1;
 		}else{
-			promptTexture.render(600,150);
+			promptTexture.render(600,50);
 		}
-		SDL_Rect usernameBox = {450,180,400,65};
+		SDL_Rect usernameBox = {450,80,400,65};
 		SDL_RenderDrawRect(gRender,&usernameBox);
-		inputTexture.render(450,180);
+		inputTexture.render(450,80);
 		gUI_LoginEnterTexture.render(loginEnter.x,loginEnter.y);
 		gUI_ButtonsTexture[BACK].render(gButtonPosition[BACK].x,gButtonPosition[BACK].y);
 		SDL_RenderPresent(gRender);
