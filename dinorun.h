@@ -58,7 +58,10 @@ struct Player
 			mPlayerSprite[i].y = 0;
 		}
 	}
-
+	~Player()
+	{
+		free();
+	}
 	void handleEvent(SDL_Event &e)
 	{
 		if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
@@ -173,21 +176,19 @@ int gStarDecrease = 1;
 int gSpawnInterval = 0;
 int gCurColAnimation = 0;
 
+const int gCurCollisionDelay = 10;
 const int gGroundSpeed = 6;
 const int gTree1Speed = 5;
 const int gTree2Speed = 4;
 const int gTree3Speed = 2;
 const int gStarSpeed = 1;
-const int gColAnimationCount = 8;
+const int gColAnimationCount = 5;
 
 SDL_Rect gCollisionRect[gColAnimationCount];
 
 std::vector<std::pair<int, BLOCK_TYPE>> gBlockPos; //storing block x and block type
 std::vector<int> gBlockIfCollieded;
 
-void freeDino()
-{
-}
 
 bool loadDinoMedia()
 {
@@ -215,6 +216,8 @@ bool loadDinoMedia()
 		return false;
 	if (!gCollisionTexture.loadFile("images/dino/collision_animation.png"))
 		return false;
+
+	gCollisionTexture.setBlendMode(SDL_BLENDMODE_ADD);
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -223,20 +226,29 @@ bool loadDinoMedia()
 	}
 
 	//initializing collision animation sprite
-	const int tWidth = 70;
+	const int tWidth = 60;
 	const int tHeight = 60;
 	for (int i = 0, j = 0; i < gColAnimationCount; i++)
 	{
-		gCollisionRect[i].x = (i % 4) * tWidth;
+		gCollisionRect[i].x = (i % 5) * tWidth;
 		gCollisionRect[i].y = j * tHeight;
 		gCollisionRect[i].w = tWidth;
 		gCollisionRect[i].h = tHeight;
 
-		if (i % 4 == 0)
+		if (i % 5 == 0)
 			j++;
 	}
 
 	return true;
+}
+
+void freeDino()
+{
+	SDL_RenderClear(gRender);
+	for(int i = 0; i < LAYER_COUNT;i++)gBgTextureDino[i].free();
+	for(int i = 0;i < BLOCK_COUNT;i++)gBlockTexture[i].free();
+	gHealthTexture.free();
+	gCollisionTexture.free();
 }
 
 //checks collision between two objects
@@ -356,14 +368,22 @@ void renderMapDino()
 		int posX = gBlockPos[i].first;
 		gBlockTexture[block].render(posX, posY);
 
+		//rendering animation
+		if(gBlockIfCollieded[i] > 0){
+			gBlockIfCollieded[i] = std::max(0,gBlockIfCollieded[i] - 1);
+			gCollisionTexture.render(gBlockPos[i].first,posY,&gCollisionRect[gCurColAnimation/gCurCollisionDelay]);
+			if(++gCurColAnimation/gCurCollisionDelay >= gColAnimationCount)gCurColAnimation = 0;
+			printf("------>%d\n",gCurColAnimation);
+		}
+
 		SDL_Rect player = {gMyPlayer.mPosX, gMyPlayer.mPosY, gMyPlayer.PLAYER_HEIGHT, gMyPlayer.PLAYER_WIDTH};
 		SDL_Rect object = {gBlockPos[i].first, posY, gBlockTexture[block].getWidth(), gBlockTexture[block].getHeight()};
 
 		//collision detection
-		if (checkCollisionDino(player, object) && !gBlockIfCollieded[i])
+		if (checkCollisionDino(player, object) && gBlockIfCollieded[i] == 0)
 		{
 			TOTAL_HEALTH--;
-			gBlockIfCollieded[i] = 20;
+			gBlockIfCollieded[i] = 80;
 			printf("%d Collided\n", TOTAL_HEALTH);
 		}
 	}
@@ -405,7 +425,7 @@ int dinoRun()
 		renderMapDino();
 		SDL_RenderPresent(gRender);
 	}
-
+	freeDino();
 	return TOTAL_SCORE;
 }
 
