@@ -27,7 +27,7 @@ struct Player
 	const int PLAYER_HEIGHT = 65;
 	const int PLAYER_VEL = 80;
 	const int PLAYER_SETP = 10;
-	const int JUMP_VEL = 240;//use 200
+	const int JUMP_VEL = 240; //use 200
 	const int JUMP_STEP = 14;
 	const int GRAVITY = 8;
 	const int SPRITE_COUNT = 6;
@@ -149,7 +149,8 @@ enum BACKGROUND_LAYER
 	MOON_LAYER_7,
 	LAYER_COUNT
 };
-enum BLOCK_TYPE{
+enum BLOCK_TYPE
+{
 	BLOCK_T1,
 	BLOCK_T2,
 	BLOCK_T3,
@@ -161,6 +162,7 @@ Player gMyPlayer; //Player object
 Texture gBgTextureDino[LAYER_COUNT];
 Texture gBlockTexture[BLOCK_COUNT];
 Texture gHealthTexture;
+Texture gCollisionTexture;
 
 int gGroundScroll = 0;
 int gTree1Scroll = 0;
@@ -168,40 +170,70 @@ int gTree2Scroll = 0;
 int gTree3Scroll = 0;
 int gStarScroll = 0;
 int gStarDecrease = 1;
-int mSpawnInterval = 0;
-int mSpawnGap = 173;
+int gSpawnInterval = 0;
+int gCurColAnimation = 0;
 
 const int gGroundSpeed = 6;
 const int gTree1Speed = 5;
 const int gTree2Speed = 4;
 const int gTree3Speed = 2;
 const int gStarSpeed = 1;
+const int gColAnimationCount = 8;
 
-std::vector<std::pair<int,BLOCK_TYPE>>gBlockPos;//storing block x and block type
-std::vector<bool>gBlockIfCollieded;
+SDL_Rect gCollisionRect[gColAnimationCount];
 
-void freeDino(){
+std::vector<std::pair<int, BLOCK_TYPE>> gBlockPos; //storing block x and block type
+std::vector<int> gBlockIfCollieded;
 
+void freeDino()
+{
 }
 
 bool loadDinoMedia()
 {
-	if (!gMyPlayer.mPlayerTexture.loadFile("images/dino/dino_runner.png"))return false;
-	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/dino/dino_bush.png"))return false;
-	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/dino/dino_ground.png"))return false;
-	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/dino/dino_tree1.png"))return false;
-	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/dino/dino_tree3.png"))return false;
-	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/dino/dino_tree3.png"))return false;
-	if(!gBgTextureDino[STAR_LAYER_6].loadFile("images/dino/dino_star.png"))return false;
-	if(!gBgTextureDino[MOON_LAYER_7].loadFile("images/dino/dino_moon.png"))return false;
-	if(!gBlockTexture[BLOCK_T1].loadFile("images/dino/block1.png"))return false;
-	if(!gBlockTexture[BLOCK_T2].loadFile("images/dino/block2.png"))return false;
-	if(!gBlockTexture[BLOCK_T3].loadFile("images/dino/block3.png"))return false;
+	if (!gMyPlayer.mPlayerTexture.loadFile("images/dino/dino_runner.png"))
+		return false;
+	if (!gBgTextureDino[BUSH_LAYER_1].loadFile("images/dino/dino_bush.png"))
+		return false;
+	if (!gBgTextureDino[GROUND_LAYER_2].loadFile("images/dino/dino_ground.png"))
+		return false;
+	if (!gBgTextureDino[TREE1_LAYER_3].loadFile("images/dino/dino_tree1.png"))
+		return false;
+	if (!gBgTextureDino[TREE2_LAYER_4].loadFile("images/dino/dino_tree3.png"))
+		return false;
+	if (!gBgTextureDino[TREE3_LAYER_5].loadFile("images/dino/dino_tree3.png"))
+		return false;
+	if (!gBgTextureDino[STAR_LAYER_6].loadFile("images/dino/dino_star.png"))
+		return false;
+	if (!gBgTextureDino[MOON_LAYER_7].loadFile("images/dino/dino_moon.png"))
+		return false;
+	if (!gBlockTexture[BLOCK_T1].loadFile("images/dino/block1.png"))
+		return false;
+	if (!gBlockTexture[BLOCK_T2].loadFile("images/dino/block2.png"))
+		return false;
+	if (!gBlockTexture[BLOCK_T3].loadFile("images/dino/block3.png"))
+		return false;
+	if (!gCollisionTexture.loadFile("images/dino/collision_animation.png"))
+		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
 		ERROR_T;
 		return false;
+	}
+
+	//initializing collision animation sprite
+	const int tWidth = 70;
+	const int tHeight = 60;
+	for (int i = 0, j = 0; i < gColAnimationCount; i++)
+	{
+		gCollisionRect[i].x = (i % 4) * tWidth;
+		gCollisionRect[i].y = j * tHeight;
+		gCollisionRect[i].w = tWidth;
+		gCollisionRect[i].h = tHeight;
+
+		if (i % 4 == 0)
+			j++;
 	}
 
 	return true;
@@ -211,7 +243,7 @@ bool loadDinoMedia()
 bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 {
 	bool tFlag = true;
-	player.w -= 10,player.h -= 10;
+	player.w -= 10, player.h -= 10;
 	if (player.x + player.w <= object.x)
 		tFlag = false;
 	if (player.x >= object.x + object.w)
@@ -223,45 +255,53 @@ bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 	return tFlag;
 }
 
-
-
-void spawnBlocks(){
+void spawnBlocks()
+{
 	//clear blocks out of screen
-	std::vector<std::pair<int,BLOCK_TYPE>> tBlocks;
-	std::vector<bool>tIfCollieded;
-	for(int i = 0;i < gBlockPos.size();i++){
-		if(gBlockPos[i].first < -gBlockTexture[gBlockPos[i].second].getWidth()){
+	std::vector<std::pair<int, BLOCK_TYPE>> tBlocks;
+	std::vector<int> tIfCollieded;
+	for (int i = 0; i < gBlockPos.size(); i++)
+	{
+		if (gBlockPos[i].first < -gBlockTexture[gBlockPos[i].second].getWidth())
+		{
 			gBlockPos[i].first = -1;
-		}else tBlocks.push_back(gBlockPos[i]),tIfCollieded.push_back(gBlockIfCollieded[i]);
+		}
+		else
+			tBlocks.push_back(gBlockPos[i]), tIfCollieded.push_back(gBlockIfCollieded[i]);
 	}
-	int random_intervals[] = {57,91,123,187,173,273,1823,753};
+
+	int random_intervals[] = {57, 91, 123, 187, 173, 273, 1823, 753};
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
 	int divCount = 0;
-	if(mSpawnInterval++%random_intervals[rand()%8] == 0 && (int)gBlockPos.size() < 30){
+
+	if (gSpawnInterval++ % random_intervals[rand() % 8] == 0 && (int)gBlockPos.size() < 30)
+	{
 		int tWidth = SCREEN_WIDTH + 400;
-		int tBlock = rand()%BLOCK_COUNT;
+		int tBlock = rand() % BLOCK_COUNT;
 		bool if_collision = false;
-		for(int i = 0;i < (int)gBlockPos.size();i++){
+		for (int i = 0; i < (int)gBlockPos.size(); i++)
+		{
 			BLOCK_TYPE block = gBlockPos[i].second;
 			int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
-			SDL_Rect object0 = {gBlockPos[i].first,posY,gBlockTexture[block].getWidth(),gBlockTexture[block].getHeight()};
+			SDL_Rect object0 = {gBlockPos[i].first, posY, gBlockTexture[block].getWidth(), gBlockTexture[block].getHeight()};
 			posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[tBlock].getHeight();
-			SDL_Rect object1 = {tWidth,posY,gBlockTexture[tBlock].getWidth(),gBlockTexture[tBlock].getHeight()};
-			if(checkCollisionDino(object0,object1)){
+			SDL_Rect object1 = {tWidth, posY, gBlockTexture[tBlock].getWidth(), gBlockTexture[tBlock].getHeight()};
+			if (checkCollisionDino(object0, object1))
+			{
 				if_collision = true;
 				break;
 			}
 		}
-		if(!if_collision){
-			gBlockPos.push_back(std::make_pair(tWidth,(BLOCK_TYPE)tBlock));
+		if (!if_collision)
+		{
+			gBlockPos.push_back(std::make_pair(tWidth, (BLOCK_TYPE)tBlock));
 			gBlockIfCollieded.push_back(false);
 		}
-		mSpawnInterval %= 14000;
-	}
-	// if(mSpawnInterval % 12563)mSpawnGap = std::max(53,mSpawnGap - 10);
-}
 
+		gSpawnInterval %= 14000;
+	}
+}
 
 void renderMapDino()
 {
@@ -271,59 +311,68 @@ void renderMapDino()
 	SDL_RenderClear(gRender);
 
 	gGroundScroll -= gGroundSpeed;
-	if (gGroundScroll < -SCREEN_WIDTH)gGroundScroll = 0;
+	if (gGroundScroll < -SCREEN_WIDTH)
+		gGroundScroll = 0;
 	gTree1Scroll -= gTree1Speed;
-	if(gTree1Scroll < -SCREEN_WIDTH)gTree1Scroll = 0;
+	if (gTree1Scroll < -SCREEN_WIDTH)
+		gTree1Scroll = 0;
 	gTree2Scroll -= gTree2Speed;
-	if(gTree2Scroll < -SCREEN_WIDTH)gTree2Scroll = 0;
+	if (gTree2Scroll < -SCREEN_WIDTH)
+		gTree2Scroll = 0;
 	gTree3Scroll -= gTree3Speed;
-	if(gTree3Scroll < -SCREEN_WIDTH)gTree3Scroll = 0;
+	if (gTree3Scroll < -SCREEN_WIDTH)
+		gTree3Scroll = 0;
 	gStarScroll -= gStarSpeed;
-	if(gStarSpeed < -SCREEN_WIDTH)gStarScroll = 0;
+	if (gStarSpeed < -SCREEN_WIDTH)
+		gStarScroll = 0;
 
-	gBgTextureDino[MOON_LAYER_7].render(0,0);
-	gBgTextureDino[STAR_LAYER_6].render(gStarScroll,0);
-	gBgTextureDino[STAR_LAYER_6].render(gStarScroll + SCREEN_WIDTH,0);
-	gBgTextureDino[TREE3_LAYER_5].render(gTree3Scroll,0);
-	gBgTextureDino[TREE3_LAYER_5].render(gTree3Scroll + SCREEN_WIDTH,0);
-	gBgTextureDino[TREE2_LAYER_4].render(gTree2Scroll,0);
-	gBgTextureDino[TREE2_LAYER_4].render(gTree2Scroll + SCREEN_WIDTH,0);
-	gBgTextureDino[TREE1_LAYER_3].render(gTree1Scroll,0);
-	gBgTextureDino[TREE1_LAYER_3].render(gTree1Scroll + SCREEN_WIDTH,0);
+	gBgTextureDino[MOON_LAYER_7].render(0, 0);
+	gBgTextureDino[STAR_LAYER_6].render(gStarScroll, 0);
+	gBgTextureDino[STAR_LAYER_6].render(gStarScroll + SCREEN_WIDTH, 0);
+	gBgTextureDino[TREE3_LAYER_5].render(gTree3Scroll, 0);
+	gBgTextureDino[TREE3_LAYER_5].render(gTree3Scroll + SCREEN_WIDTH, 0);
+	gBgTextureDino[TREE2_LAYER_4].render(gTree2Scroll, 0);
+	gBgTextureDino[TREE2_LAYER_4].render(gTree2Scroll + SCREEN_WIDTH, 0);
+	gBgTextureDino[TREE1_LAYER_3].render(gTree1Scroll, 0);
+	gBgTextureDino[TREE1_LAYER_3].render(gTree1Scroll + SCREEN_WIDTH, 0);
 	gBgTextureDino[GROUND_LAYER_2].render(gGroundScroll, 0);
 	gBgTextureDino[GROUND_LAYER_2].render(gGroundScroll + SCREEN_WIDTH, 0);
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll, 0);
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll + SCREEN_WIDTH, 0);
 
 	std::stringstream liveText;
-	SDL_Color textColor = {255,200,0};
+	SDL_Color textColor = {255, 200, 0};
 	liveText.str("");
 	liveText << "Lives : " << TOTAL_HEALTH;
 	gHealthTexture.loadFromText(liveText.str().c_str(), textColor);
-	gHealthTexture.render(0,0);
+	gHealthTexture.render(0, 0);
 
 	//Rendering blocks on map
-	for(int i = 0;i < gBlockPos.size();i++){
+	for (int i = 0; i < gBlockPos.size(); i++)
+	{
 		gBlockPos[i].first -= gGroundSpeed;
 		BLOCK_TYPE block = gBlockPos[i].second;
 		int posY = gMyPlayer.BASE_HEIGHT - gBlockTexture[block].getHeight();
 		int posX = gBlockPos[i].first;
-		gBlockTexture[block].render(posX ,posY);
+		gBlockTexture[block].render(posX, posY);
 
-		SDL_Rect player = {gMyPlayer.mPosX,gMyPlayer.mPosY,gMyPlayer.PLAYER_HEIGHT,gMyPlayer.PLAYER_WIDTH};
-		SDL_Rect object = {gBlockPos[i].first,posY,gBlockTexture[block].getWidth(),gBlockTexture[block].getHeight()};
-		
-		if(checkCollisionDino(player,object) && !gBlockIfCollieded[i]){
+		SDL_Rect player = {gMyPlayer.mPosX, gMyPlayer.mPosY, gMyPlayer.PLAYER_HEIGHT, gMyPlayer.PLAYER_WIDTH};
+		SDL_Rect object = {gBlockPos[i].first, posY, gBlockTexture[block].getWidth(), gBlockTexture[block].getHeight()};
+
+		//collision detection
+		if (checkCollisionDino(player, object) && !gBlockIfCollieded[i])
+		{
 			TOTAL_HEALTH--;
-			gBlockIfCollieded[i] = true;
-			printf("%d Collided\n",TOTAL_HEALTH);
+			gBlockIfCollieded[i] = 20;
+			printf("%d Collided\n", TOTAL_HEALTH);
 		}
 	}
-	
+
 	gMyPlayer.render();
 }
 
-void initVariableDino(){
+void initVariableDino()
+{
 	TOTAL_SCORE = 0;
 	TOTAL_HEALTH = 2;
 	gBlockPos.clear();
