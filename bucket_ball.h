@@ -25,7 +25,7 @@ const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
-std::stringstream scoreText, liveText;//strings for prompting score and health
+std::stringstream gBBscoreText, gBBliveText;//strings for prompting score and health
 
 Texture gBackgroundTextureBB;//background texture
 Texture gLiveTexture;//score and health texture
@@ -326,15 +326,15 @@ void lavaAnimation()
 void renderMapBB()
 {
 	SDL_Color textColor = {0, 0, 0, 255};
-	scoreText.str("");
-	scoreText << "Score : " << TOTAL_POINTS;
-	if (!gScoreTexture.loadFromText(scoreText.str().c_str(), textColor))
+	gBBscoreText.str("");
+	gBBscoreText << "Score : " << TOTAL_POINTS;
+	if (!gScoreTexture.loadFromText(gBBscoreText.str().c_str(), textColor))
 	{
 		printf("Unable to render score texture\n");
 	}
-	liveText.str("");
-	liveText << "Lives : " << TOTAL_LIVES;
-	if (!gLiveTexture.loadFromText(liveText.str().c_str(), textColor))
+	gBBliveText.str("");
+	gBBliveText << "Lives : " << TOTAL_LIVES;
+	if (!gLiveTexture.loadFromText(gBBliveText.str().c_str(), textColor))
 	{
 		printf("Unable to render health texture\n");
 	}

@@ -139,7 +139,7 @@ struct Player
 };
 
 int TOTAL_SCORE = 0;
-int TOTAL_HEALTH = 2;
+int TOTAL_HEALTH = 3;
 
 enum BACKGROUND_LAYER
 {
@@ -166,6 +166,7 @@ Texture gBgTextureDino[LAYER_COUNT];
 Texture gBlockTexture[BLOCK_COUNT];
 Texture gHealthTexture;
 Texture gCollisionTexture;
+Texture gDinoScoreTexture;
 
 int gGroundScroll = 0;
 int gTree1Scroll = 0;
@@ -176,8 +177,9 @@ int gStarDecrease = 1;
 int gSpawnInterval = 0;
 int gCurColAnimation = 0;
 int gBlockSpawnGap = 600;
+int gScoreDelay = 0;
 
-Uint32 gPrevTime; 
+Uint32 gPrevTime;
 
 const int gCurCollisionDelay = 10;
 const int gGroundSpeed = 6;
@@ -191,6 +193,7 @@ SDL_Rect gCollisionRect[gColAnimationCount];
 
 std::vector<std::pair<int, BLOCK_TYPE>> gBlockPos; //storing block x and block type
 std::vector<int> gBlockIfCollieded;
+std::vector<int> gHealthPos;
 
 Timer gDinoTimer;
 
@@ -219,6 +222,8 @@ bool loadDinoMedia()
 	if (!gBlockTexture[BLOCK_T3].loadFile("images/dino/block3.png"))
 		return false;
 	if (!gCollisionTexture.loadFile("images/dino/collision_animation.png"))
+		return false;
+	if (!gHealthTexture.loadFile("images/health.png"))
 		return false;
 
 	gCollisionTexture.setBlendMode(SDL_BLENDMODE_ADD);
@@ -249,8 +254,10 @@ bool loadDinoMedia()
 void freeDino()
 {
 	SDL_RenderClear(gRender);
-	for(int i = 0; i < LAYER_COUNT;i++)gBgTextureDino[i].free();
-	for(int i = 0;i < BLOCK_COUNT;i++)gBlockTexture[i].free();
+	for (int i = 0; i < LAYER_COUNT; i++)
+		gBgTextureDino[i].free();
+	for (int i = 0; i < BLOCK_COUNT; i++)
+		gBlockTexture[i].free();
 	gHealthTexture.free();
 	gCollisionTexture.free();
 }
@@ -273,17 +280,39 @@ bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 
 void spawnObjects()
 {
-	//Increasing Difficulty
-	Uint32 curTime = gDinoTimer.getTicks()/1000;
-	if(curTime%15 == 0 && curTime != gPrevTime){
-		printf("Time : %d\n",curTime);
+	//Increasing Difficulty and spawing health points
+	Uint32 curTime = gDinoTimer.getTicks() / 1000;
+	if (curTime % 15 == 0 && curTime != gPrevTime)
+	{
+		printf("Time : %d\n", curTime);
 		gPrevTime = curTime;
-		gBlockSpawnGap = std::max(110,gBlockSpawnGap - 20);
+		gBlockSpawnGap = std::max(110, gBlockSpawnGap - 20);
+
+		int tX = SCREEN_WIDTH + 200;
+		bool if_collision = false;
+		for (int i = 0; i < gBlockPos.size(); i++)
+		{
+			if (abs(gBlockPos[i].first - tX) < 50)
+			{
+				if_collision = false;
+				break;
+			}
+		}
+		if (!if_collision)
+			gHealthPos.push_back(tX);
 	}
 
 	//clear blocks out of screen
 	std::vector<std::pair<int, BLOCK_TYPE>> tBlocks;
 	std::vector<int> tIfCollieded;
+	std::vector<int> tHealth;
+
+	for (int i = 0; i < gHealthPos.size(); i++)
+	{
+		if (gHealthPos[i] >= -gHealthTexture.getWidth())
+			tHealth.push_back(gHealthPos[i]);
+	}
+	gHealthPos = tHealth;
 
 	for (int i = 0; i < gBlockPos.size(); i++)
 	{
@@ -297,7 +326,6 @@ void spawnObjects()
 	gBlockPos = tBlocks;
 	gBlockIfCollieded = tIfCollieded;
 
-
 	int random_intervals[] = {57, 91, 12, 87, 173, 273, 182, 753};
 
 	if (gSpawnInterval++ % random_intervals[rand() % 8] == 0 && (int)gBlockPos.size() < 50)
@@ -306,8 +334,10 @@ void spawnObjects()
 		int tBlock = rand() % BLOCK_COUNT;
 		bool if_collision = false;
 
-		for (int i = 0; i < (int)gBlockPos.size(); i++){
-			if (abs(tWidth - gBlockPos[i].first) < gBlockSpawnGap){
+		for (int i = 0; i < (int)gBlockPos.size(); i++)
+		{
+			if (abs(tWidth - gBlockPos[i].first) < gBlockSpawnGap)
+			{
 				if_collision = true;
 				break;
 			}
@@ -359,13 +389,6 @@ void renderMapDino()
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll, 0);
 	gBgTextureDino[BUSH_LAYER_1].render(gGroundScroll + SCREEN_WIDTH, 0);
 
-	std::stringstream liveText;
-	SDL_Color textColor = {255, 200, 0};
-	liveText.str("");
-	liveText << "Lives : " << TOTAL_HEALTH;
-	gHealthTexture.loadFromText(liveText.str().c_str(), textColor);
-	gHealthTexture.render(0, 0);
-
 	//Rendering blocks on map
 	for (int i = 0; i < gBlockPos.size(); i++)
 	{
@@ -376,10 +399,12 @@ void renderMapDino()
 		gBlockTexture[block].render(posX, posY);
 
 		//rendering animation
-		if(gBlockIfCollieded[i] > 0){
-			gBlockIfCollieded[i] = std::max(0,gBlockIfCollieded[i] - 1);
-			gCollisionTexture.render(gBlockPos[i].first,posY,&gCollisionRect[gCurColAnimation/gCurCollisionDelay]);
-			if(++gCurColAnimation/gCurCollisionDelay >= gColAnimationCount)gCurColAnimation = 0;
+		if (gBlockIfCollieded[i] > 0)
+		{
+			gBlockIfCollieded[i] = std::max(0, gBlockIfCollieded[i] - 1);
+			gCollisionTexture.render(gBlockPos[i].first, posY, &gCollisionRect[gCurColAnimation / gCurCollisionDelay]);
+			if (++gCurColAnimation / gCurCollisionDelay >= gColAnimationCount)
+				gCurColAnimation = 0;
 		}
 
 		SDL_Rect player = {gMyPlayer.mPosX, gMyPlayer.mPosY, gMyPlayer.PLAYER_HEIGHT, gMyPlayer.PLAYER_WIDTH};
@@ -394,15 +419,47 @@ void renderMapDino()
 		}
 	}
 
+	//rendering health points on map
+	for (int i = 0; i < gHealthPos.size(); i++)
+	{
+		gHealthPos[i] -= gGroundSpeed;
+		int posY = gMyPlayer.BASE_HEIGHT - gHealthTexture.getHeight();
+		gHealthTexture.render(gHealthPos[i], posY);
+
+		SDL_Rect player = {gMyPlayer.mPosX, gMyPlayer.mPosY, gMyPlayer.PLAYER_HEIGHT, gMyPlayer.PLAYER_WIDTH};
+		SDL_Rect object = {gHealthPos[i], posY, gHealthTexture.getWidth(), gHealthTexture.getHeight()};
+		if (checkCollisionDino(player, object))
+		{
+			TOTAL_HEALTH = std::min(5, TOTAL_HEALTH + 1);
+			gHealthPos[i] = -400;
+			printf("%d HEALTH INC\n", TOTAL_HEALTH);
+		}
+	}
+
+	if (gScoreDelay++ % 5 == 0)
+		TOTAL_SCORE += 1;
+	//rendering health bar
+	for (int i = 0; i < TOTAL_HEALTH; i++)
+	{
+		gHealthTexture.render(i * gHealthTexture.getWidth(), 0);
+	}
+	//rendering score bar
+	SDL_Color textColor = {255, 180, 0, 255};
+	std::stringstream tScoreText;
+	tScoreText.str("");
+	tScoreText << "Score : " << TOTAL_SCORE;
+	gDinoScoreTexture.loadFromText(tScoreText.str().c_str(), textColor);
+	gDinoScoreTexture.render(SCREEN_WIDTH - 200, 0);
+
 	gMyPlayer.render();
 }
 
 void initVariableDino()
 {
 	gDinoTimer.start();
-	gPrevTime = gDinoTimer.getTicks()/1000;
+	gPrevTime = gDinoTimer.getTicks() / 1000;
 	TOTAL_SCORE = 0;
-	TOTAL_HEALTH = 2;
+	TOTAL_HEALTH = 5;
 	gBlockPos.clear();
 }
 
