@@ -25,10 +25,10 @@ const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
 
-std::stringstream gBBscoreText;//strings for prompting score and health
+std::stringstream gBBscoreText; //strings for prompting score and health
 
-Texture gBackgroundTextureBB;//background texture
-Texture gLiveTexture;//score and health texture
+Texture gBackgroundTextureBB; //background texture
+Texture gLiveTexture;		  //score and health texture
 Texture gScoreTexture;
 
 Mix_Chunk *gSplash = NULL;
@@ -65,9 +65,10 @@ struct Bucket
 	}
 	void handleEvent(SDL_Event &e)
 	{
-		int mouseX,mouseY;
-		SDL_GetMouseState(&mouseX,&mouseY);
-		if(e.type == SDL_MOUSEMOTION){
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		if (e.type == SDL_MOUSEMOTION)
+		{
 			mPosX = mouseX;
 			mVelX = 0;
 		}
@@ -107,7 +108,7 @@ struct Bucket
 		{
 			mPosX -= mVelX;
 		}
-	
+
 		mBucketShape = {mPosX, SCREEN_HEIGHT - mBucketTexture.getHeight(), mBucketTexture.getWidth(), mBucketTexture.getHeight()};
 	}
 	void render()
@@ -137,7 +138,7 @@ struct Ball
 	Timer mTimer;
 	Uint32 mPrevTime1;
 	Uint32 mPrevTime2;
-	
+
 	Texture mBallTexture;
 
 	SDL_Rect mBallShape;
@@ -250,7 +251,6 @@ void closeBB()
 	gScoreTexture.free();
 }
 
-
 COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 {
 	if (ballShape.y + ballShape.h < SCREEN_HEIGHT - bucketShape.h)
@@ -265,7 +265,7 @@ COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
 	if (ballShape.y > bucketShape.y + bucketShape.h)
 		ifBucketCol = false;
 
-	if (ifBucketCol && ballShape.y <= SCREEN_HEIGHT - bucketShape.h/2)
+	if (ifBucketCol && ballShape.y <= SCREEN_HEIGHT - bucketShape.h / 2)
 	{
 		Mix_PlayChannel(2, gSplash, 0);
 		return BUCKET_COLLSION;
@@ -290,7 +290,7 @@ bool loadBucketBallMedia()
 		return false;
 	if (!gLavaTexture.loadFile("images/BucketBall/lavaSplash.png"))
 		return false;
-	if(!gLiveTexture.loadFile("images/health.png"))
+	if (!gLiveTexture.loadFile("images/health.png"))
 		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
@@ -334,15 +334,15 @@ void renderMapBB()
 		printf("Unable to render score texture\n");
 	}
 
-
 	SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 	SDL_RenderClear(gRender);
 	gBackgroundTextureBB.render(0, 0);
 	gScoreTexture.render(1050, 0);
 	gBallDrop.render(gBallCatcher.mBucketShape);
 	gBallCatcher.render();
-	for(int i = 0;i < TOTAL_LIVES;i++){
-		gLiveTexture.render(i * gLiveTexture.getWidth(),0);
+	for (int i = 0; i < TOTAL_LIVES; i++)
+	{
+		gLiveTexture.render(i * gLiveTexture.getWidth(), 0);
 	}
 	if (--gLavaDuration > 0)
 		lavaAnimation();

@@ -224,17 +224,17 @@ enum MENU_OPTIONS
 BUTTONS gameState = PLAY;
 
 SDL_Rect gCamera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; //Dynamic map variables
-SDL_Rect gTaskPosition[NUMBER_OF_TASKS];//Task positions on map
+SDL_Rect gTaskPosition[NUMBER_OF_TASKS];				//Task positions on map
 SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
 
 bool gIfTaskComplete[NUMBER_OF_TASKS];
 bool gIfResume = false; //Checks if the game is resumed or not
 bool gIfMusic = true;
 
-int gTaskScore[NUMBER_OF_TASKS]; 
+int gTaskScore[NUMBER_OF_TASKS];
 int gRequiredTaskScore[NUMBER_OF_TASKS]; //required score in each game
-int gCharCurPosX, gCharCurPosY; //Variable to check the change in characters position
-int gCOIN_COUNT = 5;  //5 coins for new users. (will be loaded from file for older users)
+int gCharCurPosX, gCharCurPosY;			 //Variable to check the change in characters position
+int gCOIN_COUNT = 5;					 //5 coins for new users. (will be loaded from file for older users)
 
 //struct variables
 CoinAnimation gTaskCoinA(8, 40, 40, 4);
@@ -253,15 +253,14 @@ Texture gUI_ButtonsTexture[NUMBER_OF_BUTTONS];
 Texture gUI_LoginTexture;
 Texture gUI_LoginEnterTexture;
 Texture gCoinCountTexture;
+Texture gIdNameTexture;
 
-
-std::vector<SDL_Rect> gMapObjects;//List of objects in the room for collision detection
-std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
+std::vector<SDL_Rect> gMapObjects;					 //List of objects in the room for collision detection
+std::vector<std::pair<int, int>> gBuildingPositions; //Coordinates for placing trees and buildings on the map
 std::vector<std::tuple<int, int, int>> gTreePositions;
-std::string gCurentUsername;
+std::string gCurentUsername = "NOT LOGGED IN";
 //global timer
 Timer gTimer;
-
 
 bool init()
 {
@@ -365,8 +364,10 @@ void closeAll()
 	gTaskCoinA.free();
 	gTimeTexture.free();
 
-	for (int i = 0; i < BUILDING_COUNT; i++)gBuildingTexture[i].free();
-	for (int i = 0; i < TREE_COUNT; i++)gTreesTexture[i].free();
+	for (int i = 0; i < BUILDING_COUNT; i++)
+		gBuildingTexture[i].free();
+	for (int i = 0; i < TREE_COUNT; i++)
+		gTreesTexture[i].free();
 
 	gMapObjects.clear();
 	gBuildingPositions.clear();
@@ -384,36 +385,59 @@ void closeAll()
 
 bool loadMedia()
 {
-	if (!gMyCharacter.mCharTexture.loadFile("images/main/walk1.png"))return false;
-	if (!gBackgroundTexture.loadFile("images/main/background1.png"))return false;
-	if (!gBuildingTexture[0].loadFile("images/main/arcade1.png"))return false;
-	if (!gBuildingTexture[1].loadFile("images/main/arcade2.png"))return false;
-	if (!gBuildingTexture[2].loadFile("images/main/arcade4.png"))return false;
-	if (!gBuildingTexture[3].loadFile("images/main/arcade3.png"))return false;
-	if (!gTreesTexture[0].loadFile("images/main/tree1.png"))return false;
-	if (!gTreesTexture[1].loadFile("images/main/tree2.png"))return false;
-	if (!gTreesTexture[2].loadFile("images/main/tree3.png"))return false;
-	if (!gTaskCoinA.mCoinTexture.loadFile("images/main/coin.png"))return false;
-	if(!gUI_BackgroundTexture.loadFile("images/main/ui_back.png"))return false;
-	if(!gUI_ButtonsTexture[PLAY].loadFile("images/main/play_button.png"))return false;
-	if(!gUI_ButtonsTexture[CONTINUE].loadFile("images/main/continue_button.png"))return false;
-	if(!gUI_ButtonsTexture[EXIT].loadFile("images/main/exit_button.png"))return false;
-	if(!gUI_ButtonsTexture[LOGIN].loadFile("images/main/login_button.png"))return false;
-	if(!gUI_ButtonsTexture[REGISTER].loadFile("images/main/register_button.png"))return false;
-	if(!gUI_ButtonsTexture[HELP].loadFile("images/main/help_button.png"))return false;
-	if(!gUI_ButtonsTexture[BACK].loadFile("images/main/back_button.png"))return false;
-	if(!gUI_LoginTexture.loadFile("images/main/login_back.png"))return false;
-	if(!gUI_LoginEnterTexture.loadFile("images/main/login_enter.png"))return false;
-	if(!gUI_ButtonsTexture[VOLUME_ON].loadFile("images/main/music_on.png"))return false;
-	if(!gUI_ButtonsTexture[VOLUME_OFF].loadFile("images/main/music_off.png"))return false;
-	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 24);
+	if (!gMyCharacter.mCharTexture.loadFile("images/main/walk1.png"))
+		return false;
+	if (!gBackgroundTexture.loadFile("images/main/background1.png"))
+		return false;
+	if (!gBuildingTexture[0].loadFile("images/main/arcade1.png"))
+		return false;
+	if (!gBuildingTexture[1].loadFile("images/main/arcade2.png"))
+		return false;
+	if (!gBuildingTexture[2].loadFile("images/main/arcade4.png"))
+		return false;
+	if (!gBuildingTexture[3].loadFile("images/main/arcade3.png"))
+		return false;
+	if (!gTreesTexture[0].loadFile("images/main/tree1.png"))
+		return false;
+	if (!gTreesTexture[1].loadFile("images/main/tree2.png"))
+		return false;
+	if (!gTreesTexture[2].loadFile("images/main/tree3.png"))
+		return false;
+	if (!gTaskCoinA.mCoinTexture.loadFile("images/main/coin.png"))
+		return false;
+	if (!gUI_BackgroundTexture.loadFile("images/main/ui_back.png"))
+		return false;
+	if (!gUI_ButtonsTexture[PLAY].loadFile("images/main/play_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[CONTINUE].loadFile("images/main/continue_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[EXIT].loadFile("images/main/exit_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[LOGIN].loadFile("images/main/login_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[REGISTER].loadFile("images/main/register_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[HELP].loadFile("images/main/help_button.png"))
+		return false;
+	if (!gUI_ButtonsTexture[BACK].loadFile("images/main/back_button.png"))
+		return false;
+	if (!gUI_LoginTexture.loadFile("images/main/login_back.png"))
+		return false;
+	if (!gUI_LoginEnterTexture.loadFile("images/main/login_enter.png"))
+		return false;
+	if (!gUI_ButtonsTexture[VOLUME_ON].loadFile("images/main/music_on.png"))
+		return false;
+	if (!gUI_ButtonsTexture[VOLUME_OFF].loadFile("images/main/music_off.png"))
+		return false;
+	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 21);
 	if (gFont == NULL)
 	{
 		ERROR_T;
 		return false;
 	}
 	gMusic = Mix_LoadMUS("sounds/background.wav");
-	if(gMusic == NULL){
+	if (gMusic == NULL)
+	{
 		ERROR_M;
 		return false;
 	}
@@ -437,7 +461,7 @@ void gameInitialize()
 
 	tRect.x = 950, tRect.y = 550;
 	gBuildingPositions.push_back(std::make_pair(tRect.x, tRect.y));
-	tRect.w = gBuildingTexture[0].getWidth() - gMyCharacter.mCharWidth , tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
+	tRect.w = gBuildingTexture[0].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[0].getHeight() - gMyCharacter.mCharHeight;
 	gMapObjects.push_back(tRect);
 
 	tRect.x = 150, tRect.y = 500;
@@ -455,50 +479,52 @@ void gameInitialize()
 	tRect.w = gBuildingTexture[3].getWidth() - gMyCharacter.mCharWidth, tRect.h = gBuildingTexture[3].getHeight() - 20;
 	gMapObjects.push_back(tRect);
 
-
 	//Rendering trees on map
 
 	int tempHeight[] = {30, 70, 97};
 	int st = 240;
-	for (int i = st, j = 0,k = 0; k <= 3; i += 210, j = (j + 1) % TREE_COUNT)
+	for (int i = st, j = 0, k = 0; k <= 3; i += 210, j = (j + 1) % TREE_COUNT)
 	{
 		tRect.x = i, tRect.y = tempHeight[j];
 		gTreePositions.push_back(std::make_tuple(j, tRect.x, tRect.y));
 		tRect.w = gTreesTexture[j].getWidth() - 10, tRect.h = gTreesTexture[j].getHeight() - 10;
 		gMapObjects.push_back(tRect);
-		if(i >= LEVEL_WIDTH){
+		if (i >= LEVEL_WIDTH)
+		{
 			k++;
-			if(k == 1)st = 430,tempHeight[0] = 240, tempHeight[1] = 280, tempHeight[2] = 330;
-			if(k == 2)st = 411,tempHeight[0] = 450, tempHeight[1] = 500, tempHeight[2] = 450;
-			if(k == 3)st = 40,tempHeight[0] = 790, tempHeight[1] = 700, tempHeight[2] = 680;
+			if (k == 1)
+				st = 430, tempHeight[0] = 240, tempHeight[1] = 280, tempHeight[2] = 330;
+			if (k == 2)
+				st = 411, tempHeight[0] = 450, tempHeight[1] = 500, tempHeight[2] = 450;
+			if (k == 3)
+				st = 40, tempHeight[0] = 790, tempHeight[1] = 700, tempHeight[2] = 680;
 			i = st - 210;
 		}
 	}
-	
+
 	//initializing task positions on map
 	gTaskPosition[NO_GAME] = {-1, -1, -1, -1};
 	gIfTaskComplete[NO_GAME] = true;
 
 	gTaskPosition[DINORUN].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[DINORUN].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[DINORUN].x = gBuildingPositions[0].first + gBuildingTexture[0].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[DINORUN].x = gBuildingPositions[0].first + gBuildingTexture[0].getWidth() / 2 - gTaskCoinA.mCoinWidth / 2;
 	gTaskPosition[DINORUN].y = gBuildingPositions[0].second + gBuildingTexture[0].getHeight() - gTaskCoinA.mCoinHeight;
 
 	gTaskPosition[BUCKET_BALL].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[BUCKET_BALL].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[BUCKET_BALL].x = gBuildingPositions[1].first + gBuildingTexture[1].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[BUCKET_BALL].x = gBuildingPositions[1].first + gBuildingTexture[1].getWidth() / 2 - gTaskCoinA.mCoinWidth / 2;
 	gTaskPosition[BUCKET_BALL].y = gBuildingPositions[1].second + gBuildingTexture[1].getHeight() - gTaskCoinA.mCoinHeight;
 
 	gTaskPosition[PACMAN].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[PACMAN].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + gBuildingTexture[2].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[PACMAN].x = gBuildingPositions[2].first + gBuildingTexture[2].getWidth() / 2 - gTaskCoinA.mCoinWidth / 2;
 	gTaskPosition[PACMAN].y = gBuildingPositions[2].second + gBuildingTexture[2].getHeight() - gTaskCoinA.mCoinHeight;
-	
+
 	gTaskPosition[TOWERGAME].h = gTaskCoinA.mCoinWidth;
 	gTaskPosition[TOWERGAME].w = gTaskCoinA.mCoinHeight;
-	gTaskPosition[TOWERGAME].x = gBuildingPositions[3].first + gBuildingTexture[3].getWidth()/2 - gTaskCoinA.mCoinWidth/2;
+	gTaskPosition[TOWERGAME].x = gBuildingPositions[3].first + gBuildingTexture[3].getWidth() / 2 - gTaskCoinA.mCoinWidth / 2;
 	gTaskPosition[TOWERGAME].y = gBuildingPositions[3].second + gBuildingTexture[3].getHeight() - gTaskCoinA.mCoinHeight;
-
 
 	gRequiredTaskScore[BUCKET_BALL] = 100;
 	gRequiredTaskScore[PACMAN] = 5;
@@ -506,15 +532,16 @@ void gameInitialize()
 	gRequiredTaskScore[DINORUN] = 5000;
 
 	//Initializing UI button positions
-	for(int i = 0;i < NUMBER_OF_BUTTONS-3;i++){
-		gButtonPosition[i].x = SCREEN_WIDTH/2 - 309/2;
+	for (int i = 0; i < NUMBER_OF_BUTTONS - 3; i++)
+	{
+		gButtonPosition[i].x = SCREEN_WIDTH / 2 - 309 / 2;
 		gButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
 		gButtonPosition[i].w = 309;
 		gButtonPosition[i].h = 55;
 	}
 	gButtonPosition[CONTINUE] = gButtonPosition[PLAY];
-	gButtonPosition[BACK].x = 0,gButtonPosition[BACK].y = 0;
-	gButtonPosition[BACK].w = 50,gButtonPosition[BACK].h = 50;
+	gButtonPosition[BACK].x = 0, gButtonPosition[BACK].y = 0;
+	gButtonPosition[BACK].w = 50, gButtonPosition[BACK].h = 50;
 
 	gButtonPosition[VOLUME_ON].x = SCREEN_WIDTH - gUI_ButtonsTexture[VOLUME_ON].getWidth();
 	gButtonPosition[VOLUME_ON].y = 0;
@@ -522,7 +549,6 @@ void gameInitialize()
 	gButtonPosition[VOLUME_ON].h = gUI_ButtonsTexture[VOLUME_ON].getHeight();
 
 	gButtonPosition[VOLUME_OFF] = gButtonPosition[VOLUME_ON];
-
 }
 
 //Rendering all the objects in the map
@@ -540,7 +566,6 @@ void renderMapObjects()
 	if (gCamera.y > LEVEL_HEIGHT - gCamera.h)
 		gCamera.y = LEVEL_HEIGHT - gCamera.h;
 
-
 	SDL_SetRenderDrawColor(gRender, 127, 0, 127, 255);
 	SDL_RenderClear(gRender);
 	//render background
@@ -555,7 +580,7 @@ void renderMapObjects()
 		gTreesTexture[std::get<0>(gTreePositions[i])].render(std::get<1>(gTreePositions[i]) - gCamera.x, std::get<2>(gTreePositions[i]) - gCamera.y);
 	}
 
-	//rendering coin animation at task positions 	
+	//rendering coin animation at task positions
 	for (int i = 0; i < NUMBER_OF_TASKS; i++)
 	{
 		if (!gIfTaskComplete[i])
@@ -576,7 +601,8 @@ void renderMapObjects()
 		gCharCurPosX = gMyCharacter.mPosX;
 		gCharCurPosY = gMyCharacter.mPosY;
 	}
-	else{
+	else
+	{
 		gMyCharacter.mCurSprite = 0;
 	}
 
@@ -587,10 +613,16 @@ void renderMapObjects()
 	// gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
 	// gTimeTexture.render(SCREEN_WIDTH - 100, 0);
 
-	std::stringstream coinText;
-	coinText << "Coins : "<<gCOIN_COUNT;
-	gCoinCountTexture.loadFromText(coinText.str().c_str(),textColor);
-	gCoinCountTexture.render(0,0);
+
+	std::stringstream tempText;
+	tempText << "Coins : " << gCOIN_COUNT;
+	gCoinCountTexture.loadFromText(tempText.str().c_str(), textColor);
+	gCoinCountTexture.render(0, 0);
+
+	tempText.str("");
+	tempText<<"User :"<<gCurentUsername;
+	gIdNameTexture.loadFromText(tempText.str().c_str(),textColor);
+	gIdNameTexture.render(0,20);
 
 	gMyCharacter.render(gCamera.x, gCamera.y);
 }
@@ -604,8 +636,10 @@ void taskHandler()
 		if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[i]))
 			whichTask = (TASK_NAME)i;
 	}
-	if(whichTask != NO_GAME && gCOIN_COUNT > 0){
-		if(gIfMusic){
+	if (whichTask != NO_GAME && gCOIN_COUNT > 0)
+	{
+		if (gIfMusic)
+		{
 			Mix_HaltMusic();
 		}
 		gCOIN_COUNT -= 1;
@@ -615,69 +649,78 @@ void taskHandler()
 		curTaskScore = bucketBall();
 	if (whichTask == PACMAN)
 		curTaskScore = pacman();
-	if(whichTask == DINORUN)
+	if (whichTask == DINORUN)
 		curTaskScore = dinoRun();
-	if(whichTask == TOWERGAME)
+	if (whichTask == TOWERGAME)
 		curTaskScore = towerGame();
-	if(whichTask != NO_GAME)gMyCharacter.positionReset();
+	if (whichTask != NO_GAME)
+		gMyCharacter.positionReset();
 	gTaskScore[whichTask] = curTaskScore;
 
-	if(gIfMusic && Mix_PlayingMusic() == 0){
-		Mix_PlayMusic(gMusic,0);
+	if (gIfMusic && Mix_PlayingMusic() == 0)
+	{
+		Mix_PlayMusic(gMusic, 0);
 	}
 }
 
-
-MENU_OPTIONS handleUI(SDL_Event &e){
+MENU_OPTIONS handleUI(SDL_Event &e)
+{
 
 	bool quit = false;
 	int menuScroll = 0;
-	while(!quit){
+	while (!quit)
+	{
 
 		//Control Music
-		if(Mix_PlayingMusic() == 0 && gIfMusic){
-			Mix_PlayMusic(gMusic,0);
-		}else if(!gIfMusic){
+		if (Mix_PlayingMusic() == 0 && gIfMusic)
+		{
+			Mix_PlayMusic(gMusic, 0);
+		}
+		else if (!gIfMusic)
+		{
 			Mix_HaltMusic();
 		}
 
-		int mouseX,mouseY;
-		SDL_GetMouseState(&mouseX,&mouseY);
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
 
 		// Mouse hover animation on button
 
-		for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
+		for (int i = 0; i < NUMBER_OF_BUTTONS; i++)
+		{
 			gUI_ButtonsTexture[i].setAlpha(255);
-			if(mouseX >= gButtonPosition[i].x && mouseX <= gButtonPosition[i].x + gButtonPosition[i].w
-			&& mouseY >= gButtonPosition[i].y && mouseY <= gButtonPosition[i].y + gButtonPosition[i].h){
+			if (mouseX >= gButtonPosition[i].x && mouseX <= gButtonPosition[i].x + gButtonPosition[i].w && mouseY >= gButtonPosition[i].y && mouseY <= gButtonPosition[i].y + gButtonPosition[i].h)
+			{
 				gUI_ButtonsTexture[i].setAlpha(200);
 			}
 		}
 
-		while(SDL_PollEvent(&e) != 0){
-			if(e.type == SDL_QUIT){
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
 				quit = true;
 				return FULL_EXIT;
 			}
-			else if(e.type == SDL_MOUSEBUTTONDOWN){
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
 
-				if(mouseX >= gButtonPosition[PLAY].x && mouseX <= gButtonPosition[PLAY].x + gButtonPosition[PLAY].w
-				&& mouseY >= gButtonPosition[PLAY].y && mouseY <= gButtonPosition[PLAY].y + gButtonPosition[PLAY].h)return START_GAME;
-				
-				if(mouseX >= gButtonPosition[EXIT].x && mouseX <= gButtonPosition[EXIT].x + gButtonPosition[EXIT].w
-				&& mouseY >= gButtonPosition[EXIT].y && mouseY <= gButtonPosition[EXIT].y + gButtonPosition[EXIT].h)return FULL_EXIT;
+				if (mouseX >= gButtonPosition[PLAY].x && mouseX <= gButtonPosition[PLAY].x + gButtonPosition[PLAY].w && mouseY >= gButtonPosition[PLAY].y && mouseY <= gButtonPosition[PLAY].y + gButtonPosition[PLAY].h)
+					return START_GAME;
 
-				if(mouseX >= gButtonPosition[LOGIN].x && mouseX <= gButtonPosition[LOGIN].x + gButtonPosition[LOGIN].w
-				&& mouseY >= gButtonPosition[LOGIN].y && mouseY <= gButtonPosition[LOGIN].y + gButtonPosition[LOGIN].h)return LOGIN_MENU;
+				if (mouseX >= gButtonPosition[EXIT].x && mouseX <= gButtonPosition[EXIT].x + gButtonPosition[EXIT].w && mouseY >= gButtonPosition[EXIT].y && mouseY <= gButtonPosition[EXIT].y + gButtonPosition[EXIT].h)
+					return FULL_EXIT;
 
-				if(mouseX >= gButtonPosition[HELP].x && mouseX <= gButtonPosition[HELP].x + gButtonPosition[HELP].w
-				&& mouseY >= gButtonPosition[HELP].y && mouseY <= gButtonPosition[HELP].y + gButtonPosition[HELP].h)return HELP_MENU;
+				if (mouseX >= gButtonPosition[LOGIN].x && mouseX <= gButtonPosition[LOGIN].x + gButtonPosition[LOGIN].w && mouseY >= gButtonPosition[LOGIN].y && mouseY <= gButtonPosition[LOGIN].y + gButtonPosition[LOGIN].h)
+					return LOGIN_MENU;
 
-				if(mouseX >= gButtonPosition[VOLUME_ON].x && mouseX <= gButtonPosition[VOLUME_ON].x + gButtonPosition[VOLUME_ON].w
-				&& mouseY >= gButtonPosition[VOLUME_ON].y && mouseY <= gButtonPosition[VOLUME_ON].y + gButtonPosition[VOLUME_ON].h){
+				if (mouseX >= gButtonPosition[HELP].x && mouseX <= gButtonPosition[HELP].x + gButtonPosition[HELP].w && mouseY >= gButtonPosition[HELP].y && mouseY <= gButtonPosition[HELP].y + gButtonPosition[HELP].h)
+					return HELP_MENU;
+
+				if (mouseX >= gButtonPosition[VOLUME_ON].x && mouseX <= gButtonPosition[VOLUME_ON].x + gButtonPosition[VOLUME_ON].w && mouseY >= gButtonPosition[VOLUME_ON].y && mouseY <= gButtonPosition[VOLUME_ON].y + gButtonPosition[VOLUME_ON].h)
+				{
 					gIfMusic = !gIfMusic;
 				}
-
 			}
 		}
 		//render UI
@@ -685,85 +728,102 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 		SDL_RenderClear(gRender);
 
 		menuScroll -= 2;
-		if(menuScroll < -SCREEN_WIDTH)menuScroll = 0;
-		gUI_BackgroundTexture.render(menuScroll,0);
-		gUI_BackgroundTexture.render(menuScroll + SCREEN_WIDTH,0);
-		int st = 0,skip = -1;
-		if(gIfResume){
+		if (menuScroll < -SCREEN_WIDTH)
+			menuScroll = 0;
+		gUI_BackgroundTexture.render(menuScroll, 0);
+		gUI_BackgroundTexture.render(menuScroll + SCREEN_WIDTH, 0);
+		int st = 0, skip = -1;
+		if (gIfResume)
+		{
 			st = 1;
-		}else{
+		}
+		else
+		{
 			skip = 1;
 		}
 
-		for(int i = st;i < NUMBER_OF_BUTTONS-3;i++){
-			if(skip != -1 && i == skip)continue;
+		for (int i = st; i < NUMBER_OF_BUTTONS - 3; i++)
+		{
+			if (skip != -1 && i == skip)
+				continue;
 			int pos = i;
-			if(i == 1)pos = i - st;
-			gUI_ButtonsTexture[i].render(gButtonPosition[pos].x,gButtonPosition[pos].y);
+			if (i == 1)
+				pos = i - st;
+			gUI_ButtonsTexture[i].render(gButtonPosition[pos].x, gButtonPosition[pos].y);
 		}
 
-		
 		//render volume button
 		BUTTONS tButton;
-		if(gIfMusic){
+		if (gIfMusic)
+		{
 			tButton = VOLUME_ON;
 		}
-		else tButton = VOLUME_OFF;
-		gUI_ButtonsTexture[tButton].render(gButtonPosition[tButton].x,gButtonPosition[VOLUME_ON].y);
+		else
+			tButton = VOLUME_OFF;
+		gUI_ButtonsTexture[tButton].render(gButtonPosition[tButton].x, gButtonPosition[VOLUME_ON].y);
 
 		SDL_RenderPresent(gRender);
-		
 	}
 	return FULL_EXIT;
 }
 
-MENU_OPTIONS loginUI(SDL_Event &e){
+MENU_OPTIONS loginUI(SDL_Event &e)
+{
 	bool quit = false;
 	int invalidPromptDelay = 0;
-	SDL_Color textColor = {255,255,255,255};
-	SDL_Rect loginEnter = {570,200,150,27};
-	Texture inputTexture,promptTexture,invalidTexture;
+	SDL_Color textColor = {255, 255, 255, 255};
+	SDL_Rect loginEnter = {570, 200, 150, 27};
+	Texture inputTexture, promptTexture, invalidTexture;
 	std::string inputText = "Username";
-	promptTexture.loadFromText(inputText.c_str(),textColor);
+	promptTexture.loadFromText(inputText.c_str(), textColor);
 	inputText = "Invalid Username";
-	invalidTexture.loadFromText(inputText.c_str(),textColor);
+	invalidTexture.loadFromText(inputText.c_str(), textColor);
 	inputText = "";
-	while(!quit){
+	while (!quit)
+	{
 		bool ifRender = false;
-		int mouseX,mouseY;
-		SDL_GetMouseState(&mouseX,&mouseY);
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
 
-		if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
-		&& mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h){
+		if (mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w && mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h)
+		{
 			gUI_LoginEnterTexture.setAlpha(200);
-		}else gUI_LoginEnterTexture.setAlpha(255);
+		}
+		else
+			gUI_LoginEnterTexture.setAlpha(255);
 
-		while(SDL_PollEvent(&e) != 0){
-			if(e.type == SDL_QUIT){
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
 				quit = true;
 				return FULL_EXIT;
 			}
-			else if(e.type == SDL_MOUSEBUTTONDOWN){
-				if(mouseX >= gButtonPosition[BACK].x && mouseX <= gButtonPosition[BACK].x + gButtonPosition[BACK].w 
-				&& mouseY >= gButtonPosition[BACK].y && mouseY <= gButtonPosition[BACK].y + gButtonPosition[BACK].h){
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gButtonPosition[BACK].x && mouseX <= gButtonPosition[BACK].x + gButtonPosition[BACK].w && mouseY >= gButtonPosition[BACK].y && mouseY <= gButtonPosition[BACK].y + gButtonPosition[BACK].h)
+				{
 					return LOADING_SCREEN;
 				}
-				
-				else if(mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w 
-				&& mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h){
+
+				else if (mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w && mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h)
+				{
 					//check username
 					bool flag = false;
 					std::ifstream usernameFile;
 					usernameFile.open("saved_files/username.in");
-					if(!usernameFile){
+					if (!usernameFile)
+					{
 						printf("Could not open file\n");
 					}
 					std::string tStr;
 					int tCoin;
-				
-					while(usernameFile.eof() == false){
-						usernameFile>>tStr>>tCoin;
-						if(tStr == inputText){
+
+					while (usernameFile.eof() == false)
+					{
+						usernameFile >> tStr >> tCoin;
+						if (tStr == inputText)
+						{
 							flag = true;
 							gCOIN_COUNT = tCoin;
 							gCurentUsername = tStr;
@@ -771,64 +831,75 @@ MENU_OPTIONS loginUI(SDL_Event &e){
 						// std::cout<<tStr<<"----"<<tCoin<<"\n";
 					}
 					usernameFile.close();
-					if(flag)
+					if (flag)
 						return START_GAME;
-					else{
+					else
+					{
 						invalidPromptDelay = 50;
 					}
 				}
 			}
-			
-			else if(e.type == SDL_KEYDOWN)
+
+			else if (e.type == SDL_KEYDOWN)
 			{
-				if(e.ksym == SDLK_BACKSPACE){
+				if (e.ksym == SDLK_ESCAPE)
+				{
 					return LOADING_SCREEN;
 				}
-				else if(e.ksym == SDLK_BACKSPACE && inputText.size() > 0){
+				else if (e.ksym == SDLK_BACKSPACE && inputText.size() > 0)
+				{
 					inputText.pop_back();
 					ifRender = true;
 				}
-				else if(e.ksym == SDLK_c && SDL_GetModState() & KMOD_CTRL){
+				else if (e.ksym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
+				{
 					SDL_SetClipboardText(inputText.c_str());
 				}
-				else if(e.ksym == SDLK_v && SDL_GetModState() & KMOD_CTRL){
+				else if (e.ksym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
+				{
 					inputText = SDL_GetClipboardText();
 					ifRender = true;
 				}
 			}
-			else if(e.type == SDL_TEXTINPUT)
+			else if (e.type == SDL_TEXTINPUT)
 			{
-				if(!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V') ) ){
+				if (!(SDL_GetModState() & KMOD_CTRL && (e.text.text[0] == 'c' || e.text.text[0] == 'C' || e.text.text[0] == 'v' || e.text.text[0] == 'V')))
+				{
 					inputText += e.text.text;
 					ifRender = true;
 				}
 			}
 		}
-		if(ifRender){
-			if(inputText != "")inputTexture.loadFromText(inputText.c_str(),textColor);
-			else inputTexture.loadFromText(" ",textColor);
+		if (ifRender)
+		{
+			if (inputText != "")
+				inputTexture.loadFromText(inputText.c_str(), textColor);
+			else
+				inputTexture.loadFromText(" ", textColor);
 		}
-		SDL_SetRenderDrawColor( gRender, 255, 255, 255, 255 );
-		SDL_RenderClear( gRender );
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
 
-		gUI_LoginTexture.render(0,0);
+		gUI_LoginTexture.render(0, 0);
 		// printf("%d\n",invalidPromptDelay);
-		if(invalidPromptDelay > 0){	
-			invalidTexture.render(540,50);
+		if (invalidPromptDelay > 0)
+		{
+			invalidTexture.render(540, 50);
 			invalidPromptDelay -= 1;
-		}else{
-			promptTexture.render(600,50);
 		}
-		SDL_Rect usernameBox = {450,80,400,65};
-		SDL_RenderDrawRect(gRender,&usernameBox);
-		inputTexture.render(450,80);
-		gUI_LoginEnterTexture.render(loginEnter.x,loginEnter.y);
-		gUI_ButtonsTexture[BACK].render(gButtonPosition[BACK].x,gButtonPosition[BACK].y);
+		else
+		{
+			promptTexture.render(600, 50);
+		}
+		SDL_Rect usernameBox = {450, 80, 400, 65};
+		SDL_RenderDrawRect(gRender, &usernameBox);
+		inputTexture.render(450, 80);
+		gUI_LoginEnterTexture.render(loginEnter.x, loginEnter.y);
+		gUI_ButtonsTexture[BACK].render(gButtonPosition[BACK].x, gButtonPosition[BACK].y);
 		SDL_RenderPresent(gRender);
 	}
 	return LOGIN_MENU;
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -849,7 +920,6 @@ int main(int argc, char *argv[])
 	//Loading map object position and shape
 	gameInitialize();
 
-	
 	SDL_Event e;
 
 	//initial character position to track movement
@@ -857,38 +927,45 @@ int main(int argc, char *argv[])
 	gCharCurPosY = gMyCharacter.mPosY;
 
 	bool game_quit = false;
-	while(!game_quit){
+	while (!game_quit)
+	{
 
 		bool quit = true;
 		MENU_OPTIONS menuState = LOADING_SCREEN;
 
-		if(menuState == LOADING_SCREEN){
+		if (menuState == LOADING_SCREEN)
+		{
 			menuState = handleUI(e);
 		}
-		if(menuState == LOGIN_MENU){
+		if (menuState == LOGIN_MENU)
+		{
 			menuState = loginUI(e);
 		}
-		if(menuState == FULL_EXIT)game_quit = true;
-		if(menuState == START_GAME){
+		if (menuState == FULL_EXIT)
+			game_quit = true;
+		if (menuState == START_GAME)
+		{
 			quit = false;
 			gIfResume = true;
 		}
-		
+
 		while (!quit)
 		{
 			while (SDL_PollEvent(&e) != 0)
 			{
-				if(e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE){
+				if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+				{
 					quit = true;
-				}	
-				else if(e.type == SDL_QUIT){
+				}
+				else if (e.type == SDL_QUIT)
+				{
 					quit = true;
 					game_quit = true;
 				}
 				gMyCharacter.handleEvent(e);
 			}
 			gMyCharacter.move(gMapObjects);
-			
+
 			// printf("%d %d\n",gMyCharacter.mPosX,gMyCharacter.mPosY);
 
 			//running a task if in correct position
