@@ -206,6 +206,8 @@ enum BUTTONS
 	REGISTER,
 	EXIT,
 	BACK,
+	VOLUME_ON,
+	VOLUME_OFF,
 	NUMBER_OF_BUTTONS
 };
 
@@ -226,7 +228,8 @@ SDL_Rect gTaskPosition[NUMBER_OF_TASKS];//Task positions on map
 SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
 
 bool gIfTaskComplete[NUMBER_OF_TASKS];
-bool ifResume = false; //Checks if the game is resumed or not
+bool gIfResume = false; //Checks if the game is resumed or not
+bool gIfMusic = true;
 
 int gTaskScore[NUMBER_OF_TASKS]; 
 int gRequiredTaskScore[NUMBER_OF_TASKS]; //required score in each game
@@ -250,6 +253,7 @@ Texture gUI_ButtonsTexture[NUMBER_OF_BUTTONS];
 Texture gUI_LoginTexture;
 Texture gUI_LoginEnterTexture;
 Texture gCoinCountTexture;
+
 
 std::vector<SDL_Rect> gMapObjects;//List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions;//Coordinates for placing trees and buildings on the map
@@ -400,10 +404,17 @@ bool loadMedia()
 	if(!gUI_ButtonsTexture[BACK].loadFile("images/main/back_button.png"))return false;
 	if(!gUI_LoginTexture.loadFile("images/main/login_back.png"))return false;
 	if(!gUI_LoginEnterTexture.loadFile("images/main/login_enter.png"))return false;
+	if(!gUI_ButtonsTexture[VOLUME_ON].loadFile("images/main/music_on.png"))return false;
+	if(!gUI_ButtonsTexture[VOLUME_OFF].loadFile("images/main/music_off.png"))return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 24);
 	if (gFont == NULL)
 	{
 		ERROR_T;
+		return false;
+	}
+	gMusic = Mix_LoadMUS("sounds/background.wav");
+	if(gMusic == NULL){
+		ERROR_M;
 		return false;
 	}
 	//chaning cursor inside the game
@@ -495,7 +506,7 @@ void gameInitialize()
 	gRequiredTaskScore[DINORUN] = 5000;
 
 	//Initializing UI button positions
-	for(int i = 0;i < NUMBER_OF_BUTTONS;i++){
+	for(int i = 0;i < NUMBER_OF_BUTTONS-3;i++){
 		gButtonPosition[i].x = SCREEN_WIDTH/2 - 309/2;
 		gButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
 		gButtonPosition[i].w = 309;
@@ -504,6 +515,13 @@ void gameInitialize()
 	gButtonPosition[CONTINUE] = gButtonPosition[PLAY];
 	gButtonPosition[BACK].x = 0,gButtonPosition[BACK].y = 0;
 	gButtonPosition[BACK].w = 50,gButtonPosition[BACK].h = 50;
+
+	gButtonPosition[VOLUME_ON].x = SCREEN_WIDTH - gUI_ButtonsTexture[VOLUME_ON].getWidth();
+	gButtonPosition[VOLUME_ON].y = 0;
+	gButtonPosition[VOLUME_ON].w = gUI_ButtonsTexture[VOLUME_ON].getWidth();
+	gButtonPosition[VOLUME_ON].h = gUI_ButtonsTexture[VOLUME_ON].getHeight();
+
+	gButtonPosition[VOLUME_OFF] = gButtonPosition[VOLUME_ON];
 
 }
 
@@ -586,25 +604,43 @@ void taskHandler()
 		if (checkCollisionRect(gMyCharacter.mCharShape, gTaskPosition[i]))
 			whichTask = (TASK_NAME)i;
 	}
+	if(whichTask != NO_GAME && gCOIN_COUNT > 0){
+		if(gIfMusic){
+			Mix_HaltMusic();
+		}
+		gCOIN_COUNT -= 1;
+	}
+	int curTaskScore = 0;
+	if (whichTask == BUCKET_BALL)
+		curTaskScore = bucketBall();
+	if (whichTask == PACMAN)
+		curTaskScore = pacman();
+	if(whichTask == DINORUN)
+		curTaskScore = dinoRun();
+	if(whichTask == TOWERGAME)
+		curTaskScore = towerGame();
+	if(whichTask != NO_GAME)gMyCharacter.positionReset();
+	gTaskScore[whichTask] = curTaskScore;
 
-		int curTaskScore = 0;
-		if (whichTask == BUCKET_BALL)
-			curTaskScore = bucketBall(),gCOIN_COUNT -= 1;
-		if (whichTask == PACMAN)
-			curTaskScore = pacman(),gCOIN_COUNT -= 1;
-		if(whichTask == DINORUN)
-			curTaskScore = dinoRun(),gCOIN_COUNT -= 1;
-		if(whichTask == TOWERGAME)
-			curTaskScore = towerGame(),gCOIN_COUNT -= 1;
-		if(whichTask != NO_GAME)gMyCharacter.positionReset();
-		gTaskScore[whichTask] = curTaskScore;
+	if(gIfMusic && Mix_PlayingMusic() == 0){
+		Mix_PlayMusic(gMusic,0);
+	}
 }
 
 
 MENU_OPTIONS handleUI(SDL_Event &e){
+
 	bool quit = false;
 	int menuScroll = 0;
 	while(!quit){
+
+		//Control Music
+		if(Mix_PlayingMusic() == 0 && gIfMusic){
+			Mix_PlayMusic(gMusic,0);
+		}else if(!gIfMusic){
+			Mix_HaltMusic();
+		}
+
 		int mouseX,mouseY;
 		SDL_GetMouseState(&mouseX,&mouseY);
 
@@ -636,27 +672,44 @@ MENU_OPTIONS handleUI(SDL_Event &e){
 
 				if(mouseX >= gButtonPosition[HELP].x && mouseX <= gButtonPosition[HELP].x + gButtonPosition[HELP].w
 				&& mouseY >= gButtonPosition[HELP].y && mouseY <= gButtonPosition[HELP].y + gButtonPosition[HELP].h)return HELP_MENU;
+
+				if(mouseX >= gButtonPosition[VOLUME_ON].x && mouseX <= gButtonPosition[VOLUME_ON].x + gButtonPosition[VOLUME_ON].w
+				&& mouseY >= gButtonPosition[VOLUME_ON].y && mouseY <= gButtonPosition[VOLUME_ON].y + gButtonPosition[VOLUME_ON].h){
+					gIfMusic = !gIfMusic;
+				}
+
 			}
 		}
 		//render UI
 		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 		SDL_RenderClear(gRender);
+
 		menuScroll -= 2;
 		if(menuScroll < -SCREEN_WIDTH)menuScroll = 0;
 		gUI_BackgroundTexture.render(menuScroll,0);
 		gUI_BackgroundTexture.render(menuScroll + SCREEN_WIDTH,0);
 		int st = 0,skip = -1;
-		if(ifResume){
+		if(gIfResume){
 			st = 1;
 		}else{
 			skip = 1;
 		}
-		for(int i = st;i < NUMBER_OF_BUTTONS-1;i++){
+
+		for(int i = st;i < NUMBER_OF_BUTTONS-3;i++){
 			if(skip != -1 && i == skip)continue;
 			int pos = i;
 			if(i == 1)pos = i - st;
 			gUI_ButtonsTexture[i].render(gButtonPosition[pos].x,gButtonPosition[pos].y);
 		}
+
+		
+		//render volume button
+		BUTTONS tButton;
+		if(gIfMusic){
+			tButton = VOLUME_ON;
+		}
+		else tButton = VOLUME_OFF;
+		gUI_ButtonsTexture[tButton].render(gButtonPosition[tButton].x,gButtonPosition[VOLUME_ON].y);
 
 		SDL_RenderPresent(gRender);
 		
@@ -805,6 +858,7 @@ int main(int argc, char *argv[])
 
 	bool game_quit = false;
 	while(!game_quit){
+
 		bool quit = true;
 		MENU_OPTIONS menuState = LOADING_SCREEN;
 
@@ -817,7 +871,7 @@ int main(int argc, char *argv[])
 		if(menuState == FULL_EXIT)game_quit = true;
 		if(menuState == START_GAME){
 			quit = false;
-			ifResume = true;
+			gIfResume = true;
 		}
 		
 		while (!quit)
