@@ -229,7 +229,7 @@ bool loadDinoMedia()
 		return false;
 
 	gCollisionTexture.setBlendMode(SDL_BLENDMODE_ADD);
-	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 21);
 	if (gFont == NULL)
 	{
 		ERROR_T;
