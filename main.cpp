@@ -198,7 +198,7 @@ SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
 
 bool gIfTaskComplete[NUMBER_OF_TASKS];
 bool gIfResume = false; //Checks if the game is resumed or not
-bool gIfMusic = true;
+bool gIfMusic = false;
 
 int gTaskScore[NUMBER_OF_TASKS];
 int gRequiredTaskScore[NUMBER_OF_TASKS]; //required score in each game
@@ -916,6 +916,9 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+
+	//===================
+	int pp = dinoRun();
 	//Loading map object position and shape
 	gameInitialize();
 

@@ -138,9 +138,6 @@ struct Player
 	}
 };
 
-int TOTAL_SCORE = 0;
-int TOTAL_HEALTH = 3;
-
 enum BACKGROUND_LAYER
 {
 	BUSH_LAYER_1,
@@ -160,13 +157,6 @@ enum BLOCK_TYPE
 	BLOCK_COUNT
 };
 
-Player gMyPlayer; //Player object
-
-Texture gBgTextureDino[LAYER_COUNT];
-Texture gBlockTexture[BLOCK_COUNT];
-Texture gHealthTexture;
-Texture gCollisionTexture;
-Texture gDinoScoreTexture;
 
 int gGroundScroll = 0;
 int gTree1Scroll = 0;
@@ -178,6 +168,10 @@ int gSpawnInterval = 0;
 int gCurColAnimation = 0;
 int gBlockSpawnGap = 600;
 int gScoreDelay = 0;
+int TOTAL_SCORE = 0;
+int TOTAL_HEALTH = 3;
+
+bool gIfResumeDino = false;
 
 Uint32 gPrevTime;
 
@@ -188,8 +182,22 @@ const int gTree2Speed = 4;
 const int gTree3Speed = 2;
 const int gStarSpeed = 1;
 const int gColAnimationCount = 5;
+const int gButtonCount = 4;
 
+Player gMyPlayer; //Player object
+
+Texture gBgTextureDino[LAYER_COUNT];
+Texture gBlockTexture[BLOCK_COUNT];
+Texture gHealthTexture;
+Texture gCollisionTexture;
+Texture gDinoScoreTexture;
+Texture gDinoButtonTexture[gButtonCount];
+Texture gDinoMenuTexture;
+Texture gDinoBackTexture;
+
+SDL_Rect gBackButtonPosition;
 SDL_Rect gCollisionRect[gColAnimationCount];
+SDL_Rect gDinoButtonPosition[gButtonCount];
 
 std::vector<std::pair<int, BLOCK_TYPE>> gBlockPos; //storing block x and block type
 std::vector<int> gBlockIfCollieded;
@@ -227,8 +235,20 @@ bool loadDinoMedia()
 		return false;
 	if (!gHealthTexture.loadFile("images/health.png"))
 		return false;
-
+	if(!gDinoButtonTexture[PLAY].loadFile("images/main/play_button.png"))
+		return false;
+	if(!gDinoButtonTexture[CONTINUE].loadFile("images/main/continue_button.png"))
+		return false;
+	if(!gDinoButtonTexture[HELP].loadFile("images/main/help_button.png"))
+		return false;
+	if(!gDinoButtonTexture[EXIT].loadFile("images/main/exit_button.png"))
+		return false;
+	if(!gDinoMenuTexture.loadFile("images/dino/menu_back.png"))
+		return false;
+	if(!gDinoBackTexture.loadFile("images/main/back_button.png"))
+		return false;
 	gCollisionTexture.setBlendMode(SDL_BLENDMODE_ADD);
+
 	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 21);
 	if (gFont == NULL)
 	{
@@ -257,6 +277,19 @@ bool loadDinoMedia()
 			j++;
 	}
 
+	for (int i = 0; i < gButtonCount; i++)
+	{
+		gDinoButtonPosition[i].x = SCREEN_WIDTH / 3 - 350;
+		gDinoButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
+		gDinoButtonPosition[i].w = 309;
+		gDinoButtonPosition[i].h = 55;
+	}
+	gBackButtonPosition.x = 0;
+	gBackButtonPosition.y = 0;
+	gBackButtonPosition.w = gDinoBackTexture.getWidth();
+	gBackButtonPosition.h = gDinoBackTexture.getHeight();
+
+
 	return true;
 }
 
@@ -267,6 +300,8 @@ void freeDino()
 		gBgTextureDino[i].free();
 	for (int i = 0; i < BLOCK_COUNT; i++)
 		gBlockTexture[i].free();
+	for(int i = 0;i < gButtonCount;i++)
+		gDinoButtonTexture[i].free();
 	gHealthTexture.free();
 	gCollisionTexture.free();
 }
@@ -468,9 +503,129 @@ void initVariableDino()
 {
 	gDinoTimer.start();
 	gPrevTime = gDinoTimer.getTicks() / 1000;
-	TOTAL_SCORE = 0;
-	TOTAL_HEALTH = 5;
+
+	gGroundScroll = 0;
+	gTree1Scroll = 0;
+	gTree2Scroll = 0;
+	gTree3Scroll = 0;
+	gStarScroll = 0;
+	gStarDecrease = 1;
+	gSpawnInterval = 0;
+	gCurColAnimation = 0;
+	gBlockSpawnGap = 600;
+	gScoreDelay = 0;
+	gIfResumeDino = false;
+
+	TOTAL_HEALTH = 3;
+	
+	gMyPlayer.mPosX = 300;
+	gMyPlayer.mPosY = gMyPlayer.BASE_HEIGHT - gMyPlayer.PLAYER_HEIGHT;
+	gMyPlayer.mFlipType = SDL_FLIP_NONE;
+
 	gBlockPos.clear();
+	gHealthPos.clear();
+	gBlockIfCollieded.clear();
+
+}
+
+MENU_OPTIONS handleDinoUI(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+
+		// Mouse hover animation on button
+		for (int i = 0; i < gButtonCount; i++)
+		{
+			gDinoButtonTexture[i].setAlpha(255);
+			if (mouseX >= gDinoButtonPosition[i].x && mouseX <= gDinoButtonPosition[i].x + gDinoButtonPosition[i].w && mouseY >= gDinoButtonPosition[i].y && mouseY <= gDinoButtonPosition[i].y + gDinoButtonPosition[i].h)
+			{
+				gDinoButtonTexture[i].setAlpha(200);
+			}
+		}
+
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				//check mouse_button position
+				if (mouseX >= gDinoButtonPosition[PLAY].x && mouseX <= gDinoButtonPosition[PLAY].x + gDinoButtonPosition[PLAY].w && mouseY >= gDinoButtonPosition[PLAY].y && mouseY <= gDinoButtonPosition[PLAY].y + gDinoButtonPosition[PLAY].h)
+					return START_GAME;
+
+				if (mouseX >= gDinoButtonPosition[EXIT].x && mouseX <= gDinoButtonPosition[EXIT].x + gDinoButtonPosition[EXIT].w && mouseY >= gDinoButtonPosition[EXIT].y && mouseY <= gDinoButtonPosition[EXIT].y + gDinoButtonPosition[EXIT].h)
+					return FULL_EXIT;
+
+				if (mouseX >= gDinoButtonPosition[HELP].x && mouseX <= gDinoButtonPosition[HELP].x + gDinoButtonPosition[HELP].w && mouseY >= gDinoButtonPosition[HELP].y && mouseY <= gDinoButtonPosition[HELP].y + gDinoButtonPosition[HELP].h)
+					return HELP_MENU;
+			}
+		}
+		//render UI
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+
+		//render UI background and buttons
+		gDinoMenuTexture.render(0,0);
+		int st = 0, skip = -1;
+		if (gIfResumeDino)
+			st = 1;
+		else
+			skip = 1;
+		
+		for (int i = st; i < gButtonCount; i++)
+		{
+			if (skip != -1 && i == skip)
+				continue;
+			int pos = i;
+			if (i == 1)
+				pos = i - st;
+			gDinoButtonTexture[i].render(gDinoButtonPosition[pos].x, gDinoButtonPosition[pos].y);
+		}
+
+		SDL_RenderPresent(gRender);
+	}
+	return LOADING_SCREEN;
+}
+MENU_OPTIONS showDinoScore(SDL_Event &e){
+	bool quit = false;
+	Texture tScoreTexture;
+	SDL_Color textColor = {255, 180, 0, 255};
+	std::stringstream tempText;
+	tempText<<"Your Score : "<<TOTAL_SCORE;
+	tScoreTexture.loadFromText(tempText.str().c_str(),textColor);
+
+	while(!quit){
+		int mouseX,mouseY;
+		SDL_GetMouseState(&mouseX,&mouseY);
+		while(SDL_PollEvent(&e) != 0){
+			if(e.type == SDL_QUIT){
+				return FULL_EXIT;
+			}
+			else if(e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE){
+				return LOADING_SCREEN;
+			}
+			else if(e.type == SDL_MOUSEBUTTONDOWN){
+				if (mouseX >= gBackButtonPosition.x && mouseX <= gBackButtonPosition.x + gBackButtonPosition.w && mouseY >= gBackButtonPosition.y && mouseY <= gBackButtonPosition.y + gBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gDinoMenuTexture.render(0,0);
+		gDinoBackTexture.render(gBackButtonPosition.x,gBackButtonPosition.y);
+		tScoreTexture.render(SCREEN_WIDTH/2 - tScoreTexture.getWidth(),100);
+		
+		SDL_RenderPresent(gRender);
+	}
+	return LOADING_SCREEN;
 }
 
 int dinoRun()
@@ -480,25 +635,52 @@ int dinoRun()
 		printf("Failed to load Media(dinorun)\n");
 		return -1;
 	}
-	initVariableDino();
-
-	bool quit = false;
+	bool game_quit = false;
 	SDL_Event e;
-	while (!quit)
-	{
-		while (SDL_PollEvent(&e) != 0)
-		{
-			if (e.type == SDL_QUIT)
-			{
-				quit = true;
-			}
-			gMyPlayer.handleEvent(e);
+	MENU_OPTIONS menuState = LOADING_SCREEN;
+	while(!game_quit){
+		bool quit = true;
+		if(menuState == LOADING_SCREEN){
+			menuState = handleDinoUI(e);
 		}
-		// if(TOTAL_HEALTH <= 0)quit = true;
-		gMyPlayer.move();
-		// printf("%d %d\n",gMyPlayer.mPosX,gMyPlayer.mPosY);
-		renderMapDino();
-		SDL_RenderPresent(gRender);
+		if(menuState == FULL_EXIT){
+			game_quit = true;
+		}
+		if(menuState == START_GAME){
+			TOTAL_SCORE = 0;
+			initVariableDino();
+			quit = false;
+		}
+		if(menuState == SHOW_SCORE){
+			menuState = showDinoScore(e);
+		}
+		while (!quit)
+		{
+			gIfResumeDino = true;
+
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if (e.type == SDL_QUIT)
+				{
+					quit = true;
+					game_quit = true;
+				}
+				if(e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE){
+					quit = true;
+					menuState = LOADING_SCREEN;
+				}
+				gMyPlayer.handleEvent(e);
+			}
+			if(TOTAL_HEALTH <= 0){
+				menuState = SHOW_SCORE;
+				quit = true;
+				initVariableDino();
+			}
+			gMyPlayer.move();
+			// printf("%d %d\n",gMyPlayer.mPosX,gMyPlayer.mPosY);
+			renderMapDino();
+			SDL_RenderPresent(gRender);
+		}
 	}
 	freeDino();
 	return TOTAL_SCORE;
