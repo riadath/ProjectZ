@@ -188,7 +188,6 @@ struct Character
 	}
 };
 
-
 //Game state paused or initial menu
 BUTTONS gameState = PLAY;
 
@@ -228,7 +227,7 @@ Texture gIdNameTexture;
 std::vector<SDL_Rect> gMapObjects;					 //List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions; //Coordinates for placing trees and buildings on the map
 std::vector<std::tuple<int, int, int>> gTreePositions;
-std::string gCurentUsername = "NOT LOGGED IN";
+std::string gCurentUsername = "NOT_LOGGED_IN";
 //global timer
 Timer gTimer;
 
@@ -395,7 +394,7 @@ bool loadMedia()
 		return false;
 	if (!gUI_LoginEnterTexture.loadFile("images/main/login_enter.png"))
 		return false;
-	if(!gUI_RegisterEnterTexture.loadFile("images/main/register_enter.png"))
+	if (!gUI_RegisterEnterTexture.loadFile("images/main/register_enter.png"))
 		return false;
 	if (!gUI_ButtonsTexture[VOLUME_ON].loadFile("images/main/music_on.png"))
 		return false;
@@ -585,16 +584,15 @@ void renderMapObjects()
 	// gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
 	// gTimeTexture.render(SCREEN_WIDTH - 100, 0);
 
-
 	std::stringstream tempText;
 	tempText << "Coins : " << gCOIN_COUNT;
 	gCoinCountTexture.loadFromText(tempText.str().c_str(), textColor);
 	gCoinCountTexture.render(0, 0);
 
 	tempText.str("");
-	tempText<<"User :"<<gCurentUsername;
-	gIdNameTexture.loadFromText(tempText.str().c_str(),textColor);
-	gIdNameTexture.render(0,20);
+	tempText << "User :" << gCurentUsername;
+	gIdNameTexture.loadFromText(tempText.str().c_str(), textColor);
+	gIdNameTexture.render(0, 20);
 
 	gMyCharacter.render(gCamera.x, gCamera.y);
 }
@@ -618,11 +616,11 @@ void taskHandler()
 	}
 	int curTaskScore = 0;
 	if (whichTask == BUCKET_BALL)
-		curTaskScore = bucketBall();
+		curTaskScore = bucketBall(gCurentUsername);
 	if (whichTask == PACMAN)
 		curTaskScore = pacman();
 	if (whichTask == DINORUN)
-		curTaskScore = dinoRun();
+		curTaskScore = dinoRun(gCurentUsername);
 	if (whichTask == TOWERGAME)
 		curTaskScore = towerGame();
 	if (whichTask != NO_GAME)
@@ -743,7 +741,7 @@ MENU_OPTIONS handleUI(SDL_Event &e)
 	return FULL_EXIT;
 }
 
-MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
+MENU_OPTIONS loginRegisterUI(SDL_Event &e, MENU_OPTIONS tMenu)
 {
 	bool quit = false;
 	int invalidPromptDelay = 0;
@@ -751,9 +749,10 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
 	SDL_Rect loginEnter = {570, 200, 150, 27};
 	Texture inputTexture, promptTexture, invalidTexture;
 	std::string inputText;
-	if(tMenu == LOGIN_MENU)
+	if (tMenu == LOGIN_MENU)
 		inputText = "Username";
-	else inputText = "Enter Username";
+	else
+		inputText = "Enter Username";
 	promptTexture.loadFromText(inputText.c_str(), textColor);
 	inputText = "Invalid Username";
 	invalidTexture.loadFromText(inputText.c_str(), textColor);
@@ -769,7 +768,8 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
 			gUI_LoginEnterTexture.setAlpha(200);
 			gUI_RegisterEnterTexture.setAlpha(200);
 		}
-		else{
+		else
+		{
 			gUI_LoginEnterTexture.setAlpha(255);
 			gUI_RegisterEnterTexture.setAlpha(255);
 		}
@@ -790,11 +790,12 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
 
 				else if (mouseX >= loginEnter.x && mouseX <= loginEnter.x + loginEnter.w && mouseY >= loginEnter.y && mouseY <= loginEnter.y + loginEnter.h)
 				{
-					if(tMenu == LOGIN_MENU){
-					//check username
+					if (tMenu == LOGIN_MENU)
+					{
+						//check username
 						bool flag = false;
 						std::ifstream usernameFile;
-						usernameFile.open("saved_files/username.in");
+						usernameFile.open("saved_files/username.names");
 						if (!usernameFile)
 						{
 							printf("Could not open file\n");
@@ -821,16 +822,18 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
 							invalidPromptDelay = 50;
 						}
 					}
-					else if(tMenu == REGISTER_MENU){
+					else if (tMenu == REGISTER_MENU)
+					{
 						std::ofstream usernameFile;
-						usernameFile.open("saved_files/username.in",std::ios_base::app);
+						usernameFile.open("saved_files/username.names", std::ios_base::app);
 						if (!usernameFile)
 						{
 							printf("Could not open file\n");
 						}
-						usernameFile<<"\n"<<inputText<<" 5";
+						usernameFile<< inputText << " 5" <<"\n";
 						gCOIN_COUNT = 5;
 						gCurentUsername = inputText;
+						usernameFile.close();
 						return START_GAME;
 					}
 				}
@@ -890,10 +893,10 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e,MENU_OPTIONS tMenu)
 		SDL_Rect usernameBox = {450, 80, 400, 65};
 		SDL_RenderDrawRect(gRender, &usernameBox);
 		inputTexture.render(450, 80);
-		if(tMenu == LOGIN_MENU)
-		gUI_LoginEnterTexture.render(loginEnter.x, loginEnter.y);
-		else if(tMenu == REGISTER_MENU)
-		gUI_RegisterEnterTexture.render(loginEnter.x,loginEnter.y);
+		if (tMenu == LOGIN_MENU)
+			gUI_LoginEnterTexture.render(loginEnter.x, loginEnter.y);
+		else if (tMenu == REGISTER_MENU)
+			gUI_RegisterEnterTexture.render(loginEnter.x, loginEnter.y);
 		gUI_ButtonsTexture[BACK].render(gButtonPosition[BACK].x, gButtonPosition[BACK].y);
 		SDL_RenderPresent(gRender);
 	}
@@ -916,9 +919,9 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-
 	//===================
-	int pp = dinoRun();
+	// int t = dinoRun(gCurentUsername);
+
 	//Loading map object position and shape
 	gameInitialize();
 
@@ -941,10 +944,11 @@ int main(int argc, char *argv[])
 		}
 		if (menuState == LOGIN_MENU)
 		{
-			menuState = loginRegisterUI(e,menuState);
+			menuState = loginRegisterUI(e, menuState);
 		}
-		if(menuState == REGISTER_MENU){
-			menuState = loginRegisterUI(e,menuState);
+		if (menuState == REGISTER_MENU)
+		{
+			menuState = loginRegisterUI(e, menuState);
 		}
 		if (menuState == FULL_EXIT)
 			game_quit = true;

@@ -14,22 +14,31 @@
 
 int TOTAL_POINTS;
 int TOTAL_LIVES;
-
-//lava splash animation
-Texture gLavaTexture;
-int gCurLavaSprite = 0;
+int gCurLavaSprite = 0; //lava splash animation
 int gLavaDuration = 0;
+
+bool gIfResumeBucketBall = false;
 
 const int LAVA_WIDTH = 59;
 const int LAVA_HEIGHT = 53;
 const int LAVA_SPRITE_COUNT = 5;
+const int gBucketBallButtonCount = 4;
+
 SDL_Rect gLavaSprite[LAVA_SPRITE_COUNT];
+SDL_Rect gBucketBallButtonPosition[gBucketBallButtonCount];
+SDL_Rect gBucketBackButtonPosition;
+SDL_Rect gBucketHighscorePosition;
 
 std::stringstream gBBscoreText; //strings for prompting score and health
 
 Texture gBackgroundTextureBB; //background texture
 Texture gLiveTexture;		  //score and health texture
 Texture gScoreTexture;
+Texture gLavaTexture;
+Texture gBucketButtonTexture[gBucketBallButtonCount];
+Texture gBucketMenuTexture;
+Texture gBucketBackTexture;
+Texture gBucketHighscoreTexture;
 
 Mix_Chunk *gSplash = NULL;
 
@@ -47,7 +56,7 @@ void renderMapBB();
 bool loadBucketBallMedia();
 int bucketBall();
 void lavaAnimation();
-COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape);
+COLLISION_TYPE checkCollisionBB(SDL_Rect bucketShape, SDL_Rect ballShape);
 
 struct Bucket
 {
@@ -185,7 +194,7 @@ struct Ball
 
 		for (int i = 0; i < mBallRects.size(); i++)
 		{
-			COLLISION_TYPE whatCol = checkCollision(bucketShape, mBallRects[i].second);
+			COLLISION_TYPE whatCol = checkCollisionBB(bucketShape, mBallRects[i].second);
 
 			if (whatCol == WALL_COLLISION || whatCol == BUCKET_COLLSION)
 			{
@@ -227,10 +236,14 @@ struct Ball
 Bucket gBallCatcher;
 Ball gBallDrop;
 
+bool comp1(const std::pair<std::string, int> &a, const std::pair<std::string, int> &b)
+{
+	return a.second > b.second;
+}
+
 void initVariable()
 {
 	TOTAL_LIVES = 5;
-	TOTAL_POINTS = 0;
 
 	gBallDrop.mSpawnInterval = 173;
 	gBallDrop.mSpawnSpeed = 0;
@@ -251,7 +264,7 @@ void closeBB()
 	gScoreTexture.free();
 }
 
-COLLISION_TYPE checkCollision(SDL_Rect bucketShape, SDL_Rect ballShape)
+COLLISION_TYPE checkCollisionBB(SDL_Rect bucketShape, SDL_Rect ballShape)
 {
 	if (ballShape.y + ballShape.h < SCREEN_HEIGHT - bucketShape.h)
 		return NO_COLLISION;
@@ -292,6 +305,20 @@ bool loadBucketBallMedia()
 		return false;
 	if (!gLiveTexture.loadFile("images/health.png"))
 		return false;
+	if (!gBucketButtonTexture[PLAY].loadFile("images/main/play_button.png"))
+		return false;
+	if (!gBucketButtonTexture[CONTINUE].loadFile("images/main/continue_button.png"))
+		return false;
+	if (!gBucketButtonTexture[HELP].loadFile("images/main/help_button.png"))
+		return false;
+	if (!gBucketButtonTexture[EXIT].loadFile("images/main/exit_button.png"))
+		return false;
+	if (!gBucketMenuTexture.loadFile("images/BucketBall/menu_back.png"))
+		return false;
+	if (!gBucketBackTexture.loadFile("images/main/back_button.png"))
+		return false;
+	if (!gBucketHighscoreTexture.loadFile("images/main/highscore_button.png"))
+		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -313,6 +340,24 @@ bool loadBucketBallMedia()
 		gLavaSprite[i].w = LAVA_WIDTH;
 		gLavaSprite[i].h = LAVA_HEIGHT;
 	}
+
+	for (int i = 0; i < gBucketBallButtonCount; i++)
+	{
+		gBucketBallButtonPosition[i].x = SCREEN_WIDTH / 2 - 200;
+		gBucketBallButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
+		gBucketBallButtonPosition[i].w = 309;
+		gBucketBallButtonPosition[i].h = 55;
+	}
+
+	gBucketHighscorePosition.x = SCREEN_WIDTH / 2 - 200;
+	gBucketHighscorePosition.y = 3 * 100 + 100;
+	gBucketHighscorePosition.w = 309;
+	gBucketHighscorePosition.h = 55;
+
+	gBucketBackButtonPosition.x = 0;
+	gBucketBackButtonPosition.y = 0;
+	gBucketBackButtonPosition.w = gBucketBackTexture.getWidth();
+	gBucketBackButtonPosition.h = gBucketBackTexture.getHeight();
 
 	return true;
 }
@@ -348,32 +393,272 @@ void renderMapBB()
 		lavaAnimation();
 }
 
-int bucketBall()
+
+MENU_OPTIONS handleBucketBallUI(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+
+		// Mouse hover animation on button
+		for (int i = 0; i < gBucketBallButtonCount; i++)
+		{
+			gBucketButtonTexture[i].setAlpha(255);
+			if (mouseX >= gBucketBallButtonPosition[i].x && mouseX <= gBucketBallButtonPosition[i].x + gBucketBallButtonPosition[i].w && mouseY >= gBucketBallButtonPosition[i].y && mouseY <= gBucketBallButtonPosition[i].y + gBucketBallButtonPosition[i].h)
+			{
+				gBucketButtonTexture[i].setAlpha(200);
+			}
+		}
+
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				quit = true;
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				//check mouse_button position
+				if (mouseX >= gBucketBallButtonPosition[PLAY].x && mouseX <= gBucketBallButtonPosition[PLAY].x + gBucketBallButtonPosition[PLAY].w && mouseY >= gBucketBallButtonPosition[PLAY].y && mouseY <= gBucketBallButtonPosition[PLAY].y + gBucketBallButtonPosition[PLAY].h)
+					return START_GAME;
+
+				if (mouseX >= gBucketBallButtonPosition[EXIT].x && mouseX <= gBucketBallButtonPosition[EXIT].x + gBucketBallButtonPosition[EXIT].w && mouseY >= gBucketBallButtonPosition[EXIT].y && mouseY <= gBucketBallButtonPosition[EXIT].y + gBucketBallButtonPosition[EXIT].h)
+					return FULL_EXIT;
+
+				// if (mouseX >= gBucketBallButtonPosition[HELP].x && mouseX <= gBucketBallButtonPosition[HELP].x + gBucketBallButtonPosition[HELP].w && mouseY >= gBucketBallButtonPosition[HELP].y && mouseY <= gBucketBallButtonPosition[HELP].y + gBucketBallButtonPosition[HELP].h)
+				// 	return HELP_MENU;
+
+				if (mouseX >= gBucketHighscorePosition.x && mouseX <= gBucketHighscorePosition.x + gBucketHighscorePosition.w && mouseY >= gBucketHighscorePosition.y && mouseY <= gBucketHighscorePosition.y + gBucketHighscorePosition.h)
+					return SHOW_HIGHSCORE;
+			}
+		}
+		//render UI
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+
+		//render UI background and buttons
+		gBucketMenuTexture.render(0, 0);
+		int st = 0, skip = -1;
+		if (gIfResumeBucketBall)
+			st = 1;
+		else
+			skip = 1;
+
+		for (int i = st; i < gBucketBallButtonCount; i++)
+		{
+			if (skip != -1 && i == skip)
+				continue;
+			int pos = i;
+			if (i == 1)
+				pos = i - st;
+			gBucketButtonTexture[i].render(gBucketBallButtonPosition[pos].x, gBucketBallButtonPosition[pos].y);
+		}
+		gBucketHighscoreTexture.render(gBucketHighscorePosition.x, gBucketHighscorePosition.y);
+		SDL_RenderPresent(gRender);
+	}
+	return LOADING_SCREEN;
+}
+
+MENU_OPTIONS showBucketBallScore(SDL_Event &e, std::string username)
+{
+	bool quit = false;
+	Texture tScoreTexture;
+	SDL_Color textColor = {255, 180, 0, 255};
+	std::stringstream tempText;
+	tempText << "Your Score : " << TOTAL_POINTS;
+	tScoreTexture.loadFromText(tempText.str().c_str(), textColor);
+
+	//insert score to high score list
+	std::vector<std::pair<std::string, int>> scoreList;
+	std::ifstream highscoreFile;
+
+	highscoreFile.open("saved_files/bucketball.score");
+	if (!highscoreFile)
+	{
+		printf("Could not open file\n");
+	}
+	std::string tStr;
+	int tScore;
+	while (highscoreFile.eof() == false)
+	{
+		highscoreFile >> tStr >> tScore;
+		if (highscoreFile.eof() == false)
+			scoreList.push_back(std::make_pair(tStr, tScore));
+	}
+	highscoreFile.close();
+
+	std::ofstream highscoreFileOut;
+	highscoreFileOut.open("saved_files/bucketball.score");
+	if (!highscoreFileOut)
+	{
+		printf("Could not open file\n");
+	}
+
+	scoreList.push_back(std::make_pair(username, TOTAL_POINTS));
+	std::sort(scoreList.begin(), scoreList.end(), comp1);
+	std::map<std::string, bool> tCheck;
+
+	for (int i = 0; i < std::min(10, (int)scoreList.size()); i++)
+	{
+		highscoreFileOut << scoreList[i].first << " " << scoreList[i].second << "\n";
+	}
+
+	highscoreFileOut.close();
+	TOTAL_POINTS = 0;
+
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gBucketBackButtonPosition.x && mouseX <= gBucketBackButtonPosition.x + gBucketBackButtonPosition.w && mouseY >= gBucketBackButtonPosition.y && mouseY <= gBucketBackButtonPosition.y + gBucketBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gBucketMenuTexture.render(0, 0);
+		gBucketBackTexture.render(gBucketBackButtonPosition.x, gBucketBackButtonPosition.y);
+		tScoreTexture.render(SCREEN_WIDTH / 2 - tScoreTexture.getWidth(), 100);
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
+MENU_OPTIONS showBucketBallHighScore(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gBucketBackButtonPosition.x && mouseX <= gBucketBackButtonPosition.x + gBucketBackButtonPosition.w && mouseY >= gBucketBackButtonPosition.y && mouseY <= gBucketBackButtonPosition.y + gBucketBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gBucketMenuTexture.render(0, 0);
+		gBucketBackTexture.render(gBucketBackButtonPosition.x, gBucketBackButtonPosition.y);
+
+		std::ifstream highscore;
+		highscore.open("saved_files/bucketball.score");
+		int position = 1;
+		Texture tHighscore;
+		tHighscore.loadFromText("User           Score",{255,188,0,255});
+		tHighscore.render(200, 0);
+		while (highscore.eof() == false)
+		{
+			std::string str;
+			int score;
+
+			highscore >> str >> score;
+
+			// std::cout<<str<<"  "<<score<<"\n";
+
+			if(highscore.eof() == false){
+				std::stringstream tempText;
+				tempText << position++ << ". " << str << "           " << score;
+				tHighscore.loadFromText(tempText.str().c_str(), {255, 255, 255, 255});
+				tHighscore.render(200, (position - 1) * 50);
+			}
+		}
+		highscore.close();
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
+
+int bucketBall(std::string username)
 {
 	initVariable();
+
 	if (!loadBucketBallMedia())
 	{
 		printf("Failed to load Media\n");
 		return -1;
 	}
-	bool quit = false;
+	
+	bool game_quit = false;
 	SDL_Event e;
-
-	while (!quit)
-	{
-		while (SDL_PollEvent(&e) != 0)
+	MENU_OPTIONS menuState = LOADING_SCREEN;
+	while(!game_quit){
+		bool quit = true;
+		if (menuState == LOADING_SCREEN)
 		{
-			if (e.type == SDL_QUIT)
-				quit = true;
-			gBallCatcher.handleEvent(e);
+			menuState = handleBucketBallUI(e);
 		}
+		if (menuState == FULL_EXIT)
+		{
+			game_quit = true;
+		}
+		if (menuState == START_GAME)
+		{
+			quit = false;
+		}
+		if (menuState == SHOW_SCORE)
+		{
+			menuState = showBucketBallScore(e, username);
+		}
+		if (menuState == SHOW_HIGHSCORE)
+		{
+			menuState = showBucketBallHighScore(e);
+		}
+		while (!quit)
+		{
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if (e.type == SDL_QUIT)
+					quit = true;
+				if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+				{
+					quit = true;
+					menuState = LOADING_SCREEN;
+				}
+				gBallCatcher.handleEvent(e);
+			}
 
-		if (TOTAL_LIVES <= 0)
-			quit = true;
+			if (TOTAL_LIVES <= 0){
+				menuState = SHOW_SCORE;
+				quit = true;
+				initVariable();
+			}
 
-		gBallCatcher.move();
-		renderMapBB();
-		SDL_RenderPresent(gRender);
+			gBallCatcher.move();
+			renderMapBB();
+			SDL_RenderPresent(gRender);
+		}
 	}
 	closeBB();
 	return TOTAL_POINTS;
