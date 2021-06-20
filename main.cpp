@@ -920,7 +920,7 @@ int main(int argc, char *argv[])
 	}
 
 	//===================
-	// int t = dinoRun(gCurentUsername);
+	 int t = towerGame();
 
 	//Loading map object position and shape
 	gameInitialize();

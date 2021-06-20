@@ -20,6 +20,10 @@ std::deque<SDL_Rect>Platforms;
 //variable to regulate the downward speed of the platforms
 int gPlatformSpeed = 0;
 int gYcoordinate;
+int gTowerDelay = 2;
+int gVelocity = 1;
+int gTowerScoreDelay = 0;
+int gScore;
 
 //rectangular collision detection function
 bool checkCollision_tower( SDL_Rect man,SDL_Rect plat );
@@ -31,8 +35,12 @@ bool valid_platform( int a,int b,int x,int y );
 
 void loadTowerMedia();
 
+void render_score();
+
 //loads and renders the platforms
 void load_Tower();
+
+Timer gTowerTimer;
 
 struct Towerman
 {
@@ -216,6 +224,12 @@ void loadTowerMedia()
 	gSidetower1Texture.loadFile( "images/towergame/side_tower.jpg" );
 	gSidetower2Texture.loadFile( "images/towergame/side_tower.jpg" );
 
+	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	if (gFont == NULL)
+	{
+		ERROR_T;
+	}
+
 	for( int i = 0; i < 6; i++ ){
 		gTowermanRunningClips[i].x = 59*i;
 		gTowermanRunningClips[i].y = 0;
@@ -228,11 +242,11 @@ bool valid_platform( int a,int b,int x,int y )
 {
 	if( x < 150 || x > 1050 || y < 150 || y > 1050 ) return 0;
 	if( y < a ){
-		if( a-y < 80 ) return 1;
+		if( a-y < 50 ) return 1;
 		else return 0;
 	}
 	else if( x > b ){
-		if( x-b < 80 ) return 1;
+		if( x-b < 50 ) return 1;
 		else return 0;
 	}
 	else return 1;
@@ -241,11 +255,14 @@ bool valid_platform( int a,int b,int x,int y )
 void load_Tower()
 {
 	gPlatformSpeed++;
+
+	int current_time = gTowerTimer.getTicks();
+	gVelocity = current_time/15000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
 	int no_of_platforms = Platforms.size();
 
-	if( gPlatformSpeed%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += 1;
+	if( gPlatformSpeed%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
 
 	if( no_of_platforms == 0 ){
 		platform = { 150,0,300,10 };
@@ -292,12 +309,31 @@ void load_Tower()
 
 }
 
-int towerGame()
+void render_score()
 {
-    Platforms.clear();
+	Texture towermanScore;
+	std :: stringstream towermantext;
+
+	towermantext.str("");
+	towermantext << "Score : " << gScore;
+	if (!towermanScore.loadFromText(towermantext.str().c_str(), {255,255,255,0}))
+	{
+		printf("Unable to render score texture\n");
+	}
+	towermanScore.render(0, 0);
+}
+void tower_Game_Init()
+{
+	gTowerTimer.start();
+	Platforms.clear();
 	//initial coordinates of the character
     Man.mPosY = -30;
-    Man.mPosX = 160; 
+    Man.mPosX = 160;
+}
+
+int towerGame()
+{
+    tower_Game_Init();
 
     loadTowerMedia();	
     bool quit = false;
@@ -305,13 +341,16 @@ int towerGame()
     SDL_Event e;
 
 	//scrolling speed of the background
+
     int scrollingOffset = 0;
-    int scrollingSpeed = 2;
+    int scrollingSpeed = gVelocity;
 
     int scrollingOffset2 = 0;
-    int scrollingSpeed2 = 1;
+    int scrollingSpeed2 = gVelocity;
     while( !quit )
     {
+		gTowerScoreDelay++;
+		if( gTowerScoreDelay%5 == 0 ) gScore++;
         while( SDL_PollEvent( &e ) != 0 )
         {
             if( e.type == SDL_QUIT )
@@ -327,7 +366,9 @@ int towerGame()
         SDL_RenderClear( gRender );
 
         scrollingOffset += scrollingSpeed;
-        scrollingOffset2 += scrollingSpeed2;
+		gPlatformSpeed++;
+		if( (gPlatformSpeed/gTowerDelay)%2 == 0 ) scrollingOffset2 += scrollingSpeed2;
+		
         if( scrollingOffset > gTowerBackgroundTexture.getHeight() )
         {
             scrollingOffset = 0;
@@ -346,6 +387,8 @@ int towerGame()
 
         gSidetower2Texture.render(1050,scrollingOffset2);
         gSidetower2Texture.render(1050,scrollingOffset2- gSidetower2Texture.getHeight() );
+
+		render_score();
 
         Man.move( );
         load_Tower();
