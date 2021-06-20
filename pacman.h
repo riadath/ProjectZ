@@ -51,6 +51,8 @@ Texture gPacmanScoreTexture;
 Texture gPacmanRemainingLivesTexture;
 Texture gPacmanHealthTexture;
 
+Timer gPacmanTimer;
+
 SDL_Rect gPacmanAnimationClips[PACMAN_ANIMATION_CLIPS];
 SDL_Rect gPacmanFood[PACMAN_GHOSTS];
 SDL_Rect gPacmanGhosts[PACMAN_FOOD];
@@ -123,7 +125,7 @@ struct PacmanFood
 		mCollider.h = FOOD_HEIGHT;
 
 		type = rand() % PACMAN_FOOD;
-		time = SDL_GetTicks();
+		time = gPacmanTimer.getTicks();
 	}
 
 	void render()
@@ -568,7 +570,7 @@ void load_Points()
 
 void render_food()
 {
-	int present_time = SDL_GetTicks() -gCurrentTime;
+	int present_time = gPacmanTimer.getTicks();
 	int time_stamp = 15000;
 	int food_no = present_time / time_stamp + 1;
 	int food_remainingspawned_time = 5000;
@@ -588,7 +590,7 @@ void render_food()
 	}
 	for (int i = 0; i < Food_queue.size(); i++)
 	{
-		if (present_time - Food_queue[i].time + gCurrentTime > food_remainingspawned_time)
+		if (present_time - Food_queue[i].time  > food_remainingspawned_time)
 		{
 			Food_queue.erase(Food_queue.begin() + i);
 			gPacmanLives--;
@@ -656,11 +658,12 @@ void initPacman()
 	Food_queue.clear();
 	gCurrentTime = SDL_GetTicks();
 	gIfResumePacman = false;
+	gPacmanTimer.start();
 }
 
 MENU_OPTIONS handlePacmanUI(SDL_Event &e)
 {
-
+	gPacmanTimer.pause();
 	bool quit = false;
 	while (!quit)
 	{
@@ -688,7 +691,7 @@ MENU_OPTIONS handlePacmanUI(SDL_Event &e)
 			{
 				//check mouse_button position
 				if (mouseX >= gPacmanButtonPosition[PLAY].x && mouseX <= gPacmanButtonPosition[PLAY].x + gPacmanButtonPosition[PLAY].w && mouseY >= gPacmanButtonPosition[PLAY].y && mouseY <= gPacmanButtonPosition[PLAY].y + gPacmanButtonPosition[PLAY].h){
-					gCurrentTime = SDL_GetTicks();
+					gPacmanTimer.unpause();
 					return START_GAME;
 				}
 
