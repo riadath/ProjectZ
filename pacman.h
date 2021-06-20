@@ -538,7 +538,7 @@ void render_food()
 	}
 	for (int i = 0; i < Food_queue.size(); i++)
 	{
-		if (present_time - Food_queue[i].time > food_remainingspawned_time)
+		if (present_time - Food_queue[i].time + gCurrentTime > food_remainingspawned_time)
 		{
 			Food_queue.erase(Food_queue.begin() + i);
 			gPacmanLives--;
