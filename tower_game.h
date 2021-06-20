@@ -60,7 +60,7 @@ struct Towerman
 {
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
 	static const int Towerman_WIDTH = 59;
-	static const int Towerman_HEIGHT = 67;
+	static const int Towerman_HEIGHT = 68;
 
 	static const int Towerman_Vel = 6;
 	static const int jumping_vel = -14;
@@ -306,12 +306,13 @@ void load_Tower()
 	gPlatformSpeed++;
 
 	int current_time = gTowerTimer.getTicks();
-	gVelocity = current_time/15000 + 1;
+	std::cout<<current_time<<"\n";
+	gVelocity = current_time/5000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
 	int no_of_platforms = Platforms.size();
 
-	if( gPlatformSpeed%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
+	if( (gPlatformSpeed/gTowerDelay)%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
 
 	if( no_of_platforms == 0 ){
 		platform = { 150,0,300,10 };
@@ -398,7 +399,7 @@ void tower_Game_Init()
 
 MENU_OPTIONS handleTowergameUI(SDL_Event &e)
 {
-	gTowerTimer.stop();
+	gTowerTimer.pause();
 
 	bool quit = false;
 	while (!quit)
@@ -426,8 +427,10 @@ MENU_OPTIONS handleTowergameUI(SDL_Event &e)
 			else if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
 				//check mouse_button position
-				if (mouseX >= gTowergameButtonPosition[PLAY].x && mouseX <= gTowergameButtonPosition[PLAY].x + gTowergameButtonPosition[PLAY].w && mouseY >= gTowergameButtonPosition[PLAY].y && mouseY <= gTowergameButtonPosition[PLAY].y + gTowergameButtonPosition[PLAY].h)
+				if (mouseX >= gTowergameButtonPosition[PLAY].x && mouseX <= gTowergameButtonPosition[PLAY].x + gTowergameButtonPosition[PLAY].w && mouseY >= gTowergameButtonPosition[PLAY].y && mouseY <= gTowergameButtonPosition[PLAY].y + gTowergameButtonPosition[PLAY].h){
+					gTowerTimer.unpause();
 					return START_GAME;
+				}
 
 				if (mouseX >= gTowergameButtonPosition[EXIT].x && mouseX <= gTowergameButtonPosition[EXIT].x + gTowergameButtonPosition[EXIT].w && mouseY >= gTowergameButtonPosition[EXIT].y && mouseY <= gTowergameButtonPosition[EXIT].y + gTowergameButtonPosition[EXIT].h)
 					return FULL_EXIT;
@@ -619,9 +622,9 @@ int towerGame(std::string username)
 	//scrolling speed of the background
 	while(!game_quit){
 		int scrollingOffset = 0;
-		int scrollingSpeed = gVelocity;
+		// int scrollingSpeed = gVelocity;
 		int scrollingOffset2 = 0;
-		int scrollingSpeed2 = gVelocity;
+		// int scrollingSpeed2 = gVelocity;
   
 		bool quit = true;
 		if (menuState == LOADING_SCREEN)
@@ -670,9 +673,9 @@ int towerGame(std::string username)
 			SDL_SetRenderDrawColor( gRender, 0, 0, 255, 0xFF );
 			SDL_RenderClear( gRender );
 
-			scrollingOffset += scrollingSpeed;
+			scrollingOffset += gVelocity;
 			gPlatformSpeed++;
-			if( (gPlatformSpeed/gTowerDelay)%2 == 0 ) scrollingOffset2 += scrollingSpeed2;
+			if( (gPlatformSpeed)%2 == 0 ) scrollingOffset2 += gVelocity;
 			
 			if( scrollingOffset > gTowerBackgroundTexture.getHeight() )
 			{
