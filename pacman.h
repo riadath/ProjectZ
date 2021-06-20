@@ -20,7 +20,8 @@ void render_food();
 //calculates the score of the game
 void load_Points();
 
-//rectangualr collision checking function
+//rectangular collision checking function
+
 bool checkCollision(SDL_Rect a, SDL_Rect b);
 
 //checks if a randomly spawned food is valid or not
@@ -588,7 +589,7 @@ void render_food()
 	}
 	for (int i = 0; i < Food_queue.size(); i++)
 	{
-		if (present_time - Food_queue[i].time > food_remainingspawned_time)
+		if (present_time - Food_queue[i].time + gCurrentTime > food_remainingspawned_time)
 		{
 			Food_queue.erase(Food_queue.begin() + i);
 			gPacmanLives--;
