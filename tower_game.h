@@ -384,6 +384,7 @@ void tower_Game_Init()
 	gTowerDelay = 2;
 	gVelocity = 1;
 	gTowerScoreDelay = 0;
+	gIfResumeTowergame = false;
 	Man.mVelX = 0;
 	Man.mVelY = 0;
 	Man.frame = 0;
@@ -653,6 +654,7 @@ int towerGame(std::string username)
 				if( e.type == SDL_QUIT )
 				{
 					quit = true;
+					gIfResumeTowergame = false;
 					menuState = LOADING_SCREEN;
 				}
 
