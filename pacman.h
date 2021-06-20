@@ -20,7 +20,7 @@ void render_food();
 //calculates the score of the game
 void load_Points();
 
-//rectangualr collision checking function
+//rectangular collision checking function
 bool checkCollision(SDL_Rect a, SDL_Rect b);
 
 //checks if a randomly spawned food is valid or not
