@@ -38,6 +38,7 @@ std::vector<SDL_Rect> WALL;
 int gPoint = 0;
 int gPacmanLives = 7;
 int gGhostMovementSpeed = 0;
+int gCurrentTime;
 
 const int PACMAN_ANIMATION_CLIPS = 3;
 const int PACMAN_GHOSTS = 4;
@@ -53,6 +54,8 @@ Texture gPacmanHealthTexture;
 SDL_Rect gPacmanAnimationClips[PACMAN_ANIMATION_CLIPS];
 SDL_Rect gPacmanFood[PACMAN_GHOSTS];
 SDL_Rect gPacmanGhosts[PACMAN_FOOD];
+
+
 
 struct PacmanGhost
 {
@@ -515,7 +518,7 @@ void load_Points()
 
 void render_food()
 {
-	int present_time = SDL_GetTicks();
+	int present_time = SDL_GetTicks() -gCurrentTime;
 	int time_stamp = 15000;
 	int food_no = present_time / time_stamp + 1;
 	int food_remainingspawned_time = 5000;
@@ -600,6 +603,7 @@ void initPacman()
 	gGhostMovementSpeed = 0;
 	WALL.clear();
 	Food_queue.clear();
+	gCurrentTime = SDL_GetTicks();
 }
 
 int pacman()
