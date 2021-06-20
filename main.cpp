@@ -227,7 +227,7 @@ Texture gIdNameTexture;
 std::vector<SDL_Rect> gMapObjects;					 //List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions; //Coordinates for placing trees and buildings on the map
 std::vector<std::tuple<int, int, int>> gTreePositions;
-std::string gCurentUsername = "NOT_LOGGED_IN";
+std::string gCurrentUsername = "NOT_LOGGED_IN";
 //global timer
 Timer gTimer;
 
@@ -590,7 +590,7 @@ void renderMapObjects()
 	gCoinCountTexture.render(0, 0);
 
 	tempText.str("");
-	tempText << "User :" << gCurentUsername;
+	tempText << "User :" << gCurrentUsername;
 	gIdNameTexture.loadFromText(tempText.str().c_str(), textColor);
 	gIdNameTexture.render(0, 20);
 
@@ -616,13 +616,13 @@ void taskHandler()
 	}
 	int curTaskScore = 0;
 	if (whichTask == BUCKET_BALL)
-		curTaskScore = bucketBall(gCurentUsername);
+		curTaskScore = bucketBall(gCurrentUsername);
 	if (whichTask == PACMAN)
-		curTaskScore = pacman();
+		curTaskScore = pacmanLite(gCurrentUsername);
 	if (whichTask == DINORUN)
-		curTaskScore = dinoRun(gCurentUsername);
+		curTaskScore = dinoRun(gCurrentUsername);
 	if (whichTask == TOWERGAME)
-		curTaskScore = towerGame(gCurentUsername);
+		curTaskScore = towerGame(gCurrentUsername);
 	if (whichTask != NO_GAME)
 		gMyCharacter.positionReset();
 	gTaskScore[whichTask] = curTaskScore;
@@ -810,7 +810,7 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e, MENU_OPTIONS tMenu)
 							{
 								flag = true;
 								gCOIN_COUNT = tCoin;
-								gCurentUsername = tStr;
+								gCurrentUsername = tStr;
 							}
 							// std::cout<<tStr<<"----"<<tCoin<<"\n";
 						}
@@ -832,7 +832,7 @@ MENU_OPTIONS loginRegisterUI(SDL_Event &e, MENU_OPTIONS tMenu)
 						}
 						usernameFile<< inputText << " 5" <<"\n";
 						gCOIN_COUNT = 5;
-						gCurentUsername = inputText;
+						gCurrentUsername = inputText;
 						usernameFile.close();
 						return START_GAME;
 					}
@@ -920,7 +920,7 @@ int main(int argc, char *argv[])
 	}
 
 	//===================
-	//  int t = towerGame(gCurentUsername);
+	//  int t = towerGame(gCurrentUsername);
 
 	//Loading map object position and shape
 	gameInitialize();

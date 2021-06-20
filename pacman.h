@@ -57,6 +57,22 @@ SDL_Rect gPacmanGhosts[PACMAN_FOOD];
 
 
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const int gPacmanButtonCount = 4;
+bool gIfResumePacman = false;
+
+Texture gPacmanButtonTexture[gPacmanButtonCount];
+Texture gPacmanMenuTexture;
+Texture gPacmanBackTexture;
+Texture gPacmanHighscoreTexture;
+
+SDL_Rect gPacmanButtonPosition[gPacmanButtonCount];
+SDL_Rect gPacmanBackButtonPosition;
+SDL_Rect gPacmanHighscorePosition;
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
 struct PacmanGhost
 {
 	static const int GHOST_WIDTH = 15;
@@ -346,6 +362,28 @@ bool loadPacmanMedia()
 	gPacmanGhostTexture.loadFile("images/pacman/pacman_ghosts.jpg");
 	gPacmanHealthTexture.loadFile("images/health.png");
 
+	if (!gPacmanButtonTexture[PLAY].loadFile("images/main/play_button.png"))
+		return false;
+	if (!gPacmanButtonTexture[CONTINUE].loadFile("images/main/continue_button.png"))
+		return false;
+	if (!gPacmanButtonTexture[HELP].loadFile("images/main/help_button.png"))
+		return false;
+	if (!gPacmanButtonTexture[EXIT].loadFile("images/main/exit_button.png"))
+		return false;
+	if (!gPacmanMenuTexture.loadFile("images/pacman/menu_back.png"))
+		return false;
+	if (!gPacmanBackTexture.loadFile("images/main/back_button.png"))
+		return false;
+	if (!gPacmanHighscoreTexture.loadFile("images/main/highscore_button.png"))
+		return false;
+
+	
+	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	if (gFont == NULL)
+	{
+		ERROR_T;
+		return false;
+	}
 	for (int i = 0; i < 3; i++)
 	{
 		gPacmanAnimationClips[i].x = 32 * i;
@@ -368,12 +406,24 @@ bool loadPacmanMedia()
 		gPacmanGhosts[i].h = 16;
 	}
 
-	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
-	if (gFont == NULL)
+	for (int i = 0; i < gPacmanButtonCount; i++)
 	{
-		ERROR_T;
-		return false;
+		gPacmanButtonPosition[i].x = SCREEN_WIDTH / 3 - 309;
+		gPacmanButtonPosition[i].y = (i - 1) * (i != 0) * 100 + 100;
+		gPacmanButtonPosition[i].w = 309;
+		gPacmanButtonPosition[i].h = 55;
 	}
+
+	gPacmanHighscorePosition.x = SCREEN_WIDTH / 3 - 309;
+	gPacmanHighscorePosition.y = 3 * 100 + 100;
+	gPacmanHighscorePosition.w = 309;
+	gPacmanHighscorePosition.h = 55;
+
+	gPacmanBackButtonPosition.x = 0;
+	gPacmanBackButtonPosition.y = 0;
+	gPacmanBackButtonPosition.w = gPacmanBackTexture.getWidth();
+	gPacmanBackButtonPosition.h = gPacmanBackTexture.getHeight();
+
 	return true;
 }
 
@@ -597,6 +647,7 @@ bool If_Pacman_Collided_With_Ghosts(SDL_Rect a)
 	return 0;
 }
 
+
 void initPacman()
 {
 	gPacmanLives = 7;
@@ -604,58 +655,305 @@ void initPacman()
 	WALL.clear();
 	Food_queue.clear();
 	gCurrentTime = SDL_GetTicks();
+	gIfResumePacman = false;
 }
 
-int pacman()
+MENU_OPTIONS handlePacmanUI(SDL_Event &e)
 {
-	initPacman();
-	loadPacmanMedia();
-	load_ghosts();
+
 	bool quit = false;
-
-	SDL_Event e;
-
-	Pacman pacman;
-
-	SDL_Rect temp;
-
 	while (!quit)
 	{
-		//if lives lost more than gPacmanLives then GAME OVER!
-		if (gPacmanLives <= 0)
-			quit = true;
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+
+		// Mouse hover animation on button
+		for (int i = 0; i < gPacmanButtonCount; i++)
+		{
+			gPacmanButtonTexture[i].setAlpha(255);
+			if (mouseX >= gPacmanButtonPosition[i].x && mouseX <= gPacmanButtonPosition[i].x + gPacmanButtonPosition[i].w && mouseY >= gPacmanButtonPosition[i].y && mouseY <= gPacmanButtonPosition[i].y + gPacmanButtonPosition[i].h)
+			{
+				gPacmanButtonTexture[i].setAlpha(200);
+			}
+		}
+
 		while (SDL_PollEvent(&e) != 0)
 		{
 			if (e.type == SDL_QUIT)
 			{
 				quit = true;
+				return FULL_EXIT;
 			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				//check mouse_button position
+				if (mouseX >= gPacmanButtonPosition[PLAY].x && mouseX <= gPacmanButtonPosition[PLAY].x + gPacmanButtonPosition[PLAY].w && mouseY >= gPacmanButtonPosition[PLAY].y && mouseY <= gPacmanButtonPosition[PLAY].y + gPacmanButtonPosition[PLAY].h){
+					gCurrentTime = SDL_GetTicks();
+					return START_GAME;
+				}
 
-			pacman.handleEvent(e);
+				if (mouseX >= gPacmanButtonPosition[EXIT].x && mouseX <= gPacmanButtonPosition[EXIT].x + gPacmanButtonPosition[EXIT].w && mouseY >= gPacmanButtonPosition[EXIT].y && mouseY <= gPacmanButtonPosition[EXIT].y + gPacmanButtonPosition[EXIT].h){
+					return FULL_EXIT;
+				}
+				// if (mouseX >= gPacmanButtonPosition[HELP].x && mouseX <= gPacmanButtonPosition[HELP].x + gPacmanButtonPosition[HELP].w && mouseY >= gPacmanButtonPosition[HELP].y && mouseY <= gPacmanButtonPosition[HELP].y + gPacmanButtonPosition[HELP].h)
+				// 	return HELP_MENU;
+
+				if (mouseX >= gPacmanHighscorePosition.x && mouseX <= gPacmanHighscorePosition.x + gPacmanHighscorePosition.w && mouseY >= gPacmanHighscorePosition.y && mouseY <= gPacmanHighscorePosition.y + gPacmanHighscorePosition.h){
+					return SHOW_HIGHSCORE;
+				}
+			}
 		}
-
-		pacman.move();
-
-		SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0);
+		//render UI
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
 		SDL_RenderClear(gRender);
 
-		temp = {pacman.mPosX, pacman.mPosY, pacman.PACMAN_WIDTH, pacman.PACMAN_HEIGHT};
+		//render UI background and buttons
+		gPacmanMenuTexture.render(0, 0);
+		int st = 0, skip = -1;
+		if (gIfResumePacman)
+			st = 1;
+		else
+			skip = 1;
 
-		load_map();
-		render_ghosts();
-		load_Points();
-		render_food();
-		If_Pacman_Collided_With_Food(temp);
-
-		//If Pacman collided with any ghost it respawns at these coordinates
-		if (If_Pacman_Collided_With_Ghosts(temp) == 1)
+		for (int i = st; i < gPacmanButtonCount; i++)
 		{
-			pacman.mPosX = 7 * (SCREEN_WIDTH / 15);
-			pacman.mPosY = 5 * (SCREEN_HEIGHT / 10);
-			gPacmanLives--;
+			if (skip != -1 && i == skip)
+				continue;
+			int pos = i;
+			if (i == 1)
+				pos = i - st;
+			gPacmanButtonTexture[i].render(gPacmanButtonPosition[pos].x, gPacmanButtonPosition[pos].y);
 		}
-		pacman.render();
+		gPacmanHighscoreTexture.render(gPacmanHighscorePosition.x, gPacmanHighscorePosition.y);
 		SDL_RenderPresent(gRender);
+	}
+	return LOADING_SCREEN;
+}
+
+MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
+{
+	bool quit = false;
+	gIfResumePacman = false;
+	Texture tScoreTexture;
+	SDL_Color textColor = {255, 180, 0, 255};
+	std::stringstream tempText;
+	tempText << "Your Score : " << gPoint;
+	tScoreTexture.loadFromText(tempText.str().c_str(), textColor);
+
+	//insert score to high score list
+	std::vector<std::pair<std::string, int>> scoreList;
+	std::ifstream highscoreFile;
+
+	highscoreFile.open("saved_files/pacman.score");
+	if (!highscoreFile)
+	{
+		printf("Could not open file\n");
+	}
+	std::string tStr;
+	int tScore;
+	while (highscoreFile.eof() == false)
+	{
+		highscoreFile >> tStr >> tScore;
+		if (highscoreFile.eof() == false)
+			scoreList.push_back(std::make_pair(tStr, tScore));
+	}
+	highscoreFile.close();
+
+	std::ofstream highscoreFileOut;
+	highscoreFileOut.open("saved_files/pacman.score");
+	if (!highscoreFileOut)
+	{
+		printf("Could not open file\n");
+	}
+
+	scoreList.push_back(std::make_pair(username, gPoint));
+	std::sort(scoreList.begin(), scoreList.end(), comp1);
+	std::map<std::string, bool> tCheck;
+
+	for (int i = 0; i < std::min(10, (int)scoreList.size()); i++)
+	{
+		highscoreFileOut << scoreList[i].first << " " << scoreList[i].second << "\n";
+	}
+
+	highscoreFileOut.close();
+	gPoint = 0;
+
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gPacmanBackButtonPosition.x && mouseX <= gPacmanBackButtonPosition.x + gPacmanBackButtonPosition.w && mouseY >= gPacmanBackButtonPosition.y && mouseY <= gPacmanBackButtonPosition.y + gPacmanBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gPacmanMenuTexture.render(0, 0);
+		gPacmanBackTexture.render(gPacmanBackButtonPosition.x, gPacmanBackButtonPosition.y);
+		tScoreTexture.render(SCREEN_WIDTH / 2 - tScoreTexture.getWidth(), 100);
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
+MENU_OPTIONS showPacmanHighScore(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gPacmanBackButtonPosition.x && mouseX <= gPacmanBackButtonPosition.x + gPacmanBackButtonPosition.w && mouseY >= gPacmanBackButtonPosition.y && mouseY <= gPacmanBackButtonPosition.y + gPacmanBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+		gPacmanMenuTexture.render(0, 0);
+		gPacmanBackTexture.render(gPacmanBackButtonPosition.x, gPacmanBackButtonPosition.y);
+
+		std::ifstream highscore;
+		highscore.open("saved_files/pacman.score");
+		int position = 1;
+		Texture tHighscore;
+		tHighscore.loadFromText("User           Score",{255,188,0,255});
+		tHighscore.render(200, 0);
+		while (highscore.eof() == false)
+		{
+			std::string str;
+			int score;
+
+			highscore >> str >> score;
+
+			// std::cout<<str<<"  "<<score<<"\n";
+
+			if(highscore.eof() == false){
+				std::stringstream tempText;
+				tempText << position++ << ". " << str << "           " << score;
+				tHighscore.loadFromText(tempText.str().c_str(), {255, 255, 255, 255});
+				tHighscore.render(200, (position - 1) * 50);
+			}
+		}
+		highscore.close();
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
+
+
+int pacmanLite(std::string username)
+{
+	initPacman();
+	loadPacmanMedia();
+	load_ghosts();
+
+
+	bool game_quit = false;
+	SDL_Event e;
+	MENU_OPTIONS menuState = LOADING_SCREEN;
+	Pacman pacman;
+	while(!game_quit){
+		bool quit = true;
+
+		if (menuState == LOADING_SCREEN)
+		{
+			menuState = handlePacmanUI(e);
+		}
+		if (menuState == FULL_EXIT)
+		{
+			game_quit = true;
+		}
+		if (menuState == START_GAME)
+		{
+			quit = false;
+		}
+		if (menuState == SHOW_SCORE)
+		{
+			menuState = showPacmanScore(e, username);
+		}
+		if (menuState == SHOW_HIGHSCORE)
+		{
+			menuState = showPacmanHighScore(e);
+		}
+
+		while (!quit)
+		{
+			gIfResumePacman = true;
+			//if lives lost more than gPacmanLives then GAME OVER!
+			while (SDL_PollEvent(&e) != 0)
+			{
+				if (e.type == SDL_QUIT)
+				{
+					quit = true;
+					menuState = LOADING_SCREEN;
+				}
+				else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+				{
+					quit = true;
+					menuState = LOADING_SCREEN;
+				}
+				pacman.handleEvent(e);
+			}
+
+			pacman.move();
+
+			SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0);
+			SDL_RenderClear(gRender);
+
+			SDL_Rect temp = {pacman.mPosX, pacman.mPosY, pacman.PACMAN_WIDTH, pacman.PACMAN_HEIGHT};
+
+			load_map();
+			render_ghosts();
+			load_Points();
+			render_food();
+			If_Pacman_Collided_With_Food(temp);
+
+			//If Pacman collided with any ghost it respawns at these coordinates
+			if (If_Pacman_Collided_With_Ghosts(temp) == 1)
+			{
+				pacman.mPosX = 7 * (SCREEN_WIDTH / 15);
+				pacman.mPosY = 5 * (SCREEN_HEIGHT / 10);
+				gPacmanLives--;
+			}
+
+			if (gPacmanLives <= 0){
+				quit = true;
+				menuState = SHOW_SCORE;
+				initPacman();
+			}
+
+			pacman.render();
+			SDL_RenderPresent(gRender);
+		}
 	}
 
 	closePacman();

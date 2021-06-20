@@ -249,7 +249,7 @@ void initVariable()
 	gBallDrop.mSpawnSpeed = 0;
 	gBallDrop.mBallDropSpeed = 2;
 	gBallDrop.mEachCatchScore = 100;
-
+	gIfResumeBucketBall = false;
 	gBallDrop.mTimer.start();
 	gBallDrop.mPrevTime1 = gBallDrop.mTimer.getTicks() / 1000;
 	gBallDrop.mPrevTime2 = gBallDrop.mTimer.getTicks() / 1000;
