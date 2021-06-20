@@ -1,66 +1,135 @@
-#ifndef PACMAN_H
-#define PACMAN_H
-
 #include "texture_timer.h"
 
-// using namespace std;
+//A vector that stores all the wall rectangles in the game
+
+bool loadPacmanMedia();
+
+void closePacman();
+
+//Loads the layout of the game
+void load_map();
+
+void load_ghosts();
+
+void initPacman();
+
+void render_ghosts();
+
+void render_food();
+
+//calculates the score of the game
+void load_Points();
+
+//rectangualr collision checking function
+bool checkCollision(SDL_Rect a, SDL_Rect b);
+
+//checks if a randomly spawned food is valid or not
+bool Is_Food_Valid(SDL_Rect a);
+
+void If_Pacman_Collided_With_Food(SDL_Rect a);
+
+bool If_Pacman_Collided_With_Ghosts(SDL_Rect a);
+
+bool If_Pacman_Collided_With_Wall(SDL_Rect a);
+
 
 std::vector<SDL_Rect> WALL;
+//Scoring variables
+int gPoint = 0;
+int gPacmanLives = 7;
+int gGhostMovementSpeed = 0;
 
-int point = 0;
-int missed = 5;
-
-bool if_collided(SDL_Rect a);
-bool loadPacmanMedia();
-void closePacman();
-int pacman();
-bool checkWallCollision(SDL_Rect a, SDL_Rect b);
+const int PACMAN_ANIMATION_CLIPS = 3;
+const int PACMAN_GHOSTS = 4;
+const int PACMAN_FOOD = 5;
 
 Texture gPacmanTexture;
 Texture gPacmanFoodTexture;
+Texture gPacmanGhostTexture;
 Texture gPacmanScoreTexture;
 Texture gPacmanRemainingLivesTexture;
+Texture gPacmanHealthTexture;
 
-std::stringstream PacmanScoreText;
-std::stringstream PacmanLivesText;
+SDL_Rect gPacmanAnimationClips[PACMAN_ANIMATION_CLIPS];
+SDL_Rect gPacmanFood[PACMAN_GHOSTS];
+SDL_Rect gPacmanGhosts[PACMAN_FOOD];
+
+struct PacmanGhost
+{
+	static const int GHOST_WIDTH = 15;
+	static const int GHOST_HEIGHT = 16;
+	SDL_Rect *currentClip;
+
+	int upperPos;
+	int lowerPos;
+	int mPosX, mPosY;
+	int type;
+	bool movementType;
+
+	SDL_Rect mCollider;
+
+	PacmanGhost()
+	{
+		movementType = 0;
+		mCollider.w = GHOST_WIDTH;
+		mCollider.h = GHOST_HEIGHT;
+	}
+
+	void render()
+	{
+		currentClip = &gPacmanGhosts[type];
+		gPacmanGhostTexture.render(mPosX, mPosY, currentClip);
+	}
+};
 
 struct PacmanFood
 {
-	static const int Food_WIDTH = 20;
-	static const int Food_HEIGHT = 20;
+	static const int FOOD_WIDTH = 16;
+	static const int FOOD_HEIGHT = 14;
+	SDL_Rect *currentClip;
 
 	int mPosX, mPosY;
+	int type;
+	int time;
 
 	SDL_Rect mCollider;
 
 	PacmanFood()
 	{
+
 		mPosX = rand() % 1100;
 		mPosY = rand() % 650;
 
-		mCollider.w = 20;
-		mCollider.h = 20;
+		mCollider.w = FOOD_WIDTH;
+		mCollider.h = FOOD_HEIGHT;
+
+		type = rand() % PACMAN_FOOD;
+		time = SDL_GetTicks();
 	}
 
 	void render()
 	{
-		gPacmanFoodTexture.render(mPosX, mPosY, NULL);
+		currentClip = &gPacmanFood[type];
+		gPacmanFoodTexture.render(mPosX, mPosY, currentClip);
 	}
 };
-
-std::deque<std::pair<PacmanFood, int>> Food_queue;
 
 struct Pacman
 {
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
-	static const int DOT_WIDTH = 40;
-	static const int DOT_HEIGHT = 47;
+	SDL_Rect *currentClip;
+	static const int PACMAN_WIDTH = 32;
+	static const int PACMAN_HEIGHT = 34;
 
-	static const int DOT_VEL = 8;
+	static const int DOT_VEL = 5;
 
 	int mPosX, mPosY;
 
 	int mVelX, mVelY;
+
+	int frame = 0;
+
+	int pacmanAnimationSpeed = 0;
 
 	SDL_Rect mCollider;
 
@@ -69,8 +138,8 @@ struct Pacman
 		mPosX = 0;
 		mPosY = 300;
 
-		mCollider.w = 40;
-		mCollider.h = 47;
+		mCollider.w = PACMAN_WIDTH;
+		mCollider.h = PACMAN_HEIGHT;
 
 		mVelX = 0;
 		mVelY = 0;
@@ -122,7 +191,7 @@ struct Pacman
 		mPosX += mVelX;
 		mCollider.x = mPosX;
 
-		if ((mPosX < 0) || (mPosX + DOT_WIDTH > SCREEN_WIDTH) || if_collided(mCollider))
+		if ((mPosX < 0) || (mPosX + PACMAN_WIDTH > SCREEN_WIDTH) || If_Pacman_Collided_With_Wall(mCollider))
 		{
 			mPosX -= mVelX;
 			mCollider.x = mPosX;
@@ -131,7 +200,7 @@ struct Pacman
 		mPosY += mVelY;
 		mCollider.y = mPosY;
 
-		if ((mPosY < 0) || (mPosY + DOT_HEIGHT > SCREEN_HEIGHT) || if_collided(mCollider))
+		if ((mPosY < 0) || (mPosY + PACMAN_HEIGHT > SCREEN_HEIGHT) || If_Pacman_Collided_With_Wall(mCollider))
 		{
 			mPosY -= mVelY;
 			mCollider.y = mPosY;
@@ -139,83 +208,163 @@ struct Pacman
 	}
 	void render()
 	{
-		gPacmanTexture.render(mPosX, mPosY, NULL, mFlipType);
+		pacmanAnimationSpeed++;
+		if (pacmanAnimationSpeed > 100)
+			pacmanAnimationSpeed = 0;
+		if (pacmanAnimationSpeed % 10 == 0)
+			frame++;
+		if (frame > 2)
+			frame = 0;
+		currentClip = &gPacmanAnimationClips[frame];
+		gPacmanTexture.render(mPosX, mPosY, currentClip, mFlipType);
 	}
 };
 
+
+
+std::stringstream PacmanScoreText;
+std::stringstream PacmanLivesText;
+
+PacmanGhost ghost_array[PACMAN_GHOSTS];
+
+//A deque structure to keep all the currently spawned foods
+std::deque<PacmanFood> Food_queue;
+
 void load_map()
 {
-	int x = SCREEN_WIDTH / 10;
-	int y = SCREEN_HEIGHT / 8;
+	int x = SCREEN_WIDTH / 15;
+	int y = SCREEN_HEIGHT / 10;
 	SDL_Rect fillRect;
-	fillRect = {0, 0, 2 * x, 2 * y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {x, 0, x, 3 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {3 * x, 2 * y, 4 * x, y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {x, 7 * y, x, 3 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {8 * x, y, x, 3 * y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {13 * x, 0, x, 3 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {2 * x, 4 * y, x, 2 * y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {13 * x, 7 * y, x, 3 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {3 * x, 5 * y, x, y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {3 * x, 0, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {6 * x, 5 * y, x, 3 * y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {4 * x, y, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {7 * x, 7 * y, 3 * x, y};
-	SDL_SetRenderDrawColor(gRender, 0xFF, 0x00, 0x00, 0xFF);
+	fillRect = {3 * x, 8 * y, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
 	SDL_RenderFillRect(gRender, &fillRect);
 	WALL.push_back(fillRect);
 
-	fillRect = {0, 0, 2 * x, 2 * y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {4 * x, 8 * y, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {3 * x, 2 * y, 4 * x, y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {10 * x, 0, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {8 * x, y, x, 3 * y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {9 * x, 0, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {2 * x, 4 * y, x, 2 * y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {10 * x, 8 * y, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {3 * x, 5 * y, x, y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {9 * x, 8 * y, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {6 * x, 5 * y, x, 3 * y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {3 * x, 4 * y, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 
-	fillRect = {7 * x, 7 * y, 3 * x, y};
-	SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0xFF);
-	SDL_RenderDrawRect(gRender, &fillRect);
+	fillRect = {4 * x, 3 * y, x, 4 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {10 * x, 3 * y, x, 4 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {11 * x, 4 * y, x, 2 * y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {7 * x, 2 * y, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {6 * x, 3 * y, 3 * x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {6 * x, 6 * y, 3 * x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
+
+	fillRect = {7 * x, 7 * y, x, y};
+	SDL_SetRenderDrawColor(gRender, 0, 0, 205, 0xFF);
+	SDL_RenderFillRect(gRender, &fillRect);
+	WALL.push_back(fillRect);
 }
 
 bool loadPacmanMedia()
 {
-	gPacmanTexture.loadFile("images/pacman/pacman.png");
-	gPacmanFoodTexture.loadFile("images/pacman/dot.png");
+	gPacmanTexture.loadFile("images/pacman/pacman_animation.png");
+	gPacmanFoodTexture.loadFile("images/pacman/pacman_food.jpg");
+	gPacmanGhostTexture.loadFile("images/pacman/pacman_ghosts.jpg");
+	gPacmanHealthTexture.loadFile("images/health.png");
+
+	for (int i = 0; i < 3; i++)
+	{
+		gPacmanAnimationClips[i].x = 32 * i;
+		gPacmanAnimationClips[i].y = 0;
+		gPacmanAnimationClips[i].w = 32;
+		gPacmanAnimationClips[i].h = 34;
+	}
+	for (int i = 0; i < 5; i++)
+	{
+		gPacmanFood[i].x = 16 * i;
+		gPacmanFood[i].y = 0;
+		gPacmanFood[i].w = 16;
+		gPacmanFood[i].h = 14;
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		gPacmanGhosts[i].x = 0;
+		gPacmanGhosts[i].y = 16 * i;
+		gPacmanGhosts[i].w = 15;
+		gPacmanGhosts[i].h = 16;
+	}
+
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
@@ -228,25 +377,10 @@ bool loadPacmanMedia()
 void closePacman()
 {
 	gPacmanTexture.free();
-	gPacmanTexture.free();
-	gPacmanFoodTexture.free();
-	gPacmanScoreTexture.free();
-	gPacmanRemainingLivesTexture.free();
 }
 
-bool if_collided(SDL_Rect a)
+bool checkCollision(SDL_Rect a, SDL_Rect b)
 {
-	for (int i = 0; i < WALL.size(); i++)
-	{
-		if (checkWallCollision(a, WALL[i]) == true)
-			return true;
-	}
-	return false;
-}
-
-bool checkWallCollision_with_food(SDL_Rect a, PacmanFood F)
-{
-	SDL_Rect b = {F.mPosX, F.mPosY, 20, 20};
 	int leftA, leftB;
 	int rightA, rightB;
 	int topA, topB;
@@ -285,163 +419,242 @@ bool checkWallCollision_with_food(SDL_Rect a, PacmanFood F)
 	return true;
 }
 
-void if_collided_with_food(Pacman p)
+void load_ghosts()
 {
-	SDL_Rect a = {p.mPosX, p.mPosY, 65, 65};
-	for (int i = 0; i < Food_queue.size(); i++)
+	int x = SCREEN_WIDTH / 15;
+	int y = SCREEN_HEIGHT / 10;
+
+	for (int i = 0; i < 4; i++)
+		ghost_array[i].type = i;
+
+	ghost_array[0].lowerPos = ghost_array[0].mPosX = 2 * x;
+	ghost_array[0].upperPos = 6 * x;
+	ghost_array[0].mPosY = 7 * y;
+
+	ghost_array[1].lowerPos = ghost_array[1].mPosX = 5 * x;
+	ghost_array[1].upperPos = 9 * x;
+	ghost_array[1].mPosY = 4 * y;
+
+	ghost_array[2].lowerPos = ghost_array[2].mPosY = 0;
+	ghost_array[2].upperPos = 5 * y;
+	ghost_array[2].mPosX = 12 * x;
+
+	ghost_array[3].lowerPos = ghost_array[3].mPosY = y;
+	ghost_array[3].upperPos = 5 * y;
+	ghost_array[3].mPosX = 2 * x;
+}
+
+void render_ghosts()
+{
+	gGhostMovementSpeed++;
+	if (gGhostMovementSpeed > 100)
+		gGhostMovementSpeed = 0;
+
+	for (int i = 0; i < 4; i++)
 	{
-		if (checkWallCollision_with_food(a, Food_queue[i].first) == true)
+		bool mType = ghost_array[i].movementType;
+		if (i == 0 || i == 1)
 		{
-			Food_queue.erase(Food_queue.begin() + i);
-			point++;
+			if (mType == 0)
+			{
+				ghost_array[i].mPosX++;
+				if (ghost_array[i].mPosX > ghost_array[i].upperPos)
+					ghost_array[i].movementType = 1;
+			}
+			else
+			{
+				ghost_array[i].mPosX--;
+				if (ghost_array[i].mPosX < ghost_array[i].lowerPos)
+					ghost_array[i].movementType = 0;
+			}
+		}
+		else
+		{
+			if (mType == 0)
+			{
+				ghost_array[i].mPosY++;
+				if (ghost_array[i].mPosY > ghost_array[i].upperPos)
+					ghost_array[i].movementType = 1;
+			}
+			else
+			{
+				ghost_array[i].mPosY--;
+				if (ghost_array[i].mPosY < ghost_array[i].lowerPos)
+					ghost_array[i].movementType = 0;
+			}
 		}
 	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		ghost_array[i].render();
+	}
 }
 
-bool checkWallCollision(SDL_Rect a, SDL_Rect b)
+void load_Points()
 {
-	int leftA, leftB;
-	int rightA, rightB;
-	int topA, topB;
-	int bottomA, bottomB;
-
-	leftA = a.x;
-	rightA = a.x + a.w;
-	topA = a.y;
-	bottomA = a.y + a.h;
-
-	leftB = b.x;
-	rightB = b.x + b.w;
-	topB = b.y;
-	bottomB = b.y + b.h;
-
-	if (bottomA <= topB)
-	{
-		return false;
-	}
-
-	if (topA >= bottomB)
-	{
-		return false;
-	}
-
-	if (rightA <= leftB)
-	{
-		return false;
-	}
-
-	if (leftA >= rightB)
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
-void render_food(std::deque<std::pair<PacmanFood, int>> Food_queue)
-{
-	SDL_Color textColor = {0, 0, 0, 255};
-	for (int i = 0; i < Food_queue.size(); i++)
-	{
-		Food_queue[i].first.render();
-	}
+	SDL_Color textColor = {255, 255, 255, 0xFF};
 	PacmanScoreText.str("");
-	PacmanScoreText << "Score : " << point;
+	PacmanScoreText << "Score : " << gPoint;
 	if (!gPacmanScoreTexture.loadFromText(PacmanScoreText.str().c_str(), textColor))
 	{
 		printf("Unable to render score texture\n");
 	}
 	PacmanLivesText.str("");
-	PacmanLivesText << "Lives : " << missed;
+	PacmanLivesText << "Lives : " << gPacmanLives;
 	if (!gPacmanRemainingLivesTexture.loadFromText(PacmanLivesText.str().c_str(), textColor))
 	{
 		printf("Unable to render score texture\n");
 	}
-	gPacmanScoreTexture.render(0, 0);
-	gPacmanRemainingLivesTexture.render(0, 20);
+	for(int i = 0;i < gPacmanLives;i++){
+		gPacmanHealthTexture.render(500 + i * gPacmanHealthTexture.getWidth(),0);
+	}
+	
+	gPacmanScoreTexture.render(500, 20);
 }
 
-bool is_FoodValid(PacmanFood temp)
+void render_food()
 {
-	SDL_Rect spawned_food;
-	spawned_food = {temp.mPosX, temp.mPosY, 20, 20};
-	return if_collided(spawned_food);
+	int present_time = SDL_GetTicks();
+	int time_stamp = 15000;
+	int food_no = present_time / time_stamp + 1;
+	int food_remainingspawned_time = 5000;
+	SDL_Rect Food_Rect;
+	while (Food_queue.size() < food_no)
+	{
+		while (1)
+		{
+			PacmanFood temp;
+			Food_Rect = {temp.mPosX, temp.mPosY, temp.FOOD_WIDTH, temp.FOOD_HEIGHT};
+			if (Is_Food_Valid(Food_Rect) == 1)
+			{
+				Food_queue.push_back(temp);
+				break;
+			}
+		}
+	}
+	for (int i = 0; i < Food_queue.size(); i++)
+	{
+		if (present_time - Food_queue[i].time > food_remainingspawned_time)
+		{
+			Food_queue.erase(Food_queue.begin() + i);
+			gPacmanLives--;
+		}
+	}
+	for (int i = 0; i < Food_queue.size(); i++)
+	{
+		Food_queue[i].render();
+	}
+}
+
+bool If_Pacman_Collided_With_Wall(SDL_Rect a)
+{
+	for (int i = 0; i < WALL.size(); i++)
+	{
+		if (checkCollision(a, WALL[i]) == true)
+			return true;
+	}
+	return false;
+}
+
+bool Is_Food_Valid(SDL_Rect a)
+{
+	for (int i = 0; i < WALL.size(); i++)
+	{
+		if (checkCollision(WALL[i], a) == 1)
+			return 0;
+	}
+	return 1;
+}
+
+void If_Pacman_Collided_With_Food(SDL_Rect a)
+{
+	SDL_Rect temp;
+	for (int i = 0; i < Food_queue.size(); i++)
+	{
+		temp = {Food_queue[i].mPosX, Food_queue[i].mPosY, Food_queue[i].FOOD_WIDTH, Food_queue[i].FOOD_HEIGHT};
+		if (checkCollision(a, temp) == 1)
+		{
+			gPoint += Food_queue[i].type;
+			Food_queue.erase(Food_queue.begin() + i);
+			break;
+		}
+	}
+}
+
+bool If_Pacman_Collided_With_Ghosts(SDL_Rect a)
+{
+	SDL_Rect temp;
+	for (int i = 0; i < 4; i++)
+	{
+		temp = {ghost_array[i].mPosX, ghost_array[i].mPosY, ghost_array[i].GHOST_WIDTH, ghost_array[i].GHOST_HEIGHT};
+		if (checkCollision(a, temp) == 1)
+			return 1;
+	}
+	return 0;
 }
 
 void initPacman()
 {
-	point = 0;
-	missed = 2;
+	gPacmanLives = 7;
+	gGhostMovementSpeed = 0;
+	WALL.clear();
 	Food_queue.clear();
 }
 
 int pacman()
 {
 	initPacman();
-
 	loadPacmanMedia();
-
-	bool quitPacman = false;
+	load_ghosts();
+	bool quit = false;
 
 	SDL_Event e;
 
 	Pacman pacman;
 
-	Uint32 startTime = SDL_GetTicks();
+	SDL_Rect temp;
 
-	int prev = 0;
-	while (!quitPacman)
+	while (!quit)
 	{
-		if (missed <= 0)
-			quitPacman = true;
-
+		//if lives lost more than gPacmanLives then GAME OVER!
+		if (gPacmanLives <= 0)
+			quit = true;
 		while (SDL_PollEvent(&e) != 0)
 		{
-			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE))
+			if (e.type == SDL_QUIT)
 			{
-				quitPacman = true;
+				quit = true;
 			}
+
 			pacman.handleEvent(e);
 		}
 
 		pacman.move();
 
-		if_collided_with_food(pacman);
-
-		SDL_SetRenderDrawColor(gRender, 0xFF, 0xFF, 0xFF, 0xFF);
+		SDL_SetRenderDrawColor(gRender, 0, 0, 0, 0);
 		SDL_RenderClear(gRender);
 
+		temp = {pacman.mPosX, pacman.mPosY, pacman.PACMAN_WIDTH, pacman.PACMAN_HEIGHT};
+
 		load_map();
+		render_ghosts();
+		load_Points();
+		render_food();
+		If_Pacman_Collided_With_Food(temp);
 
-		int food_spawning_gap = 10000;
-		int food_vanishing_gap = 5000;
-		int curr_time = SDL_GetTicks() - startTime;
-		int food_number = curr_time / food_spawning_gap + 1;
-		for (int i = 0; i < Food_queue.size(); i++)
+		//If Pacman collided with any ghost it respawns at these coordinates
+		if (If_Pacman_Collided_With_Ghosts(temp) == 1)
 		{
-			if (curr_time - Food_queue[i].second > food_vanishing_gap)
-			{
-				Food_queue.erase(Food_queue.begin() + i);
-				missed--;
-			}
+			pacman.mPosX = 7 * (SCREEN_WIDTH / 15);
+			pacman.mPosY = 5 * (SCREEN_HEIGHT / 10);
+			gPacmanLives--;
 		}
-
-		PacmanFood temp;
-		while (Food_queue.size() < food_number && is_FoodValid(temp) == 0)
-		{
-			Food_queue.push_back(std::make_pair(temp, curr_time));
-		}
-
 		pacman.render();
-		render_food(Food_queue);
-
 		SDL_RenderPresent(gRender);
 	}
 
 	closePacman();
 
-	return point;
+	return gPoint;
 }
-
-#endif
