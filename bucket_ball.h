@@ -637,10 +637,13 @@ int bucketBall(std::string username)
 		}
 		while (!quit)
 		{
+			gIfResumeBucketBall = true;
 			while (SDL_PollEvent(&e) != 0)
 			{
-				if (e.type == SDL_QUIT)
+				if (e.type == SDL_QUIT){
 					quit = true;
+					menuState = LOADING_SCREEN;
+				}
 				if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
 				{
 					quit = true;

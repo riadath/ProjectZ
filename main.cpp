@@ -622,7 +622,7 @@ void taskHandler()
 	if (whichTask == DINORUN)
 		curTaskScore = dinoRun(gCurentUsername);
 	if (whichTask == TOWERGAME)
-		curTaskScore = towerGame();
+		curTaskScore = towerGame(gCurentUsername);
 	if (whichTask != NO_GAME)
 		gMyCharacter.positionReset();
 	gTaskScore[whichTask] = curTaskScore;
@@ -920,7 +920,7 @@ int main(int argc, char *argv[])
 	}
 
 	//===================
-	 int t = towerGame();
+	//  int t = towerGame(gCurentUsername);
 
 	//Loading map object position and shape
 	gameInitialize();
