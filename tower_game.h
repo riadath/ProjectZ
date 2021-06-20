@@ -3,30 +3,36 @@
 
 #include "texture_timer.h"
 
-const int running_animation_frames = 6;
+const int RUNNING_ANIMATION_FRAMES = 6;
 
 int gInitialX;
+//left and right coordinate of the new platform and the old platyform
+int gPrevX, gPrevY, gPresX, gPresY;
 
 Texture gTowermanTexture;
 Texture gTowerBackgroundTexture;
 Texture gSidetower1Texture;
 Texture gSidetower2Texture;
-SDL_Rect gTowermanRunningClips[ running_animation_frames ];
+SDL_Rect gTowermanRunningClips[ RUNNING_ANIMATION_FRAMES ];
 
 std::deque<SDL_Rect>Platforms;
 
+//variable to regulate the downward speed of the platforms
+int gPlatformSpeed = 0;
+int gYcoordinate;
 
-int y_coordinate;
-
+//rectangular collision detection function
 bool checkCollision_tower( SDL_Rect man,SDL_Rect plat );
 
 bool Towerman_Collided_With_Platform( SDL_Rect A );
 
+//To check is a randomly spawned platform is valid and not impossible to reach for the character
+bool valid_platform( int a,int b,int x,int y );
+
 void loadTowerMedia();
 
+//loads and renders the platforms
 void load_Tower();
-
-
 
 struct Towerman
 {
@@ -35,7 +41,7 @@ struct Towerman
 	static const int Towerman_HEIGHT = 67;
 
 	static const int Towerman_Vel = 6;
-	static const int jumping_vel = -17;
+	static const int jumping_vel = -14;
 	static const int falling_vel = 1;
 	static const int characterFrameDelay = 5;
 
@@ -100,7 +106,7 @@ struct Towerman
 		//X-axis
 		mPosX += mVelX;
 		mCollider.x = mPosX;
-		if( ( mPosX < 0 ) || ( mPosX + Towerman_WIDTH > SCREEN_WIDTH) || (Towerman_Collided_With_Platform( mCollider ) == true  && mVelY >= 0) )
+		if( ( mPosX < 150 ) || ( mPosX + Towerman_WIDTH > SCREEN_WIDTH - 150) || (Towerman_Collided_With_Platform( mCollider ) == true  && mVelY >= 0) )
 		{
 			mPosX -= mVelX;
 			mCollider.x = mPosX;
@@ -116,7 +122,7 @@ struct Towerman
 			mPosY += mVelY;
 			mCollider.y = mPosY;
 			if( Towerman_Collided_With_Platform( mCollider ) == true && special == 0 ){
-				mPosY = y_coordinate - 70;
+				mPosY = gYcoordinate - 70;
 				mCollider.y = mPosY;
 				mVelY = 0;
 				jumping = 0;
@@ -157,7 +163,7 @@ bool Towerman_Collided_With_Platform( SDL_Rect A )
 {
     for( int i = 0; i < Platforms.size(); i++ ){
         if( checkCollision_tower( A,Platforms[i] ) == true ){
-			y_coordinate = Platforms[i].y;
+			gYcoordinate = Platforms[i].y;
 			return true;
 		}
     }
@@ -231,45 +237,48 @@ bool valid_platform( int a,int b,int x,int y )
 	}
 	else return 1;
 }
-int a, b, x, y;
+
 void load_Tower()
 {
+	gPlatformSpeed++;
+	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
 	int no_of_platforms = Platforms.size();
-	for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += 2;
+
+	if( gPlatformSpeed%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += 1;
 
 	if( no_of_platforms == 0 ){
 		platform = { 150,0,300,10 };
-		a = 150;
-		b = x + 300;
+		gPrevX = 150;
+		gPrevY = gPresX + 300;
 		Platforms.push_back(platform);
 		no_of_platforms++;
 		for( int i = 1; i <= 6; i++ ){
 			while( 1 ){
-				x = rand()%750+150;
-				y = x + rand()%300 + 100;
-				if( valid_platform(a,b,x,y) == 1 ){
-					a = x;
-					b = y;
+				gPresX = rand()%750+150;
+				gPresY = gPresX + rand()%300 + 100;
+				if( valid_platform(gPrevX,gPrevY,gPresX,gPresY) == 1 ){
+					gPrevX = gPresX;
+					gPrevY = gPresY;
 					break;
 				}
 			}
-			platform = { x,100*i,y-x,10 };
+			platform = { gPresX,100*i,gPresY-gPresX,10 };
 			Platforms.push_back(platform);
 			no_of_platforms++;
 		}
 	}
 	if( no_of_platforms < 7 ){
 		while( 1 ){
-				x = rand()%750+150;
-				y = x+ rand()%300 + 100;
-				if( valid_platform(a,b,x,y) == 1 ){
-					a = x;
-					b = y;
+				gPresX = rand()%750+150;
+				gPresY = gPresX+ rand()%300 + 100;
+				if( valid_platform(gPrevX,gPrevY,gPresX,gPresY) == 1 ){
+					gPrevX = gPresX;
+					gPrevY = gPresY;
 					break;
 				}
 			}
-		platform = { x,-9,y-x,10 };
+		platform = { gPresX,-9,gPresY-gPresX,10 };
 		Platforms.push_back( platform );
 	}
 
@@ -286,6 +295,7 @@ void load_Tower()
 int towerGame()
 {
     Platforms.clear();
+	//initial coordinates of the character
     Man.mPosY = -30;
     Man.mPosX = 160; 
 
@@ -294,7 +304,7 @@ int towerGame()
 
     SDL_Event e;
 
-   
+	//scrolling speed of the background
     int scrollingOffset = 0;
     int scrollingSpeed = 2;
 

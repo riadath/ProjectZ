@@ -69,8 +69,8 @@ struct Pacman
 		mPosX = 0;
 		mPosY = 300;
 
-		mCollider.w = 65;
-		mCollider.h = 65;
+		mCollider.w = 40;
+		mCollider.h = 47;
 
 		mVelX = 0;
 		mVelY = 0;
@@ -214,8 +214,8 @@ void load_map()
 
 bool loadPacmanMedia()
 {
-	int k = gPacmanTexture.loadFile("images/pacman/pacman.png");
-	k = gPacmanFoodTexture.loadFile("images/pacman/dot.png");
+	gPacmanTexture.loadFile("images/pacman/pacman.png");
+	gPacmanFoodTexture.loadFile("images/pacman/dot.png");
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
 	if (gFont == NULL)
 	{
