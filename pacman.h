@@ -1,3 +1,6 @@
+#ifndef PACMAN_H
+#define PACMAN_H
+
 #include "texture_timer.h"
 
 //A vector that stores all the wall rectangles in the game
@@ -963,3 +966,5 @@ int pacmanLite(std::string username)
 
 	return gPoint;
 }
+
+#endif
