@@ -773,7 +773,7 @@ MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 	}
 
 	scoreList.push_back(std::make_pair(username, gPoint));
-	std::sort(scoreList.begin(), scoreList.end(), comp1);
+	std::sort(scoreList.begin(), scoreList.end(), comp);
 	std::map<std::string, bool> tCheck;
 
 	for (int i = 0; i < std::min(10, (int)scoreList.size()); i++)

@@ -236,11 +236,6 @@ struct Ball
 Bucket gBallCatcher;
 Ball gBallDrop;
 
-bool comp1(const std::pair<std::string, int> &a, const std::pair<std::string, int> &b)
-{
-	return a.second > b.second;
-}
-
 void initVariable()
 {
 	TOTAL_LIVES = 5;
@@ -498,7 +493,7 @@ MENU_OPTIONS showBucketBallScore(SDL_Event &e, std::string username)
 	}
 
 	scoreList.push_back(std::make_pair(username, TOTAL_POINTS));
-	std::sort(scoreList.begin(), scoreList.end(), comp1);
+	std::sort(scoreList.begin(), scoreList.end(), comp);
 	std::map<std::string, bool> tCheck;
 
 	for (int i = 0; i < std::min(10, (int)scoreList.size()); i++)

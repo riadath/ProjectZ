@@ -212,11 +212,6 @@ Timer gDinoTimer;
 
 Mix_Chunk *gCollisionSound = NULL;
 
-bool comp(const std::pair<std::string, int> &a, const std::pair<std::string, int> &b)
-{
-	return a.second > b.second;
-}
-
 bool loadDinoMedia()
 {
 	if (!gMyPlayer.mPlayerTexture.loadFile("images/dino/dino_runner.png"))
