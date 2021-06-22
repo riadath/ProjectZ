@@ -578,21 +578,21 @@ void renderMapObjects()
 	}
 
 	//rendering time prompt
-	SDL_Color textColor = {0, 0, 0, 255};
+	SDL_Color textColor = {105, 10, 0, 255};
 	// std::stringstream timerText;
 	// timerText << "Timer : " << gTimer.getTicks() / 1000;
 	// gTimeTexture.loadFromText(timerText.str().c_str(), textColor);
 	// gTimeTexture.render(SCREEN_WIDTH - 100, 0);
 
 	std::stringstream tempText;
-	tempText << "Coins : " << gCOIN_COUNT;
-	gCoinCountTexture.loadFromText(tempText.str().c_str(), textColor);
-	gCoinCountTexture.render(0, 0);
+	// tempText << "Coins : " << gCOIN_COUNT;
+	// gCoinCountTexture.loadFromText(tempText.str().c_str(), textColor);
+	// gCoinCountTexture.render(0, 0);
 
 	tempText.str("");
 	tempText << "User :" << gCurrentUsername;
 	gIdNameTexture.loadFromText(tempText.str().c_str(), textColor);
-	gIdNameTexture.render(0, 20);
+	gIdNameTexture.render(0, 0);
 
 	gMyCharacter.render(gCamera.x, gCamera.y);
 }

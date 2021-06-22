@@ -527,7 +527,7 @@ void initVariableDino()
 	gScoreDelay = 0;
 	gIfResumeDino = false;
 
-	TOTAL_HEALTH = 1;
+	TOTAL_HEALTH = 5;
 
 	gMyPlayer.mPosX = 300;
 	gMyPlayer.mPosY = gMyPlayer.BASE_HEIGHT - gMyPlayer.PLAYER_HEIGHT;

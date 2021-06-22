@@ -383,7 +383,7 @@ bool loadPacmanMedia()
 		return false;
 
 	
-	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 24);
+	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 21);
 	if (gFont == NULL)
 	{
 		ERROR_T;
