@@ -434,7 +434,9 @@ bool loadPacmanMedia()
 
 void closePacman()
 {
+	gPoint = 0;
 	gPacmanTexture.free();
+	
 }
 
 bool checkCollision(SDL_Rect a, SDL_Rect b)
@@ -739,6 +741,7 @@ MENU_OPTIONS handlePacmanUI(SDL_Event &e)
 
 MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 {
+	gPacmanTimer.stop();
 	bool quit = false;
 	gIfResumePacman = false;
 	Texture tScoreTexture;
@@ -819,6 +822,7 @@ MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 
 MENU_OPTIONS showPacmanHighScore(SDL_Event &e)
 {
+	initPacman();
 	bool quit = false;
 	while (!quit)
 	{

@@ -297,7 +297,7 @@ bool loadBucketBallMedia()
 	if (!gBallDrop.mBallTexture.loadFile("images/BucketBall/ball.png"))
 		return false;
 	if (!gLavaTexture.loadFile("images/BucketBall/lavaSplash.png"))
-		return false;
+		return false; 
 	if (!gLiveTexture.loadFile("images/health.png"))
 		return false;
 	if (!gBucketButtonTexture[PLAY].loadFile("images/main/play_button.png"))
@@ -391,6 +391,7 @@ void renderMapBB()
 
 MENU_OPTIONS handleBucketBallUI(SDL_Event &e)
 {
+	gBallDrop.mTimer.pause();
 	bool quit = false;
 	while (!quit)
 	{
@@ -417,8 +418,10 @@ MENU_OPTIONS handleBucketBallUI(SDL_Event &e)
 			else if (e.type == SDL_MOUSEBUTTONDOWN)
 			{
 				//check mouse_button position
-				if (mouseX >= gBucketBallButtonPosition[PLAY].x && mouseX <= gBucketBallButtonPosition[PLAY].x + gBucketBallButtonPosition[PLAY].w && mouseY >= gBucketBallButtonPosition[PLAY].y && mouseY <= gBucketBallButtonPosition[PLAY].y + gBucketBallButtonPosition[PLAY].h)
+				if (mouseX >= gBucketBallButtonPosition[PLAY].x && mouseX <= gBucketBallButtonPosition[PLAY].x + gBucketBallButtonPosition[PLAY].w && mouseY >= gBucketBallButtonPosition[PLAY].y && mouseY <= gBucketBallButtonPosition[PLAY].y + gBucketBallButtonPosition[PLAY].h){
+					gBallDrop.mTimer.unpause();
 					return START_GAME;
+				}
 
 				if (mouseX >= gBucketBallButtonPosition[EXIT].x && mouseX <= gBucketBallButtonPosition[EXIT].x + gBucketBallButtonPosition[EXIT].w && mouseY >= gBucketBallButtonPosition[EXIT].y && mouseY <= gBucketBallButtonPosition[EXIT].y + gBucketBallButtonPosition[EXIT].h)
 					return FULL_EXIT;
@@ -459,6 +462,7 @@ MENU_OPTIONS handleBucketBallUI(SDL_Event &e)
 
 MENU_OPTIONS showBucketBallScore(SDL_Event &e, std::string username)
 {
+	gBallDrop.mTimer.stop();
 	bool quit = false;
 	Texture tScoreTexture;
 	SDL_Color textColor = {255, 180, 0, 255};
@@ -522,6 +526,7 @@ MENU_OPTIONS showBucketBallScore(SDL_Event &e, std::string username)
 			{
 				if (mouseX >= gBucketBackButtonPosition.x && mouseX <= gBucketBackButtonPosition.x + gBucketBackButtonPosition.w && mouseY >= gBucketBackButtonPosition.y && mouseY <= gBucketBackButtonPosition.y + gBucketBackButtonPosition.h)
 				{
+					gBallDrop.mTimer.start();
 					return LOADING_SCREEN;
 				}
 			}
@@ -620,6 +625,7 @@ int bucketBall(std::string username)
 		}
 		if (menuState == START_GAME)
 		{
+			gBallDrop.mTimer.start();
 			quit = false;
 		}
 		if (menuState == SHOW_SCORE)
@@ -651,6 +657,7 @@ int bucketBall(std::string username)
 				menuState = SHOW_SCORE;
 				quit = true;
 				initVariable();
+				gBallDrop.mTimer.stop();
 			}
 
 			gBallCatcher.move();
