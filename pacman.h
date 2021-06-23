@@ -175,17 +175,17 @@ struct Pacman
 		{
 			switch (e.key.keysym.sym)
 			{
-			case SDLK_UP:
+			case SDLK_w:
 				mVelY -= DOT_VEL;
 				break;
-			case SDLK_DOWN:
+			case SDLK_s:
 				mVelY += DOT_VEL;
 				break;
-			case SDLK_LEFT:
+			case SDLK_a:
 				mVelX -= DOT_VEL;
 				mFlipType = SDL_FLIP_HORIZONTAL;
 				break;
-			case SDLK_RIGHT:
+			case SDLK_d:
 				mVelX += DOT_VEL;
 				mFlipType = SDL_FLIP_NONE;
 				break;
@@ -195,16 +195,16 @@ struct Pacman
 		{
 			switch (e.key.keysym.sym)
 			{
-			case SDLK_UP:
+			case SDLK_w:
 				mVelY += DOT_VEL;
 				break;
-			case SDLK_DOWN:
+			case SDLK_s:
 				mVelY -= DOT_VEL;
 				break;
-			case SDLK_LEFT:
+			case SDLK_a:
 				mVelX += DOT_VEL;
 				break;
-			case SDLK_RIGHT:
+			case SDLK_d:
 				mVelX -= DOT_VEL;
 				break;
 			}
