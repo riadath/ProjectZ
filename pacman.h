@@ -244,7 +244,7 @@ struct Pacman
 	}
 };
 
-
+Pacman pacman; //Pacman character
 
 std::stringstream PacmanScoreText;
 std::stringstream PacmanLivesText;
@@ -662,6 +662,7 @@ void initPacman()
 	gCurrentTime = SDL_GetTicks();
 	gIfResumePacman = false;
 	gPacmanTimer.start();
+	pacman.mVelX = 0,pacman.mVelY = 0;
 }
 
 MENU_OPTIONS handlePacmanUI(SDL_Event &e)
@@ -810,7 +811,7 @@ MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 		SDL_RenderClear(gRender);
 		gPacmanMenuTexture.render(0, 0);
 		gPacmanBackTexture.render(gPacmanBackButtonPosition.x, gPacmanBackButtonPosition.y);
-		tScoreTexture.render(SCREEN_WIDTH / 2 - tScoreTexture.getWidth(), 100);
+		tScoreTexture.render(SCREEN_WIDTH / 3 - tScoreTexture.getWidth(), 100);
 		SDL_RenderPresent(gRender);
 	}
 	return FULL_EXIT;
@@ -850,8 +851,8 @@ MENU_OPTIONS showPacmanHighScore(SDL_Event &e)
 		highscore.open("saved_files/pacman.score");
 		int position = 1;
 		Texture tHighscore;
-		tHighscore.loadFromText("User           Score",{255,188,0,255});
-		tHighscore.render(200, 0);
+		tHighscore.loadFromText("User           Score",{155,188,0,255});
+		tHighscore.render(100, 0);
 		while (highscore.eof() == false)
 		{
 			std::string str;
@@ -865,7 +866,7 @@ MENU_OPTIONS showPacmanHighScore(SDL_Event &e)
 				std::stringstream tempText;
 				tempText << position++ << ". " << str << "           " << score;
 				tHighscore.loadFromText(tempText.str().c_str(), {255, 255, 255, 255});
-				tHighscore.render(200, (position - 1) * 50);
+				tHighscore.render(100, (position - 1) * 50);
 			}
 		}
 		highscore.close();
@@ -886,7 +887,7 @@ int pacmanLite(std::string username)
 	bool game_quit = false;
 	SDL_Event e;
 	MENU_OPTIONS menuState = LOADING_SCREEN;
-	Pacman pacman;
+	
 	while(!game_quit){
 		bool quit = true;
 
