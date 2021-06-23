@@ -194,6 +194,7 @@ BUTTONS gameState = PLAY;
 SDL_Rect gCamera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; //Dynamic map variables
 SDL_Rect gTaskPosition[NUMBER_OF_TASKS];				//Task positions on map
 SDL_Rect gButtonPosition[NUMBER_OF_BUTTONS];
+SDL_Rect gBackButtonPosition;
 
 bool gIfTaskComplete[NUMBER_OF_TASKS];
 bool gIfResume = false; //Checks if the game is resumed or not
@@ -224,6 +225,8 @@ Texture gUI_LoginEnterTexture;
 Texture gUI_RegisterEnterTexture;
 Texture gCoinCountTexture;
 Texture gIdNameTexture;
+Texture gUI_BackButtonTexture;
+Texture gUI_TutorialTexture;
 
 std::vector<SDL_Rect> gMapObjects;					 //List of objects in the room for collision detection
 std::vector<std::pair<int, int>> gBuildingPositions; //Coordinates for placing trees and buildings on the map
@@ -403,6 +406,11 @@ bool loadMedia()
 		return false;
 	if (!gUI_ButtonsTexture[VOLUME_OFF].loadFile("images/main/music_off.png"))
 		return false;
+	if(!gUI_BackButtonTexture.loadFile("images/main/back_button.png"))
+		return false;
+	if(!gUI_TutorialTexture.loadFile("images/main/tutorial_main.png"))
+		return false;
+
 	gFont = TTF_OpenFont("images/fonts/Oswald-Medium.ttf", 21);
 	if (gFont == NULL)
 	{
@@ -516,13 +524,17 @@ void gameInitialize()
 	gButtonPosition[CONTINUE] = gButtonPosition[PLAY];
 	gButtonPosition[BACK].x = 0, gButtonPosition[BACK].y = 0;
 	gButtonPosition[BACK].w = 50, gButtonPosition[BACK].h = 50;
-
 	gButtonPosition[VOLUME_ON].x = SCREEN_WIDTH - gUI_ButtonsTexture[VOLUME_ON].getWidth();
 	gButtonPosition[VOLUME_ON].y = 0;
 	gButtonPosition[VOLUME_ON].w = gUI_ButtonsTexture[VOLUME_ON].getWidth();
 	gButtonPosition[VOLUME_ON].h = gUI_ButtonsTexture[VOLUME_ON].getHeight();
-
 	gButtonPosition[VOLUME_OFF] = gButtonPosition[VOLUME_ON];
+	gBackButtonPosition.x = 0;
+	gBackButtonPosition.y = 0;
+	gBackButtonPosition.w = gUI_BackButtonTexture.getWidth();
+	gBackButtonPosition.h = gUI_BackButtonTexture.getHeight();
+
+
 }
 
 //Rendering all the objects in the map
@@ -739,6 +751,41 @@ MENU_OPTIONS handleUI(SDL_Event &e)
 			tButton = VOLUME_OFF;
 		gUI_ButtonsTexture[tButton].render(gButtonPosition[tButton].x, gButtonPosition[VOLUME_ON].y);
 
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
+MENU_OPTIONS helpMenuUI(SDL_Event &e){
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gBackButtonPosition.x && mouseX <= gBackButtonPosition.x + gBackButtonPosition.w && mouseY >= gBackButtonPosition.y && mouseY <= gBackButtonPosition.y + gBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+
+		//render background
+		gUI_TutorialTexture.render(0,0);
+		gUI_BackButtonTexture.render(0,0);
 		SDL_RenderPresent(gRender);
 	}
 	return FULL_EXIT;
@@ -994,6 +1041,9 @@ int main(int argc, char *argv[])
 		{
 			quit = false;
 			gIfResume = true;
+		}
+		if(menuState == HELP_MENU){
+			menuState = helpMenuUI(e);
 		}
 
 		while (!quit)

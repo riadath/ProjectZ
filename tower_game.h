@@ -25,6 +25,9 @@ int gVelocity = 1;
 int gTowerScoreDelay = 0;
 int gScore;
 
+Timer gTowerTimer;
+
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 const int gTowergameButtonCount = 4;
 bool gIfResumeTowergame = false;
@@ -33,6 +36,7 @@ Texture gTowerButtonTexture[gTowergameButtonCount];
 Texture gTowerMenuTexture;
 Texture gTowerBackTexture;
 Texture gTowerHighscoreTexture;
+Texture gTowerTutorialTexture;
 
 SDL_Rect gTowergameButtonPosition[gTowergameButtonCount];
 SDL_Rect gTowerBackButtonPosition;
@@ -54,7 +58,6 @@ void render_score();
 //loads and renders the platforms
 void load_Tower();
 
-Timer gTowerTimer;
 
 struct Towerman
 {
@@ -178,6 +181,7 @@ struct Towerman
 
 	}
 };
+
 Towerman Man;
 
 
@@ -252,7 +256,8 @@ bool loadTowerMedia()
 		return false;
 	if (!gTowerHighscoreTexture.loadFile("images/main/highscore_button.png"))
 		return false;
-
+	if(!gTowerTutorialTexture.loadFile("images/towergame/tower_tutorial.png"))
+		return false;
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 21);
 	if (gFont == NULL)
 	{
@@ -434,8 +439,8 @@ MENU_OPTIONS handleTowergameUI(SDL_Event &e)
 
 				if (mouseX >= gTowergameButtonPosition[EXIT].x && mouseX <= gTowergameButtonPosition[EXIT].x + gTowergameButtonPosition[EXIT].w && mouseY >= gTowergameButtonPosition[EXIT].y && mouseY <= gTowergameButtonPosition[EXIT].y + gTowergameButtonPosition[EXIT].h)
 					return FULL_EXIT;
-				// if (mouseX >= gTowergameButtonPosition[HELP].x && mouseX <= gTowergameButtonPosition[HELP].x + gTowergameButtonPosition[HELP].w && mouseY >= gTowergameButtonPosition[HELP].y && mouseY <= gTowergameButtonPosition[HELP].y + gTowergameButtonPosition[HELP].h)
-				// 	return HELP_MENU;
+				if (mouseX >= gTowergameButtonPosition[HELP].x && mouseX <= gTowergameButtonPosition[HELP].x + gTowergameButtonPosition[HELP].w && mouseY >= gTowergameButtonPosition[HELP].y && mouseY <= gTowergameButtonPosition[HELP].y + gTowergameButtonPosition[HELP].h)
+					return HELP_MENU;
 
 				if (mouseX >= gTowerHighscorePosition.x && mouseX <= gTowerHighscorePosition.x + gTowerHighscorePosition.w && mouseY >= gTowerHighscorePosition.y && mouseY <= gTowerHighscorePosition.y + gTowerHighscorePosition.h)
 					return SHOW_HIGHSCORE;
@@ -608,6 +613,41 @@ MENU_OPTIONS showTowergameHighScore(SDL_Event &e)
 	return FULL_EXIT;
 }
 
+MENU_OPTIONS towerHelpMenuUI(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gTowerBackButtonPosition.x && mouseX <= gTowerBackButtonPosition.x + gTowerBackButtonPosition.w && mouseY >= gTowerBackButtonPosition.y && mouseY <= gTowerBackButtonPosition.y + gTowerBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+
+		//render background
+		gTowerTutorialTexture.render(0, 0);
+		gTowerBackTexture.render(0,0);
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
 
 
 int towerGame(std::string username)
@@ -648,6 +688,9 @@ int towerGame(std::string username)
 		if (menuState == SHOW_HIGHSCORE)
 		{
 			menuState = showTowergameHighScore(e);
+		}
+		if(menuState == HELP_MENU){
+			menuState = towerHelpMenuUI(e);
 		}
 		while( !quit )
 		{

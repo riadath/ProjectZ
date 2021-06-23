@@ -197,7 +197,7 @@ Texture gDinoButtonTexture[gDinoButtonCount];
 Texture gDinoMenuTexture;
 Texture gDinoBackTexture;
 Texture gDinoHighscoreTexture;
-
+Texture gDinoTutorialTexture;
 
 SDL_Rect gCollisionRect[gColAnimationCount];
 SDL_Rect gDinoButtonPosition[gDinoButtonCount];
@@ -253,6 +253,8 @@ bool loadDinoMedia()
 	if (!gDinoBackTexture.loadFile("images/main/back_button.png"))
 		return false;
 	if (!gDinoHighscoreTexture.loadFile("images/main/highscore_button.png"))
+		return false;
+	if (!gDinoTutorialTexture.loadFile("images/dino/tutorial_dino.png"))
 		return false;
 	gCollisionTexture.setBlendMode(SDL_BLENDMODE_ADD);
 
@@ -572,8 +574,8 @@ MENU_OPTIONS handleDinoUI(SDL_Event &e)
 				if (mouseX >= gDinoButtonPosition[EXIT].x && mouseX <= gDinoButtonPosition[EXIT].x + gDinoButtonPosition[EXIT].w && mouseY >= gDinoButtonPosition[EXIT].y && mouseY <= gDinoButtonPosition[EXIT].y + gDinoButtonPosition[EXIT].h)
 					return FULL_EXIT;
 
-				// if (mouseX >= gDinoButtonPosition[HELP].x && mouseX <= gDinoButtonPosition[HELP].x + gDinoButtonPosition[HELP].w && mouseY >= gDinoButtonPosition[HELP].y && mouseY <= gDinoButtonPosition[HELP].y + gDinoButtonPosition[HELP].h)
-				// 	return HELP_MENU;
+				if (mouseX >= gDinoButtonPosition[HELP].x && mouseX <= gDinoButtonPosition[HELP].x + gDinoButtonPosition[HELP].w && mouseY >= gDinoButtonPosition[HELP].y && mouseY <= gDinoButtonPosition[HELP].y + gDinoButtonPosition[HELP].h)
+					return HELP_MENU;
 
 				if (mouseX >= gDinoHighscorePosition.x && mouseX <= gDinoHighscorePosition.x + gDinoHighscorePosition.w && mouseY >= gDinoHighscorePosition.y && mouseY <= gDinoHighscorePosition.y + gDinoHighscorePosition.h)
 					return SHOW_HIGHSCORE;
@@ -719,7 +721,7 @@ MENU_OPTIONS showDinoHighScore(SDL_Event &e)
 		highscore.open("saved_files/dinoscore.score");
 		int position = 1;
 		Texture tHighscore;
-		tHighscore.loadFromText("User           Score",{255,188,0,255});
+		tHighscore.loadFromText("User           Score", {255, 188, 0, 255});
 		tHighscore.render(200, 0);
 		while (highscore.eof() == false)
 		{
@@ -730,7 +732,8 @@ MENU_OPTIONS showDinoHighScore(SDL_Event &e)
 
 			// std::cout<<str<<"  "<<score<<"\n";
 
-			if(highscore.eof() == false){
+			if (highscore.eof() == false)
+			{
 				std::stringstream tempText;
 				tempText << position++ << ". " << str << "           " << score;
 				tHighscore.loadFromText(tempText.str().c_str(), {255, 255, 255, 255});
@@ -742,6 +745,43 @@ MENU_OPTIONS showDinoHighScore(SDL_Event &e)
 	}
 	return FULL_EXIT;
 }
+
+MENU_OPTIONS dinoHelpMenuUI(SDL_Event &e)
+{
+	bool quit = false;
+	while (!quit)
+	{
+		int mouseX, mouseY;
+		SDL_GetMouseState(&mouseX, &mouseY);
+		while (SDL_PollEvent(&e) != 0)
+		{
+			if (e.type == SDL_QUIT)
+			{
+				return FULL_EXIT;
+			}
+			else if (e.type == SDL_KEYDOWN && e.ksym == SDLK_ESCAPE)
+			{
+				return LOADING_SCREEN;
+			}
+			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (mouseX >= gDinoBackButtonPosition.x && mouseX <= gDinoBackButtonPosition.x + gDinoBackButtonPosition.w && mouseY >= gDinoBackButtonPosition.y && mouseY <= gDinoBackButtonPosition.y + gDinoBackButtonPosition.h)
+				{
+					return LOADING_SCREEN;
+				}
+			}
+		}
+		SDL_SetRenderDrawColor(gRender, 255, 255, 255, 255);
+		SDL_RenderClear(gRender);
+
+		//render background
+		gDinoTutorialTexture.render(0, 0);
+		gDinoBackTexture.render(0,0);
+		SDL_RenderPresent(gRender);
+	}
+	return FULL_EXIT;
+}
+
 
 int dinoRun(std::string username)
 {
@@ -779,6 +819,10 @@ int dinoRun(std::string username)
 		if (menuState == SHOW_HIGHSCORE)
 		{
 			menuState = showDinoHighScore(e);
+		}
+		if(menuState == HELP_MENU)
+		{
+			menuState = dinoHelpMenuUI(e);
 		}
 		while (!quit)
 		{
