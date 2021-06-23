@@ -335,6 +335,7 @@ bool checkCollisionDino(SDL_Rect player, SDL_Rect object)
 	return tFlag;
 }
 
+
 void spawnObjects()
 {
 	//Increasing Difficulty and spawing health points
