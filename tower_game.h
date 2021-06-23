@@ -306,7 +306,7 @@ void load_Tower()
 	gPlatformSpeed++;
 
 	int current_time = gTowerTimer.getTicks();
-	std::cout<<current_time<<"\n";
+	std::cout<<current_time<<" "<<gVelocity<<"\n";
 	gVelocity = current_time/5000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
@@ -470,6 +470,7 @@ MENU_OPTIONS handleTowergameUI(SDL_Event &e)
 
 MENU_OPTIONS showTowergameScore(SDL_Event &e, std::string username)
 {
+	gTowerTimer.stop();
 	bool quit = false;
 	gIfResumeTowergame = false;
 	Texture tScoreTexture;
@@ -534,6 +535,7 @@ MENU_OPTIONS showTowergameScore(SDL_Event &e, std::string username)
 			{
 				if (mouseX >= gTowerBackButtonPosition.x && mouseX <= gTowerBackButtonPosition.x + gTowerBackButtonPosition.w && mouseY >= gTowerBackButtonPosition.y && mouseY <= gTowerBackButtonPosition.y + gTowerBackButtonPosition.h)
 				{
+					gTowerTimer.start();
 					return LOADING_SCREEN;
 				}
 			}

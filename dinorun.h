@@ -812,7 +812,7 @@ int dinoRun(std::string username)
 		}
 	}
 	freeDino();
-	return TOTAL_SCORE;
+	return 0;
 }
 
 #endif

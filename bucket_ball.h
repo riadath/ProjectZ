@@ -666,7 +666,7 @@ int bucketBall(std::string username)
 		}
 	}
 	closeBB();
-	return TOTAL_POINTS;
+	return 0;
 }
 
 #endif

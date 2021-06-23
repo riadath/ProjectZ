@@ -806,6 +806,7 @@ MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 			{
 				if (mouseX >= gPacmanBackButtonPosition.x && mouseX <= gPacmanBackButtonPosition.x + gPacmanBackButtonPosition.w && mouseY >= gPacmanBackButtonPosition.y && mouseY <= gPacmanBackButtonPosition.y + gPacmanBackButtonPosition.h)
 				{
+					gPacmanTimer.start();
 					return LOADING_SCREEN;
 				}
 			}
@@ -822,7 +823,6 @@ MENU_OPTIONS showPacmanScore(SDL_Event &e, std::string username)
 
 MENU_OPTIONS showPacmanHighScore(SDL_Event &e)
 {
-	initPacman();
 	bool quit = false;
 	while (!quit)
 	{
@@ -969,7 +969,7 @@ int pacmanLite(std::string username)
 
 	closePacman();
 
-	return gPoint;
+	return 0;
 }
 
 #endif
