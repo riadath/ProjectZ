@@ -291,11 +291,11 @@ bool valid_platform( int a,int b,int x,int y )
 {
 	if( x < 150 || x > 1050 || y < 150 || y > 1050 ) return 0;
 	if( y < a ){
-		if( a-y < 50 ) return 1;
+		if( abs(a-y) < 50 ) return 1;
 		else return 0;
 	}
 	else if( x > b ){
-		if( x-b < 50 ) return 1;
+		if( abs(x-b) < 50 ) return 1;
 		else return 0;
 	}
 	else return 1;
