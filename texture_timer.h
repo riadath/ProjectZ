@@ -234,4 +234,10 @@ struct Timer
 	bool isPaused() { return mIfPaused && mIfStarted; }
 };
 
+
+bool comp(const std::pair<std::string, int> &a, const std::pair<std::string, int> &b)
+{
+	return a.second > b.second;
+}
+
 #endif
