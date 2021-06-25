@@ -312,7 +312,7 @@ void load_Tower()
 
 	int current_time = gTowerTimer.getTicks();
 	std::cout<<current_time<<" "<<gVelocity<<"\n";
-	gVelocity = current_time/5000 + 1;
+	gVelocity = current_time/15000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
 	int no_of_platforms = Platforms.size();

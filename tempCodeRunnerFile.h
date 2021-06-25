@@ -1,0 +1,3 @@
+
+
+	int mPosX, mPosY;
