@@ -3,13 +3,11 @@
 
 #include "texture_timer.h"
 
-//A vector that stores all the wall rectangles in the game
-
 bool loadPacmanMedia();
 
 void closePacman();
 
-//Loads the layout of the game
+//Loads the layout of the map
 void load_map();
 
 void load_ghosts();
@@ -23,6 +21,7 @@ void render_food();
 //calculates the score of the game
 void load_Points();
 
+
 //rectangular collision checking function
 bool checkCollision(SDL_Rect a, SDL_Rect b);
 
@@ -35,17 +34,22 @@ bool If_Pacman_Collided_With_Ghosts(SDL_Rect a);
 
 bool If_Pacman_Collided_With_Wall(SDL_Rect a);
 
+//A vector that stores all the wall rectangles in the game
 std::vector<SDL_Rect> WALL;
+
 //Scoring variables
 int gPoint = 0;
 int gPacmanLives = 7;
 int gGhostMovementSpeed = 0;
 int gCurrentTime;
+bool gIfResumePacman = false;
 
 const int PACMAN_ANIMATION_CLIPS = 3;
 const int PACMAN_GHOSTS = 4;
 const int PACMAN_FOOD = 5;
+const int gPacmanButtonCount = 4;
 
+//All the textures of the game
 Texture gPacmanTexture;
 Texture gPacmanFoodTexture;
 Texture gPacmanGhostTexture;
@@ -53,26 +57,21 @@ Texture gPacmanScoreTexture;
 Texture gPacmanRemainingLivesTexture;
 Texture gPacmanHealthTexture;
 
-Timer gPacmanTimer;
-
-SDL_Rect gPacmanAnimationClips[PACMAN_ANIMATION_CLIPS];
-SDL_Rect gPacmanFood[PACMAN_GHOSTS];
-SDL_Rect gPacmanGhosts[PACMAN_FOOD];
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const int gPacmanButtonCount = 4;
-bool gIfResumePacman = false;
-
 Texture gPacmanButtonTexture[gPacmanButtonCount];
 Texture gPacmanMenuTexture;
 Texture gPacmanBackButtonTexture;
 Texture gPacmanHighscoreTexture;
 Texture gPacmanTutorialTexture;
 
+Timer gPacmanTimer;
+
+SDL_Rect gPacmanAnimationClips[PACMAN_ANIMATION_CLIPS];
+SDL_Rect gPacmanFood[PACMAN_GHOSTS];
+SDL_Rect gPacmanGhosts[PACMAN_FOOD];
 SDL_Rect gPacmanButtonPosition[gPacmanButtonCount];
 SDL_Rect gPacmanBackButtonPosition;
 SDL_Rect gPacmanHighscorePosition;
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 struct PacmanGhost
 {
@@ -245,6 +244,7 @@ Pacman pacman; //Pacman character
 std::stringstream PacmanScoreText;
 std::stringstream PacmanLivesText;
 
+//An array that stores the 4 types of ghosts
 PacmanGhost ghost_array[PACMAN_GHOSTS];
 
 //A deque structure to keep all the currently spawned foods
@@ -428,10 +428,17 @@ bool loadPacmanMedia()
 	return true;
 }
 
+//frees all the textures and resets the variables
 void closePacman()
 {
 	gPoint = 0;
 	gPacmanTexture.free();
+	gPacmanFoodTexture.free();
+	gPacmanGhostTexture.free();
+	gPacmanScoreTexture.free();
+	gPacmanRemainingLivesTexture.free();
+	gPacmanHealthTexture.free();
+	for (int i = 0; i < gPacmanButtonCount; i++) gPacmanButtonTexture[i].free();
 }
 
 bool checkCollision(SDL_Rect a, SDL_Rect b)
@@ -662,6 +669,7 @@ void initPacman()
 	pacman.mVelX = 0, pacman.mVelY = 0;
 }
 
+//Menu
 MENU_OPTIONS handlePacmanUI(SDL_Event &e)
 {
 	gPacmanTimer.pause();

@@ -4,34 +4,18 @@
 #include "texture_timer.h"
 
 const int RUNNING_ANIMATION_FRAMES = 6;
+const int gTowergameButtonCount = 4;
 
+//x-coordinate of the character
 int gInitialX;
 //left and right coordinate of the new platform and the old platyform
 int gPrevX, gPrevY, gPresX, gPresY;
 
+//Textures of the character, background, side towers
 Texture gTowermanTexture;
 Texture gTowerBackgroundTexture;
 Texture gSidetower1Texture;
 Texture gSidetower2Texture;
-SDL_Rect gTowermanRunningClips[ RUNNING_ANIMATION_FRAMES ];
-
-std::deque<SDL_Rect>Platforms;
-
-//variable to regulate the downward speed of the platforms
-int gPlatformSpeed = 0;
-int gYcoordinate;
-int gTowerDelay = 2;
-int gVelocity = 1;
-int gTowerScoreDelay = 0;
-int gScore;
-
-Timer gTowerTimer;
-
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-const int gTowergameButtonCount = 4;
-bool gIfResumeTowergame = false;
-
 Texture gTowerButtonTexture[gTowergameButtonCount];
 Texture gTowerMenuTexture;
 Texture gTowerBackTexture;
@@ -41,16 +25,33 @@ Texture gTowerTutorialTexture;
 SDL_Rect gTowergameButtonPosition[gTowergameButtonCount];
 SDL_Rect gTowerBackButtonPosition;
 SDL_Rect gTowerHighscorePosition;
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SDL_Rect gTowermanRunningClips[ RUNNING_ANIMATION_FRAMES ];
+
+//A deque to keep the existing platforms
+std::deque<SDL_Rect>Platforms;
+
+//variable to regulate the downward speed of the platforms
+int gPlatformSpeed = 0;
+int gYcoordinate;
+int gTowerDelay = 2;
+int gVelocity = 1;
+int gTowerScoreDelay = 0;
+int gScore;
+bool gIfResumeTowergame = false;
+
+
+Timer gTowerTimer;
+
 
 //rectangular collision detection function
 bool checkCollision_tower( SDL_Rect man,SDL_Rect plat );
 
 bool Towerman_Collided_With_Platform( SDL_Rect A );
 
-//To check is a randomly spawned platform is valid and not impossible to reach for the character
+//To check if a randomly spawned platform is valid and not impossible to reach for the character
 bool valid_platform( int a,int b,int x,int y );
 
+//loads all the media regarding the tower like platforms, background
 bool loadTowerMedia();
 
 void render_score();
@@ -58,7 +59,7 @@ void render_score();
 //loads and renders the platforms
 void load_Tower();
 
-
+//the main character struct
 struct Towerman
 {
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
@@ -311,7 +312,8 @@ void load_Tower()
 	gPlatformSpeed++;
 
 	int current_time = gTowerTimer.getTicks();
-//	std::cout<<current_time<<" "<<gVelocity<<"\n";
+
+	//increasing the velocity of the platforms every 30 seconds by 1
 	gVelocity = current_time/30000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
@@ -319,6 +321,7 @@ void load_Tower()
 
 	for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
 
+	//laoding platforms at the start of the game
 	if( no_of_platforms == 0 ){
 		gPrevX = 150;
 		gPrevY = 150+900;
@@ -327,7 +330,6 @@ void load_Tower()
 				gPresX = rand()%750+150;
 				gPresY = gPresX + rand()%300 + 100;
 				if( valid_platform(gPrevX,gPrevY,gPresX,gPresY) == 1 ){
-					std :: cout << gPrevX << " " << gPrevY << " "  << gPresX << " " << gPresY << std:: endl;
 					gPrevX = gPresX; 
 					gPrevY = gPresY;
 					break;
@@ -343,6 +345,7 @@ void load_Tower()
 		Platforms.push_back(platform);
 		no_of_platforms++;
 	}
+	//New platforms are added when old platforms disappear
 	if( no_of_platforms < 7 ){
 		while( 1 ){
 				gPresX = rand()%750+150;
@@ -356,11 +359,13 @@ void load_Tower()
 		platform = { gPresX,-9,gPresY-gPresX,10 };
 		Platforms.push_back( platform );
 	}
-
+	//rendering the present platforms
 	for( int i = 0; i < Platforms.size(); i++ ){
 		SDL_SetRenderDrawColor( gRender, 255,244,79, 0xFF );		
 		SDL_RenderFillRect( gRender, &Platforms[i] );
 	}
+
+	//if any platform goes under the window dimension it is deleted
 	for( int i = 0; i < Platforms.size(); i++ ){
 		if( Platforms[i].y > 700 ) Platforms.erase( Platforms.begin()+i );
 	}
@@ -380,6 +385,16 @@ void render_score()
 	}
 	towermanScore.render(0, 0);
 }
+
+void closeTowergame()
+{
+	gTowermanTexture.free();
+	gTowerBackgroundTexture.free();
+	gSidetower1Texture.free();
+	gSidetower2Texture.free();
+	for (int i = 0; i < gTowergameButtonCount; i++) gTowerButtonTexture[i].free();
+}
+
 void tower_Game_Init()
 {
 	gTowerTimer.start();
@@ -404,7 +419,7 @@ void tower_Game_Init()
 }
 
 
-
+//Menu
 MENU_OPTIONS handleTowergameUI(SDL_Event &e)
 {
 	gTowerTimer.pause();
@@ -652,7 +667,6 @@ MENU_OPTIONS towerHelpMenuUI(SDL_Event &e)
 	return FULL_EXIT;
 }
 
-
 int towerGame(std::string username)
 {
     loadTowerMedia();	
@@ -664,12 +678,14 @@ int towerGame(std::string username)
 	SDL_Event e;
 	MENU_OPTIONS menuState = LOADING_SCREEN;
 
-	//scrolling speed of the background
+	
 	while(!game_quit){
+
+		//scrolling speed of the background
 		int scrollingOffset = 0;
-		 int scrollingSpeed = gVelocity;
+		int scrollingSpeed = gVelocity;
 		int scrollingOffset2 = 0;
-		 int scrollingSpeed2 = gVelocity-1;
+		int scrollingSpeed2 = gVelocity-1;
   
 		bool quit = true;
 		if (menuState == LOADING_SCREEN)
@@ -759,7 +775,7 @@ int towerGame(std::string username)
 			}
 		}
 	}
-
+	closeTowergame();
     return 0;
 }
 
