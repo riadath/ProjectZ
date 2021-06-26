@@ -63,7 +63,7 @@ struct Towerman
 {
 	SDL_RendererFlip mFlipType = SDL_FLIP_NONE;
 	static const int Towerman_WIDTH = 59;
-	static const int Towerman_HEIGHT = 68;
+	static const int Towerman_HEIGHT = 69;
 
 	static const int Towerman_Vel = 6;
 	static const int jumping_vel = -14;
@@ -312,25 +312,23 @@ void load_Tower()
 
 	int current_time = gTowerTimer.getTicks();
 //	std::cout<<current_time<<" "<<gVelocity<<"\n";
-	gVelocity = current_time/15000 + 1;
+	gVelocity = current_time/30000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
 	int no_of_platforms = Platforms.size();
 
-	if( (gPlatformSpeed/gTowerDelay)%2 == 0 ) for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
+	for( int i = 0; i < no_of_platforms; i++ ) Platforms[i].y += gVelocity;
 
 	if( no_of_platforms == 0 ){
-		platform = { 150,0,300,10 };
 		gPrevX = 150;
-		gPrevY = gPrevX + 300;
-		Platforms.push_back(platform);
-		no_of_platforms++;
+		gPrevY = 150+900;
 		for( int i = 1; i <= 6; i++ ){
 			while( 1 ){
 				gPresX = rand()%750+150;
-				gPresY = gPresX + rand()%300;
+				gPresY = gPresX + rand()%300 + 100;
 				if( valid_platform(gPrevX,gPrevY,gPresX,gPresY) == 1 ){
-					gPrevX = gPresX;
+					std :: cout << gPrevX << " " << gPrevY << " "  << gPresX << " " << gPresY << std:: endl;
+					gPrevX = gPresX; 
 					gPrevY = gPresY;
 					break;
 				}
@@ -339,6 +337,11 @@ void load_Tower()
 			Platforms.push_back(platform);
 			no_of_platforms++;
 		}
+		platform = { 150,0,300,10 };
+		gPrevX = 150;
+		gPrevY = gPrevX + 300;
+		Platforms.push_back(platform);
+		no_of_platforms++;
 	}
 	if( no_of_platforms < 7 ){
 		while( 1 ){
@@ -388,7 +391,7 @@ void tower_Game_Init()
 	gPlatformSpeed = 0;
 	gYcoordinate;
 	gTowerDelay = 2;
-	gVelocity = 1;
+	gVelocity = 2;
 	gTowerScoreDelay = 0;
 	gIfResumeTowergame = false;
 	Man.mVelX = 0;
@@ -664,9 +667,9 @@ int towerGame(std::string username)
 	//scrolling speed of the background
 	while(!game_quit){
 		int scrollingOffset = 0;
-		// int scrollingSpeed = gVelocity;
+		 int scrollingSpeed = gVelocity;
 		int scrollingOffset2 = 0;
-		// int scrollingSpeed2 = gVelocity;
+		 int scrollingSpeed2 = gVelocity-1;
   
 		bool quit = true;
 		if (menuState == LOADING_SCREEN)
@@ -720,7 +723,7 @@ int towerGame(std::string username)
 
 			scrollingOffset += gVelocity;
 			gPlatformSpeed++;
-			if( (gPlatformSpeed)%2 == 0 ) scrollingOffset2 += gVelocity;
+			scrollingOffset2 += gVelocity-1;
 			
 			if( scrollingOffset > gTowerBackgroundTexture.getHeight() )
 			{
