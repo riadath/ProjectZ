@@ -311,7 +311,7 @@ void load_Tower()
 	gPlatformSpeed++;
 
 	int current_time = gTowerTimer.getTicks();
-	std::cout<<current_time<<" "<<gVelocity<<"\n";
+//	std::cout<<current_time<<" "<<gVelocity<<"\n";
 	gVelocity = current_time/15000 + 1;
 	if( gPlatformSpeed > 100 ) gPlatformSpeed = 0;
     SDL_Rect platform;
@@ -322,13 +322,13 @@ void load_Tower()
 	if( no_of_platforms == 0 ){
 		platform = { 150,0,300,10 };
 		gPrevX = 150;
-		gPrevY = gPresX + 300;
+		gPrevY = gPrevX + 300;
 		Platforms.push_back(platform);
 		no_of_platforms++;
 		for( int i = 1; i <= 6; i++ ){
 			while( 1 ){
 				gPresX = rand()%750+150;
-				gPresY = gPresX + rand()%300 + 100;
+				gPresY = gPresX + rand()%300;
 				if( valid_platform(gPrevX,gPrevY,gPresX,gPresY) == 1 ){
 					gPrevX = gPresX;
 					gPrevY = gPresY;
