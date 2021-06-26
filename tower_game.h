@@ -27,6 +27,9 @@ SDL_Rect gTowerBackButtonPosition;
 SDL_Rect gTowerHighscorePosition;
 SDL_Rect gTowermanRunningClips[ RUNNING_ANIMATION_FRAMES ];
 
+Mix_Chunk *gJump = NULL;
+Mix_Chunk *gGameOver = NULL;
+
 //A deque to keep the existing platforms
 std::deque<SDL_Rect>Platforms;
 
@@ -109,6 +112,7 @@ struct Towerman
 				{
 					if( jumping == 0 && e.key.repeat == 0 ){
 						mVelY = jumping_vel;
+						Mix_PlayChannel(2, gJump, 0);
 						jumping = 1;
 					}
 					break;
@@ -289,6 +293,9 @@ bool loadTowerMedia()
 	gTowerBackButtonPosition.y = 0;
 	gTowerBackButtonPosition.w = gTowerBackTexture.getWidth();
 	gTowerBackButtonPosition.h = gTowerBackTexture.getHeight();
+
+	gJump = Mix_LoadWAV("sounds/jumping.wav");
+	gGameOver = Mix_LoadWAV("sounds/game_over.wav");
 
 	return true;
 }
@@ -771,6 +778,7 @@ int towerGame(std::string username)
 			if( Man.mPosY > 700 ){
 				menuState = SHOW_SCORE;
 				quit = true;
+				Mix_PlayChannel(2, gGameOver, 0);
 				tower_Game_Init();
 			}
 		}

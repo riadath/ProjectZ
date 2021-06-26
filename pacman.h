@@ -72,6 +72,10 @@ SDL_Rect gPacmanButtonPosition[gPacmanButtonCount];
 SDL_Rect gPacmanBackButtonPosition;
 SDL_Rect gPacmanHighscorePosition;
 
+Mix_Chunk *gPacmanGameOver = NULL;
+Mix_Chunk *gPacmanEatsFood = NULL;
+Mix_Chunk *gPacmanTouchesGhost = NULL;
+
 
 struct PacmanGhost
 {
@@ -425,6 +429,10 @@ bool loadPacmanMedia()
 	gPacmanBackButtonPosition.w = gPacmanBackButtonTexture.getWidth();
 	gPacmanBackButtonPosition.h = gPacmanBackButtonTexture.getHeight();
 
+	gPacmanGameOver = Mix_LoadWAV("sounds/pacman_death.wav");
+	gPacmanEatsFood = Mix_LoadWAV("sounds/pacman_eatfruit.wav");
+	gPacmanTouchesGhost = Mix_LoadWAV("sounds/pacman_eatghost.wav");
+
 	return true;
 }
 
@@ -639,6 +647,7 @@ void If_Pacman_Collided_With_Food(SDL_Rect a)
 		if (checkCollision(a, temp) == 1)
 		{
 			gPoint += Food_queue[i].type;
+			Mix_PlayChannel(2, gPacmanEatsFood, 0);
 			Food_queue.erase(Food_queue.begin() + i);
 			break;
 		}
@@ -651,8 +660,10 @@ bool If_Pacman_Collided_With_Ghosts(SDL_Rect a)
 	for (int i = 0; i < 4; i++)
 	{
 		temp = {ghost_array[i].mPosX, ghost_array[i].mPosY, ghost_array[i].GHOST_WIDTH, ghost_array[i].GHOST_HEIGHT};
-		if (checkCollision(a, temp) == 1)
+		if (checkCollision(a, temp) == 1){
+			Mix_PlayChannel(2, gPacmanTouchesGhost, 0);
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -1007,6 +1018,7 @@ int pacmanLite(std::string username)
 
 			if (gPacmanLives <= 0)
 			{
+				Mix_PlayChannel(2, gPacmanGameOver, 0);
 				quit = true;
 				menuState = SHOW_SCORE;
 				initPacman();
