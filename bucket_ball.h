@@ -58,12 +58,15 @@ bool loadBucketBallMedia();
 int bucketBall();
 void lavaAnimation();
 COLLISION_TYPE checkCollisionBB(SDL_Rect bucketShape, SDL_Rect ballShape);
+MENU_OPTIONS bucketHelpMenuUI(SDL_Event &e);
+MENU_OPTIONS showBucketBallHighScore(SDL_Event &e);
+MENU_OPTIONS showBucketBallScore(SDL_Event &e, std::string username);
+MENU_OPTIONS handleBucketBallUI(SDL_Event &e);
 
 struct Bucket
 {
 	int mPosX, mVelX;
 	int mVelocity;
-
 	Texture mBucketTexture;
 	SDL_Rect mBucketShape;
 	Bucket()
@@ -135,7 +138,7 @@ struct Ball
 {
 	std::vector<int> mBallSpawnPosition;
 	const int mSPRITE_COUNT = 8;
-	const int mBALL_WIDTH = 21;
+	const int mBALL_WIDTH = 21;	
 	const int mBALL_HEIGHT = 21;
 
 	//variables for controlling ball spawn and drop speed
@@ -255,9 +258,13 @@ void closeBB()
 {
 	SDL_RenderClear(gRender);
 	gBackgroundTextureBB.free();
-	gBallDrop.free();
 	gLiveTexture.free();
 	gScoreTexture.free();
+	gLavaTexture.free();
+	gBucketMenuTexture.free();
+	gBucketBackTexture.free();
+	gBucketHighscoreTexture.free();
+	gBucketTutorialTexture.free();
 }
 
 COLLISION_TYPE checkCollisionBB(SDL_Rect bucketShape, SDL_Rect ballShape)
@@ -315,7 +322,7 @@ bool loadBucketBallMedia()
 		return false;
 	if (!gBucketHighscoreTexture.loadFile("images/main/highscore_button.png"))
 		return false;
-	if(!gBucketTutorialTexture.loadFile("images/bucketBall/tutorial_bucket.png"))
+	if (!gBucketTutorialTexture.loadFile("images/bucketBall/tutorial_bucket.png"))
 		return false;
 
 	gFont = TTF_OpenFont("images/fonts/Oswald-BoldItalic.ttf", 21);
@@ -634,12 +641,11 @@ MENU_OPTIONS bucketHelpMenuUI(SDL_Event &e)
 
 		//render background
 		gBucketTutorialTexture.render(0, 0);
-		gBucketBackTexture.render(0,0);
+		gBucketBackTexture.render(0, 0);
 		SDL_RenderPresent(gRender);
 	}
 	return FULL_EXIT;
 }
-
 
 int bucketBall(std::string username)
 {
@@ -678,7 +684,7 @@ int bucketBall(std::string username)
 		{
 			menuState = showBucketBallHighScore(e);
 		}
-		if(menuState == HELP_MENU)
+		if (menuState == HELP_MENU)
 		{
 			menuState = bucketHelpMenuUI(e);
 		}

@@ -21,7 +21,6 @@ void render_food();
 //calculates the score of the game
 void load_Points();
 
-
 //rectangular collision checking function
 bool checkCollision(SDL_Rect a, SDL_Rect b);
 
@@ -33,6 +32,7 @@ void If_Pacman_Collided_With_Food(SDL_Rect a);
 bool If_Pacman_Collided_With_Ghosts(SDL_Rect a);
 
 bool If_Pacman_Collided_With_Wall(SDL_Rect a);
+
 
 //A vector that stores all the wall rectangles in the game
 std::vector<SDL_Rect> WALL;

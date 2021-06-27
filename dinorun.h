@@ -21,6 +21,8 @@ void freeDino();
 MENU_OPTIONS showDinoHighScore(SDL_Event &e);
 MENU_OPTIONS showDinoScore(SDL_Event &e, std::string username);
 MENU_OPTIONS handleDinoUI(SDL_Event &e);
+MENU_OPTIONS dinoHelpMenuUI(SDL_Event &e);
+
 
 struct Player
 {
@@ -120,14 +122,12 @@ struct Player
 				mPosX += PLAYER_SETP;
 		}
 	}
-
 	void spriteChanger()
 	{
 		mCurSprite++;
 		if (mCurSprite / SPRITE_SPEED >= SPRITE_COUNT)
 			mCurSprite = 0;
 	}
-
 	void render()
 	{
 		gravity();
